@@ -4,7 +4,7 @@ namespace Infrastructure.Context;
 
 public abstract class ApplicationDbContext : DbContext
 {
-    public ApplicationDbContext(DbContextOptions options) : base(options)
+    public ApplicationDbContext(DbContextOptions options) : base(options) 
     {
         //ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
     }
