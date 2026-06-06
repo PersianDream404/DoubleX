@@ -19,7 +19,25 @@ public class UserController(IAuthenticationService authenticationService) : Cont
         {
 
         }, ct);
-        return Content("تست");
+        return View("تست");
+    }
+
+
+}
+//[Area("User")]
+//[Authorize]
+public class User1Controller(IAuthenticationService authenticationService) : Controller
+{
+
+    //[Route("/test")]
+    public async Task<IActionResult> Index(CancellationToken ct)
+    {
+
+        var result = await authenticationService.RegisterUser(new Application.Contract.DTOs.RegisterUserViewModel
+        {
+
+        }, ct);
+        return View("تست");
     }
 
 

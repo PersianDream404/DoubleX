@@ -32,7 +32,16 @@ public class AuthenticationService(
     {
         try
         {
-            await _validator.ValidateAndThrowAsync(viewModel);
+            var result = await _validator.ValidateAsync(viewModel, ct);
+
+            if (!result.IsValid)
+            {
+                var errors = result.Errors
+                    .Select(x => x.ErrorMessage)
+                    .ToList();
+
+                return Result.Error(errors.First());
+            }
 
             var user = viewModel.Adapt<User>();
             //user.Password=Hash
