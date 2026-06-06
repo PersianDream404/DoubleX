@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/SharedKernel/SharedKernel.csproj" Id="e9d5425e-3d9f-4088-8ccd-fd9edb22ee23" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/BuildingBlocks/Infrastructure/Infrastructure.csproj" Id="c901aa80-b0ac-4cad-beb8-337b781e871a" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Identity.Application.Contract/Identity.Application.Contract.csproj" Id="54631cdc-d393-402f-942d-94dad4de15d3" />
+    <Project Path="src/Modules/Identity/Identity.Application/Identity.Application.csproj" Id="5a8fd422-fded-4fb6-a15e-4f54069040a2" />
+    <Project Path="src/Modules/Identity/Identity.Domain/Identity.Domain.csproj" Id="b03e2646-2131-43c9-880f-ed8e35e1c8c0" />
+    <Project Path="src/Modules/Identity/Identity.Persistence/Identity.Persistence.csproj" Id="92a203ae-c4e5-4267-be78-a450bbd038f9" />
+    <Project Path="src/Modules/Identity/Identity.Presentation/Identity.Presentation.csproj" Id="a2c0092d-1d82-4e9e-9872-c4d1fed9c565" />
+  </Folder>
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/BuildingBlocks/Web/Web.csproj" Id="dae9752b-79d1-4b75-91d3-3b23382f75b1" />
+  </Folder>
+  <Folder Name="/src/Test/" />
+</Solution>
