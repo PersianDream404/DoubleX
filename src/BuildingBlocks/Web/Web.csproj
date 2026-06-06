@@ -6,6 +6,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Persistence\Identity.Persistence.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 </Project>

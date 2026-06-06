@@ -1,4 +1,5 @@
-﻿using Infrastructure.Context;
+﻿using Identity.Domain.Entities;
+using Identity.Persistence.Context;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +11,7 @@ namespace Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(
+    public static IServiceCollection AddIdentityInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -38,8 +39,8 @@ public static class DependencyInjection
 
         services.AddDbContext<IdentityDbContext>(opt =>
             opt.UseSqlServer(configuration.GetConnectionString(AppSetting.ConnectionString)));
-
-      //  services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IRepository<User>, Repository<User>>();
+        //  services.AddScoped<IUnitOfWork, UnitOfWork>();
         //services.AddScoped<IFileUploaderService, MinioFileUploaderService>();
 
         //services.AddScoped<IUsersRepository, UsersRepository>();
