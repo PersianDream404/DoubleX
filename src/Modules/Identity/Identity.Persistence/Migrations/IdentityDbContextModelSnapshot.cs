@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Identity.Persistence.Migrations
 {
-    [DbContext(typeof(IdentityDbContext))]
+    [DbContext(typeof(WriteDbContext))]
     partial class IdentityDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

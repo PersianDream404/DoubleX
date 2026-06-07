@@ -14,6 +14,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="Ardalis.Result" />
+	  <PackageReference Include="CsharpGalaxy.LibraryExtension" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Framwork\Framwork.csproj" />

@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
+using Framwork.Decorator.Command;
 using Framwork.Decorator.Query;
 using Identity.Application.Common.Mapping;
 using Identity.Application.Contract.Services;
@@ -39,6 +40,9 @@ public static class DependencyInjection
 
         services.AddScoped(typeof(IQueryBehavior<,>), typeof(LoggingQueryBehavior<,>));
         services.AddScoped(typeof(IQueryBehavior<,>), typeof(ValidationQueryBehavior<,>));
+
+        services.AddScoped(typeof(ICommandBehavior<,>), typeof(LoggingCommandBehavior<,>));
+        services.AddScoped(typeof(ICommandBehavior<,>), typeof(ValidationCommandBehavior<,>));
 
         services.AddScoped<ICommandBus, CommandBus>();
         services.AddScoped<IQueryBus, QueryBus>();

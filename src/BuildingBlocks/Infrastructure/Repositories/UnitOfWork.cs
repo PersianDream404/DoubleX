@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Context;
 using Microsoft.EntityFrameworkCore.Storage;
 using SharedKernel.Interface;
+using SharedKernel.Interface.Repositories;
 
 namespace Infrastructure.Repositories;
 

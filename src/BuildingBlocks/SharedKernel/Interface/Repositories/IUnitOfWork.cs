@@ -1,4 +1,4 @@
-﻿namespace SharedKernel.Interface;
+﻿namespace SharedKernel.Interface.Repositories;
 
 
 public interface IUnitOfWork

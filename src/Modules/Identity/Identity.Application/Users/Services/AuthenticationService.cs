@@ -14,7 +14,7 @@ using System.Text;
 namespace Identity.Application.Users.Services;
 
 public class AuthenticationService(
-    IRepository<User> _repository,
+  
      IValidator<RegisterUserViewModel> _validator
     ) : IAuthenticationService, IScopedDependency
 {
@@ -30,30 +30,31 @@ public class AuthenticationService(
 
     public async Task<Result> RegisterUser(RegisterUserViewModel viewModel, CancellationToken ct = default)
     {
-        try
-        {
-            var result = await _validator.ValidateAsync(viewModel, ct);
+        //try
+        //{
+        //    var result = await _validator.ValidateAsync(viewModel, ct);
 
-            if (!result.IsValid)
-            {
-                var errors = result.Errors
-                    .Select(x => x.ErrorMessage)
-                    .ToList();
+        //    if (!result.IsValid)
+        //    {
+        //        var errors = result.Errors
+        //            .Select(x => x.ErrorMessage)
+        //            .ToList();
 
-                return Result.Error(errors.First());
-            }
+        //        return Result.Error(errors.First());
+        //    }
 
-            var user = viewModel.Adapt<User>();
-            //user.Password=Hash
+        //    var user = viewModel.Adapt<User>();
+        //    //user.Password=Hash
 
-            await _repository.AddAsync(user);
+        //    await _repository.AddAsync(user);
 
-            return Result.Success();
-        }
-        catch (Exception)
-        {
+        //    return Result.Success();
+        //}
+        //catch (Exception)
+        //{
 
-            return Result.Error(MessageHelper.Format(AppMessages.ErrorIn, AppEntity.User));
-        }
+        //    return Result.Error(MessageHelper.Format(AppMessages.ErrorIn, AppEntity.User));
+        //}
+        throw new NotImplementedException();
     }
 }

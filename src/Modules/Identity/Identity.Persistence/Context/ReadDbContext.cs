@@ -5,9 +5,9 @@ using SharedKernel.Base;
 using System.Linq.Expressions;
 
 namespace Identity.Persistence.Context;
-public class IdentityDbContext : BaseDbContext
+public class ReadDbContext : BaseDbContext
 {
-    public IdentityDbContext(DbContextOptions<BaseDbContext> options) : base(options)
+    public ReadDbContext(DbContextOptions<BaseDbContext> options) : base(options)
     {
     
     }
@@ -17,8 +17,12 @@ public class IdentityDbContext : BaseDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
     }
     #region DbSet
+
+
     public DbSet<User> Users { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
+
+
     //public DbSet<JobSeeker> JobSeeker { get; set; }
 
 

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Identity.Persistence.Migrations
 {
-    [DbContext(typeof(IdentityDbContext))]
+    [DbContext(typeof(WriteDbContext))]
     [Migration("20260606153656_add-User")]
     partial class addUser
     {

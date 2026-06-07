@@ -1,5 +1,7 @@
 ﻿using Identity.Domain.Entities;
+using Identity.Domain.Interface;
 using Identity.Persistence.Context;
+using Identity.Persistence.Repositories.Users;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,9 +39,16 @@ public static class DependencyInjection
         #endregion
 
 
-        services.AddDbContext<IdentityDbContext>(opt =>
+        services.AddDbContext<WriteDbContext>(opt =>
             opt.UseSqlServer(configuration.GetConnectionString(AppSetting.ConnectionString)));
-        services.AddScoped<IRepository<User>, Repository<User>>();
+
+        services.AddDbContext<ReadDbContext>(opt =>
+            opt.UseSqlServer(configuration.GetConnectionString(AppSetting.ConnectionString)));
+
+
+        services.AddScoped<IUserCommandRepository, UserCommandRepository>();
+        services.AddScoped<IUserQueryRepository, UserQueryRepository>();
+
         //  services.AddScoped<IUnitOfWork, UnitOfWork>();
         //services.AddScoped<IFileUploaderService, MinioFileUploaderService>();
 

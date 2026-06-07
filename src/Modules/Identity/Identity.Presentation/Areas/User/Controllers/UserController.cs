@@ -1,4 +1,5 @@
 ﻿
+using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Identity.Application.Contract.DTOs.Authentications;
@@ -31,20 +32,29 @@ public class UserController(IAuthenticationService authenticationService) : Cont
 }
 //[Area("User")]
 //[Authorize]
-public class User1Controller(IAuthenticationService authenticationService, IQueryBus _queryBus) : Controller
+public class User1Controller(IAuthenticationService authenticationService, IQueryBus _queryBus,ICommandBus _commandBus) : Controller
 {
 
     //[Route("/test")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
 
-        var result = await _queryBus.Send<GetAllUserQuery, GetAllUserResponseDto>(
-             new GetAllUserQuery(new GetAllUserRequestDto {Q="sdsdd"}));
+        //var result = await _queryBus.Send<GetAllUserQuery, GetAllUserResponseDto>(
+        //     new GetAllUserQuery(new GetAllUserRequestDto {Q="sdsdd"}));
 
-        if (!result.IsSuccess)
+        var request = new CreateUserRequestDto
         {
-            var message = result.GetErrorMessage();
-        }
+            FirstName="abolfazl",
+            LastName="shabani",
+            UserName="abolfazlshs80"
+        };
+        var result = await _commandBus.Send<CreateUserCommand, bool>(
+     new CreateUserCommand( request));
+
+        //if (!result.IsSuccess)
+        //{
+        //    var message = result.GetErrorMessage();
+        //}
         return View("تست");
     }
 
