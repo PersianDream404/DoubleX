@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Identity.Application.Contract.DTOs;
+namespace Identity.Application.Contract.DTOs.Authentications;
 
 public record LoginViewModel(
     [property: JsonPropertyName("UserName")] string UserName,

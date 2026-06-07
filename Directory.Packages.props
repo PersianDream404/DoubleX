@@ -23,6 +23,8 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
     <PackageVersion Include="Mapster" Version="10.0.0" />
     <PackageVersion Include="Mapster.DependencyInjection" Version="10.0.0" />

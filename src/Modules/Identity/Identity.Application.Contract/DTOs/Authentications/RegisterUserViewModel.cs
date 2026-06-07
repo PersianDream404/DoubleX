@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Identity.Application.Contract.DTOs;
+namespace Identity.Application.Contract.DTOs.Authentications;
 
 public class RegisterUserViewModel
 {

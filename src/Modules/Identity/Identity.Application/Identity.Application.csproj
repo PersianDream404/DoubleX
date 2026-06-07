@@ -1,11 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\Identity.Application.Contract\Identity.Application.Contract.csproj" />
+        <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+<ProjectReference Include="..\Identity.Application.Contract\Identity.Application.Contract.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Mapster" />
+	  <PackageReference Include="Scrutor" />
     <PackageReference Include="Mapster.DependencyInjection" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Users\Commands\" />
   </ItemGroup>
 </Project>

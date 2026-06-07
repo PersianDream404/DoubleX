@@ -1,6 +1,6 @@
 ﻿using Ardalis.Result;
 using FluentValidation;
-using Identity.Application.Contract.DTOs;
+using Identity.Application.Contract.DTOs.Authentications;
 using Identity.Application.Contract.Services;
 using Identity.Domain.Entities;
 using Mapster;

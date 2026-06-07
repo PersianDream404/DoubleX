@@ -1,5 +1,10 @@
 ﻿
+using Framwork.Bus.Query;
+using Framwork.Extensions;
+using Identity.Application.Contract.DTOs.Authentications;
+using Identity.Application.Contract.DTOs.Users;
 using Identity.Application.Contract.Services;
+using Identity.Application.Contract.Users.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Principal;
@@ -15,7 +20,7 @@ public class UserController(IAuthenticationService authenticationService) : Cont
     public async Task<IActionResult> Index(CancellationToken ct)
     {
 
-        var result = await authenticationService.RegisterUser(new Application.Contract.DTOs.RegisterUserViewModel
+        var result = await authenticationService.RegisterUser(new RegisterUserViewModel
         {
 
         }, ct);
@@ -26,17 +31,20 @@ public class UserController(IAuthenticationService authenticationService) : Cont
 }
 //[Area("User")]
 //[Authorize]
-public class User1Controller(IAuthenticationService authenticationService) : Controller
+public class User1Controller(IAuthenticationService authenticationService, IQueryBus _queryBus) : Controller
 {
 
     //[Route("/test")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
 
-        var result = await authenticationService.RegisterUser(new Application.Contract.DTOs.RegisterUserViewModel
-        {
+        var result = await _queryBus.Send<GetAllUserQuery, GetAllUserResponseDto>(
+             new GetAllUserQuery(new GetAllUserRequestDto {Q="sdsdd"}));
 
-        }, ct);
+        if (!result.IsSuccess)
+        {
+            var message = result.GetErrorMessage();
+        }
         return View("تست");
     }
 

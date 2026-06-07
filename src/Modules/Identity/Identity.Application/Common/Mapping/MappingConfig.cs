@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Identity.Application.Common.Mapping;
 
-using Identity.Application.Contract.DTOs;
+using Identity.Application.Contract.DTOs.Authentications;
 using Identity.Domain.Entities;
 using Mapster;
 

@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Framwork/Framwork.csproj" Id="4bb95870-4d6e-47b3-8bf5-dacfb03f3fd7" />
     <Project Path="src/BuildingBlocks/SharedKernel/SharedKernel.csproj" Id="e9d5425e-3d9f-4088-8ccd-fd9edb22ee23" />
   </Folder>
   <Folder Name="/src/Infrastructure/">

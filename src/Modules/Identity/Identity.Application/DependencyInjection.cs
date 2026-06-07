@@ -1,4 +1,7 @@
 ﻿using FluentValidation;
+using Framwork.Bus.Command;
+using Framwork.Bus.Query;
+using Framwork.Decorator.Query;
 using Identity.Application.Common.Mapping;
 using Identity.Application.Contract.Services;
 using Identity.Application.Users.Services;
@@ -15,10 +18,31 @@ public static class DependencyInjection
     public static IServiceCollection AddIdentityApplication(
         this IServiceCollection services)
     {
-        services.AddValidatorsFromAssembly(
-             typeof(DependencyInjection).Assembly);
+        var assembly = typeof(DependencyInjection).Assembly;
+        //services.AddValidatorsFromAssembly(assembly);
 
-       services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+        services.Scan(scan => scan
+    .FromAssemblies(assembly)
+    .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+        .AsImplementedInterfaces()
+        .WithScopedLifetime()
+
+    .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
+        .AsImplementedInterfaces()
+        .WithScopedLifetime()
+
+    .AddClasses(classes => classes.AssignableTo(typeof(IValidator<>)))
+        .AsImplementedInterfaces()
+        .WithScopedLifetime()
+                    );
+
+        services.AddScoped(typeof(IQueryBehavior<,>), typeof(LoggingQueryBehavior<,>));
+        services.AddScoped(typeof(IQueryBehavior<,>), typeof(ValidationQueryBehavior<,>));
+
+        services.AddScoped<ICommandBus, CommandBus>();
+        services.AddScoped<IQueryBus, QueryBus>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 
         var config = TypeAdapterConfig.GlobalSettings;

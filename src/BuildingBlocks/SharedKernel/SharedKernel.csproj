@@ -15,5 +15,8 @@
 	<ItemGroup>
 	  <PackageReference Include="Ardalis.Result" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Framwork\Framwork.csproj" />
+	</ItemGroup>
 
 </Project>

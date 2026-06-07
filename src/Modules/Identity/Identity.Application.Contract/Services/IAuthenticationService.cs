@@ -1,5 +1,5 @@
 ﻿using Ardalis.Result;
-using Identity.Application.Contract.DTOs;
+using Identity.Application.Contract.DTOs.Authentications;
 using SharedKernel.Interface;
 using System;
 using System.Collections.Generic;
