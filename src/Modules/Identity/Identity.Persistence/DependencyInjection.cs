@@ -49,25 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IUserCommandRepository, UserCommandRepository>();
         services.AddScoped<IUserQueryRepository, UserQueryRepository>();
 
-        //  services.AddScoped<IUnitOfWork, UnitOfWork>();
-        //services.AddScoped<IFileUploaderService, MinioFileUploaderService>();
 
-        //services.AddScoped<IUsersRepository, UsersRepository>();
-        //services.AddScoped<IAuthenticationService, AuthenticationService>();
-
-
-
-        //services.Scan(scan => scan
-        //    .FromAssemblyOf<UnitOfWork>()
-        //    .AddClasses(classes => classes.AssignableTo<IScopedDependency>())
-        //    .AsImplementedInterfaces()
-        //    .WithScopedLifetime()
-        //    .AddClasses(classes => classes.AssignableTo<ISingletonDependency>())
-        //    .AsImplementedInterfaces()
-        //    .WithSingletonLifetime()
-        //    .AddClasses(classes => classes.AssignableTo<ITransientDependency>())
-        //    .AsImplementedInterfaces()
-        //    .WithTransientLifetime());
 
         return services;
     }
