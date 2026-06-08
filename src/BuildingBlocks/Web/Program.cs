@@ -11,8 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 //builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddIdentityInfrastructure(builder.Configuration);
-builder.Services.AddIdentityApplication();
+
 var modules = ModuleLoader.DiscoverModules();
 
 var mvcBuilder = builder.Services.AddControllersWithViews();

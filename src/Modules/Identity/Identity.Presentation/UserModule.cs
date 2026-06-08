@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Infrastructure;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,8 +15,10 @@ public class UserModule : IModule
 
     public void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
-       // services.AddScoped<Identity.Application.Contract.Services.IAuthenticationService, AuthenticationService>();
-     
+        services.AddIdentityInfrastructure(configuration);
+        services.AddIdentityApplication();
+        // services.AddScoped<Identity.Application.Contract.Services.IAuthenticationService, AuthenticationService>();
+
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
