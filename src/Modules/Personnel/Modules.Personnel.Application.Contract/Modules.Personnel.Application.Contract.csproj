@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\Modules.Personnel.Domain\Modules.Personnel.Domain.csproj" />
+  </ItemGroup>
+</Project>

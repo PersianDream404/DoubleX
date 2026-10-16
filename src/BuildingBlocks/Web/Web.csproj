@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+	  <UserSecretsId>c89db002-c333-4e88-8ec5-dbe12b10096c</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Modules\Banner\Modules.Banner.Presentation\Modules.Banner.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\FileStore\Modules.FileStore.Presentation\Modules.FileStore.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Order\Modules.Order.Presentation\Modules.Order.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Payment\Modules.Payment.Presentation\Modules.Payment.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Product\Modules.Product.Presentation\Modules.Product.Presentation.csproj" />
+		<ProjectReference Include="..\Aspire\Project.ServiceDefaults\Project.ServiceDefaults.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+		<!--<PackageReference Include="Microsoft.AspNetCore.OpenApi" />-->
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+
+		<PackageReference Include="Asp.Versioning.Http" />
+
+		<!--<PackageReference Include="Microsoft.OpenApi" />-->
+		<PackageReference Include="Swashbuckle.AspNetCore" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="wwwroot\uploads\" />
+	</ItemGroup>
+
+</Project>

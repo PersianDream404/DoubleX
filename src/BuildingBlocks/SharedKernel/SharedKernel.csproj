@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Ardalis.Result" />
+	  <PackageReference Include="Asp.Versioning.Http" />
+	  <PackageReference Include="CsharpGalaxy.LibraryExtension" />
+	  <PackageReference Include="Microsoft.Extensions.Logging" />
+		
+	  <PackageReference Include="MediatR" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Framwork\Framwork.csproj" />
+	  <ProjectReference Include="..\Shared\Shared.Contract\Shared.Contract.csproj" />
+	</ItemGroup>
+
+</Project>

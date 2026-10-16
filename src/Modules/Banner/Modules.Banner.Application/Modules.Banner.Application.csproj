@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+        <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+        <ProjectReference Include="..\Modules.Banner.Application.Contract\Modules.Banner.Application.Contract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Mapster" />
+	  <PackageReference Include="Scrutor" />
+    <PackageReference Include="Mapster.DependencyInjection" />
+  </ItemGroup>
+</Project>
