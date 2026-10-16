@@ -8,9 +8,7 @@
 		<ProjectReference Include="..\..\Modules\Banner\Modules.Banner.Presentation\Modules.Banner.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\FileStore\Modules.FileStore.Presentation\Modules.FileStore.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
-		<ProjectReference Include="..\..\Modules\Order\Modules.Order.Presentation\Modules.Order.Presentation.csproj" />
-		<ProjectReference Include="..\..\Modules\Payment\Modules.Payment.Presentation\Modules.Payment.Presentation.csproj" />
-		<ProjectReference Include="..\..\Modules\Product\Modules.Product.Presentation\Modules.Product.Presentation.csproj" />
+
 		<ProjectReference Include="..\Aspire\Project.ServiceDefaults\Project.ServiceDefaults.csproj" />
 	</ItemGroup>
 

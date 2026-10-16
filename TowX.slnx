@@ -31,6 +31,13 @@
     <Project Path="src/Modules/Identity/Identity.Persistence/Identity.Persistence.csproj" Id="92a203ae-c4e5-4267-be78-a450bbd038f9" />
     <Project Path="src/Modules/Identity/Identity.Presentation/Identity.Presentation.csproj" Id="a2c0092d-1d82-4e9e-9872-c4d1fed9c565" />
   </Folder>
+  <Folder Name="/src/Modules/Personnel/">
+    <Project Path="src/Modules/Personnel/Modules.Personnel.Application.Contract/Modules.Personnel.Application.Contract.csproj" />
+    <Project Path="src/Modules/Personnel/Modules.Personnel.Application/Modules.Personnel.Application.csproj" />
+    <Project Path="src/Modules/Personnel/Modules.Personnel.Domain/Modules.Personnel.Domain.csproj" />
+    <Project Path="src/Modules/Personnel/Modules.Personnel.Persistence/Modules.Personnel.Persistence.csproj" />
+    <Project Path="src/Modules/Personnel/Modules.Personnel.Presentation/Modules.Personnel.Presentation.csproj" />
+  </Folder>
 
   <Folder Name="/src/Presentation/">
     <Project Path="src/BuildingBlocks/Web/Web.csproj" Id="e0450831-009b-46e2-b98a-f044cbab3848" />
