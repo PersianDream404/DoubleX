@@ -91,6 +91,28 @@ public sealed class NationalCode
     public override string ToString() => Value;
 }
 
+
+public sealed record Picture
+{
+    public string Value { get; private set; }
+
+    private Picture(string value)
+    {
+        Value = value;
+    }
+
+    public static Result<Picture> Create(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = nameof(Picture),
+                ErrorMessage = "ارسال تصویر الزامی است"
+            });
+
+        return new Picture(value);
+    }
+}
 public sealed class PhoneNumber
 {
     public string Value { get; }

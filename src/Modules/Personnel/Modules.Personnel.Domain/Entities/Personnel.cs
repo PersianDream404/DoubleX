@@ -13,15 +13,18 @@ public sealed class Personnel : BaseEntityIdentity
     {
     }
 
-    public PersonnelId PersonnelId => PersonnelId.Create(Id);
+
+  public PersonnelId PersonnelId => PersonnelId.Create(Id);
 
     public PersonalInfo PersonalInfo { get; private set; } = null!;
     public JobInfo JobInfo { get; private set; } = null!;
     public FinancialInfo FinancialInfo { get; private set; } = null!;
     public HealthInfo HealthInfo { get; private set; } = null!;
+
+    //حقوقی
     public GuarantorInfo GuarantorInfo { get; private set; } = null!;
 
-    public IReadOnlyCollection<PersonnelDocument> Documents => _documents.AsReadOnly();
+    //public IReadOnlyCollection<PersonnelDocument> Documents => _documents.AsReadOnly();
 
     private Personnel(
         PersonalInfo personalInfo,

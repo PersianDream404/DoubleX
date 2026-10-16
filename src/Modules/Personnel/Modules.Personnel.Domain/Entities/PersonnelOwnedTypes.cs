@@ -10,7 +10,8 @@ public sealed record PersonalInfo
     public NationalCode NationalCode { get; private set; }
     public DateOnly BirthDate { get; private set; }
     public MaritalStatus MaritalStatus { get; private set; }
-    public int ChildrenCount { get; private set; }
+    public int? ChildrenCount { get; private set; }
+    public Picture Picture{ get; private set; }
     public PhoneNumber MobilePhone { get; private set; }
     public PhoneNumber? LandlinePhone { get; private set; }
     public Address Address { get; private set; }
@@ -142,7 +143,8 @@ public sealed record JobInfo
     public string PersonnelCode { get; private set; }
     public DateOnly CooperationStartDate { get; private set; }
     public WorkingShiftType WorkingShiftType { get; private set; }
-    public List<string> Skills { get; private set; }
+  //  public List<string> Skills { get; private set; }
+    public List<string> JobPictures { get; private set; }
     public string? WorkHistory { get; private set; }
 
     private JobInfo(
@@ -150,14 +152,16 @@ public sealed record JobInfo
         string personnelCode,
         DateOnly cooperationStartDate,
         WorkingShiftType workingShiftType,
-        List<string> skills,
+      //  List<string> skills,
+      List<string> jobPictures,
         string? workHistory)
     {
         JobTitle = jobTitle;
         PersonnelCode = personnelCode;
         CooperationStartDate = cooperationStartDate;
         WorkingShiftType = workingShiftType;
-        Skills = skills;
+        JobPictures = jobPictures;
+     //   Skills = skills;
         WorkHistory = workHistory;
     }
 
@@ -230,7 +234,7 @@ public sealed record JobInfo
         PersonnelCode = result.Value.PersonnelCode;
         CooperationStartDate = result.Value.CooperationStartDate;
         WorkingShiftType = result.Value.WorkingShiftType;
-        Skills = result.Value.Skills;
+        JobPictures = result.Value.JobPictures;
         WorkHistory = result.Value.WorkHistory;
 
         return Result.Success();
@@ -240,7 +244,7 @@ public sealed record JobInfo
     {
         JobTitle = default!;
         PersonnelCode = default!;
-        Skills = new List<string>();
+        JobPictures = new List<string>();
     }
 }
 
@@ -318,57 +322,112 @@ public sealed record FinancialInfo
 
 public sealed record HealthInfo
 {
-    public string? HealthStatus { get; private set; }
-    public string? AllergyStatus { get; private set; }
+    public bool HealthStatus { get; private set; }
+    public bool AllergyStatus { get; private set; }
+    public string Diseases { get; private set; } = string.Empty;
+    public string Allergies { get; private set; } = string.Empty;
+    public List<Picture> PictureCourse { get; private set; } = [];
+    public List<Picture> PictureTest { get; private set; } = [];
 
-    private HealthInfo(string? healthStatus, string? allergyStatus)
+    private HealthInfo(
+        bool healthStatus,
+        bool allergyStatus,
+        string? diseases,
+        string? allergies,
+        List<Picture>? pictureCourse,
+        List<Picture>? pictureTest)
     {
         HealthStatus = healthStatus;
         AllergyStatus = allergyStatus;
+        Diseases = Normalize(diseases);
+        Allergies = Normalize(allergies);
+        PictureCourse = pictureCourse ?? [];
+        PictureTest = pictureTest ?? [];
     }
 
-    public static Result<HealthInfo> Create(string? healthStatus, string? allergyStatus)
+    public static Result<HealthInfo> Create(
+        bool healthStatus,
+        bool allergyStatus,
+        string? diseases,
+        string? allergies,
+        List<Picture>? pictureCourse,
+        List<Picture>? pictureTest)
     {
         return Result.Success(new HealthInfo(
-            string.IsNullOrWhiteSpace(healthStatus) ? null : healthStatus.Trim(),
-            string.IsNullOrWhiteSpace(allergyStatus) ? null : allergyStatus.Trim()));
+            healthStatus,
+            allergyStatus,
+            diseases,
+            allergies,
+            pictureCourse,
+            pictureTest));
     }
 
-    public Result Update(string? healthStatus, string? allergyStatus)
+    public Result Update(
+        bool healthStatus,
+        bool allergyStatus,
+        string? diseases,
+        string? allergies,
+        List<Picture>? pictureCourse,
+        List<Picture>? pictureTest)
     {
-        var result = Create(healthStatus, allergyStatus);
+        var result = Create(
+            healthStatus,
+            allergyStatus,
+            diseases,
+            allergies,
+            pictureCourse,
+            pictureTest);
+
         if (!result.IsSuccess)
             return Result.Invalid(result.ValidationErrors);
 
         HealthStatus = result.Value.HealthStatus;
         AllergyStatus = result.Value.AllergyStatus;
+        Diseases = result.Value.Diseases;
+        Allergies = result.Value.Allergies;
+        PictureCourse = result.Value.PictureCourse;
+        PictureTest = result.Value.PictureTest;
 
         return Result.Success();
     }
 
-    public HealthInfo() { }
+    private static string Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+
+    public HealthInfo()
+    {
+    }
 }
+
 
 public sealed record GuarantorInfo
 {
     public string GuarantorName { get; private set; }
     public string Relationship { get; private set; }
-    public PhoneNumber GuarantorPhone { get; private set; }
+    public PhoneNumber GuarantorMobilePhone { get; private set; }
+    public PhoneNumber GuarantorLandlinePhone { get; private set; }
+    public List<Picture> PictureGuaranties { get; private set; } = [];
 
     private GuarantorInfo(
         string guarantorName,
         string relationship,
-        PhoneNumber guarantorPhone)
+        PhoneNumber guarantorMobilePhone,
+        PhoneNumber guarantorLandlinePhone,
+        List<Picture>? pictureGuaranties)
     {
         GuarantorName = guarantorName;
         Relationship = relationship;
-        GuarantorPhone = guarantorPhone;
+        GuarantorMobilePhone = guarantorMobilePhone;
+        GuarantorLandlinePhone = guarantorLandlinePhone;
+        PictureGuaranties = pictureGuaranties ?? [];
     }
 
     public static Result<GuarantorInfo> Create(
         string guarantorName,
         string relationship,
-        string guarantorPhone)
+        string guarantorMobilePhone,
+        string guarantorLandlinePhone,
+        List<Picture>? pictureGuaranties)
     {
         var validationErrors = new List<ValidationError>();
 
@@ -390,9 +449,15 @@ public sealed record GuarantorInfo
             });
         }
 
-        var guarantorPhoneResult = PhoneNumber.Create(guarantorPhone);
-        if (!guarantorPhoneResult.IsSuccess)
-            validationErrors.AddRange(guarantorPhoneResult.ValidationErrors);
+        // اعتبارسنجی شماره موبایل
+        var mobileResult = PhoneNumber.Create(guarantorMobilePhone);
+        if (!mobileResult.IsSuccess)
+            validationErrors.AddRange(mobileResult.ValidationErrors);
+
+        // اعتبارسنجی تلفن ثابت (اگر اختیاری است می‌توانید شرط بگذارید، در غیر این صورت مثل موبایل بررسی می‌شود)
+        var landlineResult = PhoneNumber.Create(guarantorLandlinePhone);
+        if (!landlineResult.IsSuccess)
+            validationErrors.AddRange(landlineResult.ValidationErrors);
 
         if (validationErrors.Count > 0)
             return Result.Invalid(validationErrors);
@@ -400,25 +465,33 @@ public sealed record GuarantorInfo
         return Result.Success(new GuarantorInfo(
             guarantorName.Trim(),
             relationship.Trim(),
-            guarantorPhoneResult.Value));
+            mobileResult.Value,
+            landlineResult.Value,
+            pictureGuaranties));
     }
 
     public Result Update(
         string guarantorName,
         string relationship,
-        string guarantorPhone)
+        string guarantorMobilePhone,
+        string guarantorLandlinePhone,
+        List<Picture>? pictureGuaranties)
     {
         var result = Create(
             guarantorName,
             relationship,
-            guarantorPhone);
+            guarantorMobilePhone,
+            guarantorLandlinePhone,
+            pictureGuaranties);
 
         if (!result.IsSuccess)
             return Result.Invalid(result.ValidationErrors);
 
         GuarantorName = result.Value.GuarantorName;
         Relationship = result.Value.Relationship;
-        GuarantorPhone = result.Value.GuarantorPhone;
+        GuarantorMobilePhone = result.Value.GuarantorMobilePhone;
+        GuarantorLandlinePhone = result.Value.GuarantorLandlinePhone;
+        PictureGuaranties = result.Value.PictureGuaranties;
 
         return Result.Success();
     }
@@ -427,7 +500,9 @@ public sealed record GuarantorInfo
     {
         GuarantorName = default!;
         Relationship = default!;
-        GuarantorPhone = default!;
+        GuarantorMobilePhone = default!;
+        GuarantorLandlinePhone = default!;
     }
 }
+
 
