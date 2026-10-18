@@ -5,6 +5,7 @@ public class AppEntity
     public const string User = "کاربر";
     public const string Product = "محصول";
     public const string Brand = "برند";
+    public const string Personnel = "پرسنل";
     public const string Banner = "بنر";
     public const string FileStore = "آپلودر";
     public const string Color = "رنگ";

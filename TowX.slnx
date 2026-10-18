@@ -31,12 +31,12 @@
     <Project Path="src/Modules/Identity/Identity.Persistence/Identity.Persistence.csproj" Id="92a203ae-c4e5-4267-be78-a450bbd038f9" />
     <Project Path="src/Modules/Identity/Identity.Presentation/Identity.Presentation.csproj" Id="a2c0092d-1d82-4e9e-9872-c4d1fed9c565" />
   </Folder>
-  <Folder Name="/src/Modules/Personnel/">
-    <Project Path="src/Modules/Personnel/Modules.Personnel.Application.Contract/Modules.Personnel.Application.Contract.csproj" />
-    <Project Path="src/Modules/Personnel/Modules.Personnel.Application/Modules.Personnel.Application.csproj" />
-    <Project Path="src/Modules/Personnel/Modules.Personnel.Domain/Modules.Personnel.Domain.csproj" />
-    <Project Path="src/Modules/Personnel/Modules.Personnel.Persistence/Modules.Personnel.Persistence.csproj" />
-    <Project Path="src/Modules/Personnel/Modules.Personnel.Presentation/Modules.Personnel.Presentation.csproj" />
+  <Folder Name="/src/Modules/Salon/">
+    <Project Path="src/Modules/Salon/Modules.Salon.Application.Contract/Modules.Salon.Application.Contract.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Application/Modules.Salon.Application.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Domain/Modules.Salon.Domain.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Persistence/Modules.Salon.Persistence.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Presentation/Modules.Salon.Presentation.csproj" />
   </Folder>
 
   <Folder Name="/src/Presentation/">
