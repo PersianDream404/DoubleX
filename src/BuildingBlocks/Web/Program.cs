@@ -1,5 +1,6 @@
 using Infrastructure;
 using Infrastructure.Context;
+using Serilog;
 using SharedKernel.Constants;
 using System.Globalization;
 using Web.Extensions;
@@ -23,6 +24,7 @@ CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 var app = builder.Build();
+app.UseSerilogRequestLogging();
 app.MapMyEndpoints();
 // Configure the HTTP request pipeline.
 app.UseStaticFiles();
@@ -36,6 +38,21 @@ app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
 
 
+
+app.MapGet("/test-logs", (ILogger<Program> logger) =>
+{
+    logger.LogInformation(
+        "Test log generated at {Time}",
+        DateTime.UtcNow
+    );
+
+    logger.LogWarning("This is a warning log");
+
+    return Results.Ok(new
+    {
+        Message = "Logs generated successfully"
+    });
+});
 
 app.Run();
 

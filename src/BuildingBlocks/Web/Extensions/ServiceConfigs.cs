@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
+using Serilog;
 using SharedKernel.Constants;
 using SharedKernel.Events;
 using SharedKernel.Events.Logs;
@@ -24,7 +24,12 @@ public static class ServiceConfigs
     public static void AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
-
+        services.AddSerilog((services, loggerConfiguration) =>
+                loggerConfiguration
+        .ReadFrom.Configuration(configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+);
         services.AddEndpointsConfiguration(configuration);
         services.AddSwaggerConfiguration();
         //  services.AddAuthenticationConfiguration(configuration);
