@@ -6,9 +6,12 @@
 	  <PackageReference Include="Ardalis.Result" />
 	  <PackageReference Include="Asp.Versioning.Http" />
 	  <PackageReference Include="CsharpGalaxy.LibraryExtension" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" />
 		
 	  <PackageReference Include="MediatR" />
+		
+	  <PackageReference Include="System.Security.Cryptography.Pkcs" />
+		
+	  <PackageReference Include="System.Security.Cryptography.Xml" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Framwork\Framwork.csproj" />

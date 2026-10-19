@@ -44,7 +44,10 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             {
                 phone.Property(p => p.Value).HasColumnName("LandlinePhone").HasMaxLength(20);
             });
-
+            personal.OwnsOne(x => x.Picture, pic =>
+            {
+                pic.ToJson();
+            });
             personal.OwnsOne(x => x.Address, address =>
             {
                 address.Property(p => p.Text).HasColumnName("AddressText").HasMaxLength(1000);
@@ -104,7 +107,14 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
         builder.OwnsOne(x => x.HealthInfo, health =>
         {
             health.ToTable("PersonnelHealthInfo"); // قرارگیری در جدول جداگانه
-
+            health.OwnsMany(x => x.PictureCourse, pic =>
+            {
+                pic.ToJson();
+            });
+            health.OwnsMany(x => x.PictureTest, pic =>
+            {
+                pic.ToJson();
+            });
             health.Property(x => x.HealthStatus).HasMaxLength(500);
             health.Property(x => x.AllergyStatus).HasMaxLength(500);
         });
@@ -121,7 +131,10 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             {
                 phone.Property(p => p.Value).HasColumnName("GuarantorMobilePhone").HasMaxLength(20).IsRequired();
             });
-
+            guarantor.OwnsMany(x => x.PictureGuaranties, pic =>
+            {
+                pic.ToJson();
+            });
             guarantor.OwnsOne(x => x.GuarantorLandlinePhone, phone =>
             {
                 phone.Property(p => p.Value).HasColumnName("GuarantorLandlinePhone").HasMaxLength(20).IsRequired();

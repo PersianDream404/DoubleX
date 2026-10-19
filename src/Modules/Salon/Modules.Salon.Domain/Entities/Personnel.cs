@@ -23,7 +23,7 @@ public sealed class Personnel : BaseEntityIdentity
 
     //حقوقی
     public GuarantorInfo GuarantorInfo { get; private set; } = null!;
-    public int SalonId { get; private set; } 
+    public long SalonId { get; private set; } 
     public Salon Salon { get; private set; } = null!;
 
     //public IReadOnlyCollection<PersonnelDocument> Documents => _documents.AsReadOnly();
