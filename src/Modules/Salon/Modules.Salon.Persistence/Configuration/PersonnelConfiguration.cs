@@ -88,19 +88,29 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             //    .HasColumnName("Skills");
         });
 
-        // ۴. جدول مجزا برای اطلاعات مالی (FinancialInfo)
+
+
         builder.OwnsOne(x => x.FinancialInfo, finances =>
         {
-            finances.ToTable("PersonnelFinancialInfos"); // قرارگیری در جدول جداگانه
+            finances.ToTable("PersonnelFinancialInfos");
 
-            finances.Property(x => x.SalaryType).HasConversion<string>().IsRequired();
+            finances.Property(x => x.SalaryType)
+                .HasConversion<string>()
+                .IsRequired();
 
-            finances.OwnsOne(x => x.CardNumber, card =>
-            {
-                card.Property(p => p.Value).HasColumnName("CardNumber").HasMaxLength(16).IsRequired();
-            });
+            var cardNumberConverter = new ValueConverter<CardNumber, string>(
+                cardNumber => cardNumber.Value,
+                value => CardNumber.Create(value).Value
+            );
 
-            finances.Property(x => x.AccountNumber).HasMaxLength(50);
+            finances.Property(x => x.CardNumber)
+                .HasConversion(cardNumberConverter)
+                .HasColumnName("CardNumber")
+                .HasMaxLength(16)
+                .IsRequired();
+
+            finances.Property(x => x.AccountNumber)
+                .HasMaxLength(50);
         });
 
         // ۵. جدول مجزا برای اطلاعات سلامتی (HealthInfo)

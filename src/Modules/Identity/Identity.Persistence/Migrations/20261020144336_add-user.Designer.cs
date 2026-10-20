@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Identity.Persistence.Migrations
 {
     [DbContext(typeof(IdentityWriteDbContext))]
-    [Migration("20260613155406_add-User-Identity")]
-    partial class addUserIdentity
+    [Migration("20261020144336_add-user")]
+    partial class adduser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -69,6 +69,9 @@ namespace Identity.Persistence.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");

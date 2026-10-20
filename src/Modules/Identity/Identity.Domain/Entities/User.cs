@@ -8,5 +8,5 @@ namespace Identity.Domain.Entities;
 
 public class ApplicationUser : IdentityUser<long>
 {
-
+    public long SalonId { get; private set; }
 }

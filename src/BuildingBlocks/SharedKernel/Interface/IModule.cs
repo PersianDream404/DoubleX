@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,11 @@ public interface IModule
     ///// Register module-specific services and DbContexts.
     ///// </summary>
     void RegisterServices(IServiceCollection services, IConfiguration configuration);
+
+    void RegisterBuilder(IApplicationBuilder builder)
+    {
+        
+    }
 
     ///// <summary>
     ///// Configure endpoints/routes for this module (e.g. MVC Area routes).

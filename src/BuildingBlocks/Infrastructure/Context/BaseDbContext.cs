@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedKernel.Base;
 using System.Linq.Expressions;
+using Identity.Domain.Entities;
+using Modules.Personnel.Domain.Entities;
 
 namespace Infrastructure.Context;
 public class BaseDbContext : ApplicationDbContext
@@ -40,6 +42,14 @@ public class BaseDbContext : ApplicationDbContext
                 modelBuilder.Entity(entityType.ClrType).HasQueryFilter(notDeleted);
             }
         }
+        
+        modelBuilder.Entity<ApplicationUser>()
+            .HasOne<Salon>()
+            .WithMany()
+            .HasForeignKey(x => x.SalonId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
+
 
 
 

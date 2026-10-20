@@ -25,5 +25,16 @@ public sealed class SalonConfiguration : IEntityTypeConfiguration<Salon>
             .HasForeignKey(x => x.SalonId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
+        
+        // builder.HasData(
+        //     new Salon()
+        //     {
+        //   
+        //         Id= 10,
+        //         Name = "سالن زیبایی نمونه",
+        //         Status = true,
+        //         Deleted = false,
+        //     }
+        // );
     }
 }

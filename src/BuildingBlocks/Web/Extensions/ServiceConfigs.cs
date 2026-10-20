@@ -60,6 +60,18 @@ public static class ServiceConfigs
 
     }
 
+    public static IApplicationBuilder AddModuleDependencies(
+        this IApplicationBuilder app)
+    {
+        var modules = ModuleLoader.DiscoverModules();
+
+
+        foreach (var module in modules)
+        {
+            module.RegisterBuilder(app);
+        }
+        return app;
+    }
     private static void AddSwaggerConfiguration(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();

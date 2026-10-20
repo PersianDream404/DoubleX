@@ -3,6 +3,7 @@ using Infrastructure.Context;
 using Serilog;
 using SharedKernel.Constants;
 using System.Globalization;
+using Modules.Personnel.Persistence.Extensions;
 using Web.Extensions;
 using Web.Infrastructure.Modules;
 
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder
     .AddSqlServerDbContext<ApplicationDbContext>
-    (AppSetting.ConnectionString);
+        (AppSetting.ConnectionString);
 
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
@@ -24,6 +25,15 @@ CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 var app = builder.Build();
+
+#region Seed
+
+// await app.Services.SeedSalonAsync();
+
+#endregion
+
+app.AddModuleDependencies();
+
 app.UseSerilogRequestLogging();
 app.MapMyEndpoints();
 // Configure the HTTP request pipeline.
@@ -36,7 +46,6 @@ app.UseSwaggerUI(options =>
 });
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
-
 
 
 app.MapGet("/test-logs", (ILogger<Program> logger) =>
@@ -55,4 +64,3 @@ app.MapGet("/test-logs", (ILogger<Program> logger) =>
 });
 
 app.Run();
-

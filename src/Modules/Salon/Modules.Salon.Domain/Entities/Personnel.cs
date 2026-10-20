@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Modules.Personnel.Domain.Enums;
 using Modules.Personnel.Domain.ValueObjects;
 using SharedKernel.Base;
@@ -168,13 +169,4 @@ public sealed class Personnel : BaseEntityIdentity
 
         _documents.Remove(document);
     }
-}
-
-
-public sealed class Salon: BaseEntityIdentity
-{
-    public string Name { get; set; } = null!;
-
-
-    public ICollection<Personnel> Personnels { get; set; } = [];
 }
