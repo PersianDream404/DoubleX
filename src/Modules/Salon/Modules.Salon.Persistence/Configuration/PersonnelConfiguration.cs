@@ -46,7 +46,7 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             });
             personal.OwnsOne(x => x.Picture, pic =>
             {
-                pic.ToJson();
+                pic.ToTable("PersonnelPicture");
             });
             personal.OwnsOne(x => x.Address, address =>
             {
@@ -107,13 +107,35 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
         builder.OwnsOne(x => x.HealthInfo, health =>
         {
             health.ToTable("PersonnelHealthInfo"); // قرارگیری در جدول جداگانه
+
             health.OwnsMany(x => x.PictureCourse, pic =>
             {
-                pic.ToJson();
+                pic.ToTable("PersonnelHealthCoursePicture");
+
+                pic.WithOwner()
+                    .HasForeignKey("PersonnelId");
+
+                pic.Property<int>("Id")
+                    .ValueGeneratedOnAdd();
+
+                pic.HasKey("Id");
+
+                // سایر Propertyهای مربوط به تصویر را اینجا تنظیم کن.
             });
+            
             health.OwnsMany(x => x.PictureTest, pic =>
             {
-                pic.ToJson();
+                pic.ToTable("PersonnelHealthTestPicture");
+
+                pic.WithOwner()
+                    .HasForeignKey("PersonnelId");
+
+                pic.Property<int>("Id")
+                    .ValueGeneratedOnAdd();
+
+                pic.HasKey("Id");
+
+                // سایر Propertyهای مربوط به تصویر را اینجا تنظیم کن.
             });
             health.Property(x => x.HealthStatus).HasMaxLength(500);
             health.Property(x => x.AllergyStatus).HasMaxLength(500);
@@ -122,25 +144,47 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
         // ۶. جدول مجزا برای اطلاعات ضامن (GuarantorInfo)
         builder.OwnsOne(x => x.GuarantorInfo, guarantor =>
         {
-            guarantor.ToTable("PersonnelGuarantorInfo"); // قرارگیری در جدول جداگانه
+            guarantor.ToTable("PersonnelGuarantorInfo");
 
-            guarantor.Property(x => x.GuarantorName).HasMaxLength(200).IsRequired();
-            guarantor.Property(x => x.Relationship).HasMaxLength(150).IsRequired();
+            guarantor.Property(x => x.GuarantorName)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            guarantor.Property(x => x.Relationship)
+                .HasMaxLength(150)
+                .IsRequired();
 
             guarantor.OwnsOne(x => x.GuarantorMobilePhone, phone =>
             {
-                phone.Property(p => p.Value).HasColumnName("GuarantorMobilePhone").HasMaxLength(20).IsRequired();
+                phone.Property(p => p.Value)
+                    .HasColumnName("GuarantorMobilePhone")
+                    .HasMaxLength(20)
+                    .IsRequired();
             });
-            guarantor.OwnsMany(x => x.PictureGuaranties, pic =>
-            {
-                pic.ToJson();
-            });
+
             guarantor.OwnsOne(x => x.GuarantorLandlinePhone, phone =>
             {
-                phone.Property(p => p.Value).HasColumnName("GuarantorLandlinePhone").HasMaxLength(20).IsRequired();
+                phone.Property(p => p.Value)
+                    .HasColumnName("GuarantorLandlinePhone")
+                    .HasMaxLength(20)
+                    .IsRequired();
+            });
+
+            guarantor.OwnsMany(x => x.PictureGuaranties, pic =>
+            {
+                pic.ToTable("PersonnelGuarantorPictures");
+
+                pic.WithOwner()
+                    .HasForeignKey("PersonnelId");
+
+                pic.Property<int>("Id")
+                    .ValueGeneratedOnAdd();
+
+                pic.HasKey("Id");
+
+                // سایر Propertyهای مربوط به تصویر را اینجا تنظیم کن.
             });
         });
-
 
         builder.HasOne(x => x.Salon)
             .WithMany(x=>x.Personnels)
