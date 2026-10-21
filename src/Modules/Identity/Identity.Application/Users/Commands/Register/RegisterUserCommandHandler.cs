@@ -34,12 +34,9 @@ public class RegisterUserCommandHandler(IUserCommandRepository userCommandReposi
         if (userExists != null)
             return Result.Error("User already exists with this phone number.");
 
-        var user = new ApplicationUser
-        {
-            PhoneNumber = normalizedPhoneNumber,
-            UserName = normalizedPhoneNumber,
-            SecurityStamp = Guid.NewGuid().ToString()
-        };
+        var user =  ApplicationUser
+            .Register(normalizedPhoneNumber, command.request.FullName!,command.request.Salon!.Id);
+
 
         var result = await _userManager.CreateAsync(user, command.request.Password);
 

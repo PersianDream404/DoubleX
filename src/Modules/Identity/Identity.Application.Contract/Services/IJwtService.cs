@@ -23,7 +23,7 @@ using SharedKernel.Interface;
 
 public interface IJwtService 
 {
-    JwtTokenResponseDto CreateToken(long Id, List<string> roles);
+    JwtTokenResponseDto CreateToken(long Id,long SalonId, List<string> roles);
     string GetClaim(string token, string claimType);
     (List<string> roles, long id) ExteractToken(string token);
 }

@@ -18,6 +18,7 @@ public class JwtToken
 public static class CustomClaims
 {
     public const string User = "UserId";
+    public const string SalonId = "SalonId";
 
     public const string AccessLevel = "AccessLevel";
 }
@@ -25,7 +26,7 @@ public static class CustomClaims
 public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDependency
 {
 
-    public JwtTokenResponseDto CreateToken(long Id, List<string> roles)
+    public JwtTokenResponseDto CreateToken(long Id,long SalonId, List<string> roles)
     {
         var expiredDate = DateTime.UtcNow.AddDays(1);
 
@@ -36,6 +37,7 @@ public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDepen
             new(CustomClaims.User, Id.ToString()),
 
         };
+        claims.Add(new(CustomClaims.SalonId, SalonId.ToString()));
         foreach (var role in roles)
         {
             claims.Add(new(CustomClaims.AccessLevel, nameof(role)));

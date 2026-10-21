@@ -4,29 +4,21 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Identity.Persistence.Configuration.Users;
 
-//public class UserConfiguration : IEntityTypeConfiguration<User>
-//{
-//    public void Configure(EntityTypeBuilder<User> builder)
-//    {
+public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    {
 
-//        builder.ToTable("Users");
+        // builder.ToTable("Users");
+        //
+        //
+        // builder.HasKey(x => x.Id);
 
 
-//        builder.HasKey(x => x.Id);
+        builder.Property(p => p.FullName)
+            .IsRequired()
+            .HasMaxLength(200);
 
-
-//        builder.Property(p => p.FirstName)
-//            .IsRequired()
-//            .HasMaxLength(100);
-
-//        builder.Property(p => p.LastName)
-//            .IsRequired()
-//            .HasMaxLength(100);
-
-//        builder.HasMany(x => x.UserRole)
-//            .WithOne(x => x.User)
-//            .HasForeignKey(x => x.UserId)
-//            .OnDelete(DeleteBehavior.Cascade);
-//    }
-//}
+    }
+}
 

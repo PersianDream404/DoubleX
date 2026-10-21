@@ -48,6 +48,7 @@ public class LoginUserQueryHandler(
         var roles = await _userManager.GetRolesAsync(user);
         return new RegisterUserResponseDto
         {
+            SalonId = user.SalonId,
             Id = user.Id,
             Roles = roles.ToList(),
 

@@ -36,7 +36,7 @@ public static class RegisterUserEndpoint
                     var message = result.GetErrorMessage();
                     return BadRequest(message); 
                 }
-                var tokenResult = jwtService.CreateToken(result.Value.Id, result.Value.Roles);
+                var tokenResult = jwtService.CreateToken(result.Value.Id,result.Value.SalonId, result.Value.Roles);
                 return Ok(new
                 {
                     tokenResult= tokenResult,
