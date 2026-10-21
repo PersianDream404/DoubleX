@@ -2,12 +2,14 @@
 using SharedKernel.Base;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Identity.Domain.Entities;
 
 public class ApplicationUser : IdentityUser<long>
 {
+    [MaxLength(200)]
     public string? FullName { get; set; } 
     public long SalonId { get; private set; }
 
