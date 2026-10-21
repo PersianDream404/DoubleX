@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Identity.Application.Contract\Identity.Application.Contract.csproj" />
+	  <ProjectReference Include="..\Identity.Persistence\Identity.Persistence.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Endpoints\Users\" />
+	</ItemGroup>
+</Project>

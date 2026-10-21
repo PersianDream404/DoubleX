@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="Mapster" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+		<!--<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />-->
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+		<PackageReference Include="Scrutor" />
+		<PackageReference Include="System.Security.Cryptography.Xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Infrastructure\Infrastructure.csproj" />
+		<ProjectReference Include="..\Modules.FileStore.Application\Modules.FileStore.Application.csproj" />
+		<ProjectReference Include="..\Modules.FileStore.Domain\Modules.FileStore.Domain.csproj" />
+	</ItemGroup>
+</Project>

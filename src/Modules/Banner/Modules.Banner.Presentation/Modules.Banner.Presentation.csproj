@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Banner.Application.Contract\Modules.Banner.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Banner.Application\Modules.Banner.Application.csproj" />
+    <ProjectReference Include="..\Modules.Banner.Persistence\Modules.Banner.Persistence.csproj" />
+  </ItemGroup>
+</Project>

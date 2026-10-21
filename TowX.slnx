@@ -1,0 +1,53 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Framwork/Framwork.csproj" Id="4bb95870-4d6e-47b3-8bf5-dacfb03f3fd7" />
+    <Project Path="src/BuildingBlocks/Infrastructure/Infrastructure.csproj" Id="c901aa80-b0ac-4cad-beb8-337b781e871a" />
+    <Project Path="src/BuildingBlocks/SharedKernel/SharedKernel.csproj" Id="e9d5425e-3d9f-4088-8ccd-fd9edb22ee23" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Banner/">
+    <Project Path="src/Modules/Banner/Modules.Banner.Application.Contract/Modules.Banner.Application.Contract.csproj" />
+    <Project Path="src/Modules/Banner/Modules.Banner.Application/Modules.Banner.Application.csproj" />
+    <Project Path="src/Modules/Banner/Modules.Banner.Domain/Modules.Banner.Domain.csproj" />
+    <Project Path="src/Modules/Banner/Modules.Banner.Persistence/Modules.Banner.Persistence.csproj" />
+    <Project Path="src/Modules/Banner/Modules.Banner.Presentation/Modules.Banner.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/FileStore/">
+    <Project Path="src/Modules/FileStore/Modules.FileStore.Application.Contract/Modules.FileStore.Application.Contract.csproj" />
+    <Project Path="src/Modules/FileStore/Modules.FileStore.Application/Modules.FileStore.Application.csproj" />
+    <Project Path="src/Modules/FileStore/Modules.FileStore.Domain/Modules.FileStore.Domain.csproj" />
+    <Project Path="src/Modules/FileStore/Modules.FileStore.Persistence/Modules.FileStore.Persistence.csproj" />
+    <Project Path="src/Modules/FileStore/Modules.FileStore.Presentation/Modules.FileStore.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Identity.Application.Contract/Identity.Application.Contract.csproj" Id="54631cdc-d393-402f-942d-94dad4de15d3" />
+    <Project Path="src/Modules/Identity/Identity.Application/Identity.Application.csproj" Id="5a8fd422-fded-4fb6-a15e-4f54069040a2" />
+    <Project Path="src/Modules/Identity/Identity.Domain/Identity.Domain.csproj" Id="b03e2646-2131-43c9-880f-ed8e35e1c8c0" />
+    <Project Path="src/Modules/Identity/Identity.Persistence/Identity.Persistence.csproj" Id="92a203ae-c4e5-4267-be78-a450bbd038f9" />
+    <Project Path="src/Modules/Identity/Identity.Presentation/Identity.Presentation.csproj" Id="a2c0092d-1d82-4e9e-9872-c4d1fed9c565" />
+  </Folder>
+  <Folder Name="/src/Modules/Salon/">
+    <Project Path="src/Modules/Salon/Modules.Salon.Application.Contract/Modules.Salon.Application.Contract.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Application/Modules.Salon.Application.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Domain/Modules.Salon.Domain.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Persistence/Modules.Salon.Persistence.csproj" />
+    <Project Path="src/Modules/Salon/Modules.Salon.Presentation/Modules.Salon.Presentation.csproj" />
+  </Folder>
+
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/BuildingBlocks/Web/Web.csproj" Id="e0450831-009b-46e2-b98a-f044cbab3848" />
+  </Folder>
+  <Folder Name="/src/Presentation/Aspire/">
+    <Project Path="src/BuildingBlocks/Aspire/Project.AppHost/Project.AppHost.csproj" Id="35e4ce89-e931-4820-a802-5e0e55ac06d8" />
+    <Project Path="src/BuildingBlocks/Aspire/Project.ServiceDefaults/Project.ServiceDefaults.csproj" Id="c11cff37-3430-4cf2-923a-606c3af7b5cd" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/BuildingBlocks/Shared/Shared.Contract/Shared.Contract.csproj" Id="7cdcf294-e8d7-4e48-a698-7a89532a5c3a" />
+  </Folder>
+  <Folder Name="/src/Tests/" />
+</Solution>
