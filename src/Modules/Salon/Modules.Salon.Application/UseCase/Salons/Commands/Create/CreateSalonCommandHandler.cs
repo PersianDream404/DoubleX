@@ -21,8 +21,8 @@ public class CreateSalonCommandHandler(ISalonCommandRepository SalonCommandRepos
     {
         try
         {
-     
-            var color = command.request.Adapt<Personnel.Domain.Entities.Salon>();
+
+            var color = Personnel.Domain.Entities.Salon.Create(command.request.Name);
             await SalonCommandRepository.AddAsync(color,cancellationToken);
 
         }

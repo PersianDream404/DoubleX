@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Modules.Salon.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class addPersonnel : Migration
+    public partial class AddSalon : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

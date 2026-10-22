@@ -43,12 +43,12 @@ public class BaseDbContext : ApplicationDbContext
             }
         }
         
-        modelBuilder.Entity<ApplicationUser>()
-            .HasOne<Salon>()
-            .WithMany()
-            .HasForeignKey(x => x.SalonId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Restrict);
+        // modelBuilder.Entity<ApplicationUser>()
+        //     .HasOne<Salon>()
+        //     .WithMany()
+        //     .HasForeignKey(x => x.SalonId)
+        //     .IsRequired()
+        //     .OnDelete(DeleteBehavior.Restrict);
 
 
 

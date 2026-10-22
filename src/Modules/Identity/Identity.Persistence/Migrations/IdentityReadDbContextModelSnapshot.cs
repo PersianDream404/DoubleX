@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Identity.Persistence.Migrations
 {
-    [DbContext(typeof(IdentityWriteDbContext))]
-    partial class IdentityWriteDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(IdentityReadDbContext))]
+    partial class IdentityReadDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -43,6 +43,10 @@ namespace Identity.Persistence.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");

@@ -12,8 +12,8 @@ using Modules.Personnel.Persistence.Context;
 namespace Modules.Salon.Persistence.Migrations
 {
     [DbContext(typeof(PersonnelReadDbContext))]
-    [Migration("20261020142752_add-Personnel")]
-    partial class addPersonnel
+    [Migration("20261021161520_Add-Salon")]
+    partial class AddSalon
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -91,6 +91,12 @@ namespace Modules.Salon.Persistence.Migrations
                                 .HasMaxLength(50)
                                 .HasColumnType("nvarchar(50)");
 
+                            b1.Property<string>("CardNumber")
+                                .IsRequired()
+                                .HasMaxLength(16)
+                                .HasColumnType("nvarchar(16)")
+                                .HasColumnName("CardNumber");
+
                             b1.Property<string>("SalaryType")
                                 .IsRequired()
                                 .HasColumnType("nvarchar(max)");
@@ -101,28 +107,6 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
-
-                            b1.OwnsOne("Modules.Personnel.Domain.ValueObjects.CardNumber", "CardNumber", b2 =>
-                                {
-                                    b2.Property<long>("FinancialInfoPersonnelId")
-                                        .HasColumnType("bigint");
-
-                                    b2.Property<string>("Value")
-                                        .IsRequired()
-                                        .HasMaxLength(16)
-                                        .HasColumnType("nvarchar(16)")
-                                        .HasColumnName("CardNumber");
-
-                                    b2.HasKey("FinancialInfoPersonnelId");
-
-                                    b2.ToTable("PersonnelFinancialInfos");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("FinancialInfoPersonnelId");
-                                });
-
-                            b1.Navigation("CardNumber")
-                                .IsRequired();
                         });
 
                     b.OwnsOne("Modules.Personnel.Domain.Entities.GuarantorInfo", "GuarantorInfo", b1 =>
