@@ -447,9 +447,11 @@ function PersonnelDetailsContent({
 export function PersonnelDetailsDialog({
   personnelId,
   onOpenChange,
+  onDeleteRequest,
 }: {
   personnelId: number | null;
   onOpenChange: (open: boolean) => void;
+  onDeleteRequest: (id: number, fullName: string) => void;
 }) {
   const open = personnelId !== null;
   const [activeTab, setActiveTab] = useState<DetailsTab>("personal");
@@ -703,9 +705,12 @@ export function PersonnelDetailsDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled
                 className="h-8 rounded-lg border-rose-500 px-3 text-xs text-rose-600 disabled:cursor-not-allowed disabled:opacity-100"
-                title="حذف پرسنل هنوز در این بخش فعال نشده است"
+                onClick={() => {
+                  if (details) {
+                    onDeleteRequest(details.id, details.personalInfo.fullName);
+                  }
+                }}
               >
                 حذف پرسنل
               </Button>

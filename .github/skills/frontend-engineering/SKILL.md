@@ -56,6 +56,8 @@ Treat this context as a starting point, not a substitute for inspecting the rele
 - Handle API errors, pending states, and user feedback correctly.
 - Do not expose credentials, access tokens, or private environment variables.
 - Avoid mock data in production features unless explicitly requested.
+- For Persian/Jalali date fields, reuse an installed date-picker and calendar/locale package when available. Validate dates with real Jalali calendar rules (including leap years), keep form state in a consistent Jalali representation, and convert to Gregorian `YYYY-MM-DD` only at the API boundary when the API expects Gregorian dates. Avoid timezone-sensitive conversions for date-only values.
+- When using a date picker with a custom `render` input, do not assume its supplied display-value argument is a string; some picker versions can provide a non-string value. Bind the input to the component's own typed form value, or explicitly normalize/guard the library value before string operations such as `.replace()`. Verify initial render as well as date selection.
 
 ## List Page Convention
 

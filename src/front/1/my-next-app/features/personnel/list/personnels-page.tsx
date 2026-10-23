@@ -4,7 +4,15 @@ import { useState } from "react";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { handleApiError } from "@/lib/api/handle-api-error";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +47,7 @@ import {
 
 import { PersonnelDetailsDialog } from "./personnel-details-dialog";
 import { PersonnelCreateDialog } from "./personnel-create-dialog";
+import { PersonnelService } from "./personnel.service";
 import { usePersonnels } from "./use-personnels";
 
 export function PersonnelsPage() {
@@ -46,12 +55,44 @@ export function PersonnelsPage() {
   const [page, setPage] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    fullName: string;
+  } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(
     null,
   );
   const { data, error, loading } = usePersonnels(query, page, refreshKey);
   const totalPages = Math.max(1, data?.pagination.totalPages ?? 1);
   const personnels = data?.list ?? [];
+
+  function requestDelete(id: number, fullName: string) {
+    setSelectedPersonnelId(null);
+    setDeleteError(null);
+    setDeleteTarget({ id, fullName });
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) {
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await new PersonnelService().delete(deleteTarget.id);
+      setDeleteTarget(null);
+      setSelectedPersonnelId(null);
+      setRefreshKey((current) => current + 1);
+    } catch (error: unknown) {
+      setDeleteError(handleApiError(error));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -193,7 +234,12 @@ export function PersonnelsPage() {
                               مشاهده
                             </DropdownMenuItem>
                             <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() =>
+                                requestDelete(personnel.id, personnel.fullName)
+                              }
+                            >
                               حذف
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -277,12 +323,58 @@ export function PersonnelsPage() {
             setSelectedPersonnelId(null);
           }
         }}
+        onDeleteRequest={requestDelete}
       />
       <PersonnelCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={() => setRefreshKey((current) => current + 1)}
       />
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent dir="rtl" className="gap-4 sm:max-w-md">
+          <div className="space-y-2">
+            <DialogTitle className="text-right">حذف پرسنل</DialogTitle>
+            <DialogDescription className="text-right leading-6">
+              آیا از حذف «{deleteTarget?.fullName}» مطمئن هستید؟ این عملیات
+              قابل بازگشت نیست.
+            </DialogDescription>
+          </div>
+          {deleteError && (
+            <p className="text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
+          )}
+          <DialogFooter className="flex-row-reverse">
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+            >
+              {deleting ? "در حال حذف..." : "حذف"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleting}
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteError(null);
+              }}
+            >
+              انصراف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

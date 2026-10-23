@@ -43,4 +43,8 @@ export class PersonnelService {
       request,
     );
   }
+
+  delete(id: number): Promise<ApiResponse<void>> {
+    return this.api.delete<void>(`/api/Personnel/${id}`);
+  }
 }
