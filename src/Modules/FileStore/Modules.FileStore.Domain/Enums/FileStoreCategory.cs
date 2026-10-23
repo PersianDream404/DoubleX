@@ -10,7 +10,12 @@ public enum  FileStoreCategory
     Product,
     ProductGallery,
     Banner,
-    Blog
+    Blog,
+    PersonnelPhoto,
+    PersonnelTraining,
+    PersonnelHealthCourse,
+    PersonnelHealthTest,
+    PersonnelGuarantor
 }
 public enum FileProvider
 {

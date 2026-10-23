@@ -24,7 +24,8 @@ public sealed record PersonalInfo
         int childrenCount,
         PhoneNumber mobilePhone,
         PhoneNumber? landlinePhone,
-        Address address)
+        Address address,
+        Picture? picture)
     {
         FullName = fullName;
         NationalCode = nationalCode;
@@ -34,6 +35,7 @@ public sealed record PersonalInfo
         MobilePhone = mobilePhone;
         LandlinePhone = landlinePhone;
         Address = address;
+        Picture = picture;
     }
 
     public static Result<PersonalInfo> Create(
@@ -45,7 +47,8 @@ public sealed record PersonalInfo
         string mobilePhone,
         string? landlinePhone,
         string addressText,
-        bool isCloseToSalon)
+        bool isCloseToSalon,
+        string? pictureUrl = null)
     {
         var validationErrors = new List<ValidationError>();
 
@@ -89,6 +92,16 @@ public sealed record PersonalInfo
         if (!addressResult.IsSuccess)
             validationErrors.AddRange(addressResult.ValidationErrors);
 
+        Picture? picture = null;
+        if (!string.IsNullOrWhiteSpace(pictureUrl))
+        {
+            var pictureResult = Picture.Create(pictureUrl);
+            if (!pictureResult.IsSuccess)
+                validationErrors.AddRange(pictureResult.ValidationErrors);
+            else
+                picture = pictureResult.Value;
+        }
+
         if (validationErrors.Count > 0)
             return Result.Invalid(validationErrors);
 
@@ -100,7 +113,8 @@ public sealed record PersonalInfo
             childrenCount,
             mobilePhoneResult.Value,
             landlinePhoneValue,
-            addressResult.Value));
+            addressResult.Value,
+            picture));
     }
 
 
@@ -113,7 +127,8 @@ public sealed record PersonalInfo
                 int childrenCount,
                 PhoneNumber mobilePhone,
                 PhoneNumber? landlinePhone,
-                Address address)
+                Address address,
+                Picture? picture)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fullName);
         ArgumentNullException.ThrowIfNull(nationalCode);
@@ -131,6 +146,7 @@ public sealed record PersonalInfo
         MobilePhone = mobilePhone;
         LandlinePhone = landlinePhone;
         Address = address;
+        Picture = picture;
     }
 
     public PersonalInfo() { }
@@ -504,4 +520,3 @@ public sealed record GuarantorInfo
         GuarantorLandlinePhone = default!;
     }
 }
-

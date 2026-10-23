@@ -56,5 +56,7 @@ public enum DocumentType
     Photo = 0,
     TrainingCertificate = 1,
     MedicalDocument = 2,
-    GuarantorDocument = 3
+    GuarantorDocument = 3,
+    HealthCourse = 4,
+    HealthTest = 5
 }

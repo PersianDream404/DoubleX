@@ -16,8 +16,12 @@ type PersonnelsState = {
   loading: boolean;
 };
 
-export function usePersonnels(query: string, page: number) {
-  const requestKey = JSON.stringify([query, page]);
+export function usePersonnels(
+  query: string,
+  page: number,
+  refreshKey = 0,
+) {
+  const requestKey = JSON.stringify([query, page, refreshKey]);
   const [state, setState] = useState<PersonnelsState>({
     requestKey: "",
     data: null,
@@ -79,7 +83,7 @@ export function usePersonnels(query: string, page: number) {
       });
 
     return () => controller.abort();
-  }, [query, page, requestKey]);
+  }, [query, page, refreshKey, requestKey]);
 
   if (state.requestKey !== requestKey) {
     return { data: null, error: null, loading: true };

@@ -3,6 +3,7 @@ import type { ApiResponse } from "@/lib/api/types/api-response";
 
 import type {
   GetAllPersonnelRequest,
+  CreatePersonnelRequest,
   PersonnelDetailsDto,
   PersonnelListResult,
 } from "./personnel.types";
@@ -33,6 +34,13 @@ export class PersonnelService {
       `/api/Personnel/${id}`,
       undefined,
       config,
+    );
+  }
+
+  create(request: CreatePersonnelRequest): Promise<ApiResponse<string>> {
+    return this.api.post<string, CreatePersonnelRequest>(
+      "/api/Personnel",
+      request,
     );
   }
 }

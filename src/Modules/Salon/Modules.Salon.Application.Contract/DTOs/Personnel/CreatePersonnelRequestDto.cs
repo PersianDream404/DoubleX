@@ -7,4 +7,5 @@ public sealed record CreatePersonnelRequestDto(
     FinancialInfoRequestDto FinancialInfo,
     HealthInfoRequestDto HealthInfo,
     GuarantorInfoRequestDto GuarantorInfo,
-    IReadOnlyList<DocumentRequestDto> Documents);
+    IReadOnlyList<DocumentRequestDto> Documents,
+    bool Status = true);

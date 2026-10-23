@@ -7,6 +7,7 @@ using Modules.Personnel.Application.Contract.DTOs.Personnel;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Commands;
 using Modules.Product.Application.Contract.Interface.Salons;
 using Modules.Personnel.Domain.Entities;
+using Modules.Personnel.Domain.Enums;
 using Modules.Personnel.Domain.Interface;
 using Modules.Personnel.Domain.ValueObjects;
 using SharedKernel.Helper;
@@ -30,6 +31,7 @@ public class CreatePersonnelCommandHandler(
                 });
 
             var personnel = new Domain.Entities.Personnel();
+            personnel.Status = command.Request.Status;
 
             var salonResult = personnel.AssignToSalon(command.Request.SalonId);
             if (!salonResult.IsSuccess)
@@ -46,7 +48,12 @@ public class CreatePersonnelCommandHandler(
                 personalInfoRequest.MobilePhone,
                 personalInfoRequest.LandlinePhone,
                 personalInfoRequest.AddressText,
-                personalInfoRequest.IsCloseToSalon);
+                personalInfoRequest.IsCloseToSalon,
+                personalInfoRequest.PictureUrl ??
+                    command.Request.Documents?
+                        .FirstOrDefault(document =>
+                            document.DocumentType == DocumentType.Photo)
+                        ?.Url);
 
             if (!personalInfoResult.IsSuccess)
                 return Result.Invalid(personalInfoResult.ValidationErrors);
@@ -62,7 +69,13 @@ public class CreatePersonnelCommandHandler(
                 jobInfoRequest.PersonnelCode,
                 jobInfoRequest.CooperationStartDate,
                 jobInfoRequest.WorkingShiftType,
-                jobInfoRequest.Skills,
+                jobInfoRequest.JobPictures is { Count: > 0 }
+                    ? jobInfoRequest.JobPictures
+                    : jobInfoRequest.Skills is { Count: > 0 }
+                        ? jobInfoRequest.Skills
+                        : GetDocumentUrls(
+                            command.Request.Documents,
+                            DocumentType.TrainingCertificate),
                 jobInfoRequest.WorkHistory);
 
             if (!jobInfoResult.IsSuccess)
@@ -90,9 +103,28 @@ public class CreatePersonnelCommandHandler(
 
             var healthInfoRequest = command.Request.HealthInfo;
 
+            if (!TryParseStatus(healthInfoRequest.HealthStatus, out var healthStatus)
+                || !TryParseStatus(healthInfoRequest.AllergyStatus, out var allergyStatus))
+            {
+                return Result.Invalid(new ValidationError
+                {
+                    Identifier = nameof(command.Request.HealthInfo),
+                    ErrorMessage = "وضعیت سلامت و حساسیت باید true یا false باشد."
+                });
+            }
+
             var healthInfoResult = HealthInfo.Create(
-                false,
-                false, null, null, [],null);
+                healthStatus,
+                allergyStatus,
+                healthInfoRequest.Diseases,
+                healthInfoRequest.Allergies,
+                GetDocumentPictures(
+                    command.Request.Documents,
+                    DocumentType.HealthCourse),
+                GetDocumentPictures(
+                    command.Request.Documents,
+                    DocumentType.MedicalDocument,
+                    DocumentType.HealthTest));
 
             if (!healthInfoResult.IsSuccess)
                 return Result.Invalid(healthInfoResult.ValidationErrors);
@@ -107,7 +139,11 @@ public class CreatePersonnelCommandHandler(
             var guarantorInfoResult = GuarantorInfo.Create(
                 guarantorInfoRequest.GuarantorName,
                 guarantorInfoRequest.Relationship,
-                guarantorInfoRequest.GuarantorPhone, guarantorInfoRequest.GuarantorLandlinePhone, []);
+                guarantorInfoRequest.GuarantorPhone,
+                guarantorInfoRequest.GuarantorLandlinePhone,
+                GetDocumentPictures(
+                    command.Request.Documents,
+                    DocumentType.GuarantorDocument));
 
             if (!guarantorInfoResult.IsSuccess)
                 return Result.Invalid(guarantorInfoResult.ValidationErrors);
@@ -123,9 +159,44 @@ public class CreatePersonnelCommandHandler(
 
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Result.Error(Messages.ErrorInPersonnel);
         }
+    }
+
+    private static bool TryParseStatus(string? value, out bool status)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            status = false;
+            return true;
+        }
+
+        return bool.TryParse(value, out status);
+    }
+
+    private static List<Picture> GetDocumentPictures(
+        IReadOnlyList<DocumentRequestDto>? documents,
+        params DocumentType[] documentTypes)
+    {
+        return documents?
+            .Where(document =>
+                documentTypes.Contains(document.DocumentType)
+                && !string.IsNullOrWhiteSpace(document.Url))
+            .Select(document => Picture.Create(document.Url!).Value)
+            .ToList() ?? [];
+    }
+
+    private static List<string> GetDocumentUrls(
+        IReadOnlyList<DocumentRequestDto>? documents,
+        params DocumentType[] documentTypes)
+    {
+        return documents?
+            .Where(document =>
+                documentTypes.Contains(document.DocumentType)
+                && !string.IsNullOrWhiteSpace(document.Url))
+            .Select(document => document.Url!)
+            .ToList() ?? [];
     }
 }

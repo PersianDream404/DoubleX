@@ -11,7 +11,8 @@ public sealed class JobInfoRequestDto
     public string PersonnelCode { get; init; }
     public DateOnly CooperationStartDate { get; init; }
     public WorkingShiftType WorkingShiftType { get; init; }
-    public List<string> Skills { get; init; }
+    public List<string> Skills { get; init; } = [];
+    public List<string> JobPictures { get; init; } = [];
     public string? WorkHistory { get; init; }
 
     public JobInfoRequestDto(
@@ -26,7 +27,8 @@ public sealed class JobInfoRequestDto
         PersonnelCode = personnelCode;
         CooperationStartDate = cooperationStartDate;
         WorkingShiftType = workingShiftType;
-        Skills = skills;
+        Skills = skills ?? [];
+        JobPictures = skills ?? [];
         WorkHistory = workHistory;
     }
 

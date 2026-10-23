@@ -52,7 +52,8 @@ public class UpdatePersonnelCommandHandler(
                 request.PersonalInfo.MobilePhone,
                 request.PersonalInfo.LandlinePhone,
                 request.PersonalInfo.AddressText,
-                request.PersonalInfo.IsCloseToSalon);
+                request.PersonalInfo.IsCloseToSalon,
+                request.PersonalInfo.PictureUrl);
             if (!personalInfoResult.IsSuccess)
                 return Result.Invalid(personalInfoResult.ValidationErrors);
 
@@ -64,7 +65,8 @@ public class UpdatePersonnelCommandHandler(
                 personalInfoResult.Value.ChildrenCount ?? 0,
                 personalInfoResult.Value.MobilePhone,
                 personalInfoResult.Value.LandlinePhone,
-                personalInfoResult.Value.Address);
+                personalInfoResult.Value.Address,
+                personalInfoResult.Value.Picture ?? existing.PersonalInfo.Picture);
 
             var jobInfoUpdateResult = existing.JobInfo.Update(
                 request.JobInfo.JobTitle,
@@ -102,8 +104,8 @@ public class UpdatePersonnelCommandHandler(
             var healthInfoUpdateResult = existing.HealthInfo.Update(
                 healthStatus,
                 allergyStatus,
-                existing.HealthInfo.Diseases,
-                existing.HealthInfo.Allergies,
+                request.HealthInfo.Diseases ?? existing.HealthInfo.Diseases,
+                request.HealthInfo.Allergies ?? existing.HealthInfo.Allergies,
                 existing.HealthInfo.PictureCourse,
                 existing.HealthInfo.PictureTest);
             if (!healthInfoUpdateResult.IsSuccess)

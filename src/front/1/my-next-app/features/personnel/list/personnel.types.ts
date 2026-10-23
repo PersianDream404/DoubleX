@@ -60,6 +60,62 @@ export interface PersonnelDetailsDto {
   }[];
 }
 
+export type PersonnelDocumentType = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface PersonnelDocumentRequest {
+  documentType: PersonnelDocumentType;
+  fileName: string;
+  url: string;
+}
+
+export interface CreatePersonnelRequest {
+  salonId: number;
+  status: boolean;
+  personalInfo: {
+    fullName: string;
+    nationalCode: string;
+    birthDate: string;
+    maritalStatus: 0 | 1;
+    childrenCount: number;
+    mobilePhone: string;
+    landlinePhone: string | null;
+    addressText: string;
+    isCloseToSalon: boolean;
+    pictureUrl: string | null;
+  };
+  jobInfo: {
+    jobTitle: string;
+    personnelCode: string;
+    cooperationStartDate: string;
+    workingShiftType: number;
+    jobPictures: string[];
+    workHistory: string | null;
+  };
+  financialInfo: {
+    salaryType: number;
+    cardNumber: string;
+    accountNumber: string;
+  };
+  healthInfo: {
+    healthStatus: string;
+    allergyStatus: string;
+    diseases: string | null;
+    allergies: string | null;
+  };
+  guarantorInfo: {
+    guarantorName: string;
+    relationship: string;
+    guarantorPhone: string;
+    guarantorLandlinePhone: string;
+  };
+  documents: PersonnelDocumentRequest[];
+}
+
+export interface UploadedPersonnelFile {
+  id: number;
+  path: string;
+}
+
 export type GetAllPersonnelRequest = PageParams & {
   [key: string]: string | number | boolean | null | undefined;
   Q?: string;

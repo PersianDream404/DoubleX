@@ -15,6 +15,7 @@ public sealed class PersonalInfoRequestDto
     public string? LandlinePhone { get; init; }
     public string AddressText { get; init; }
     public bool IsCloseToSalon { get; init; }
+    public string? PictureUrl { get; init; }
 
     public PersonalInfoRequestDto(
         string fullName,
@@ -25,7 +26,8 @@ public sealed class PersonalInfoRequestDto
         string mobilePhone,
         string? landlinePhone,
         string addressText,
-        bool isCloseToSalon)
+        bool isCloseToSalon,
+        string? pictureUrl = null)
     {
         FullName = fullName;
         NationalCode = nationalCode;
@@ -36,6 +38,7 @@ public sealed class PersonalInfoRequestDto
         LandlinePhone = landlinePhone;
         AddressText = addressText;
         IsCloseToSalon = isCloseToSalon;
+        PictureUrl = pictureUrl;
     }
 
     public PersonalInfoRequestDto()

@@ -53,10 +53,12 @@ export class SalonService {
 
   getSelectList(
     query?: GetAllSalonRequest,
+    config?: { signal?: AbortSignal },
   ): Promise<ApiResponse<PagedResult<GetSelectListSalonResponse>>> {
     return this.api.get<PagedResult<GetSelectListSalonResponse>>(
       "/api/Salon/SelectList",
       query,
+      config,
     );
   }
 }

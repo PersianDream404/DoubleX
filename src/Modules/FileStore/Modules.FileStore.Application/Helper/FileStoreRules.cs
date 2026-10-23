@@ -13,7 +13,12 @@ public static class FileStoreRules
             { FileStoreCategory.Product, [".jpg", ".jpeg", ".png", ".webp"] },
             { FileStoreCategory.ProductGallery, [".jpg", ".jpeg", ".png", ".webp"] },
             { FileStoreCategory.Banner, [".jpg", ".jpeg", ".png", ".webp"] },
-            { FileStoreCategory.Blog, [".jpg", ".jpeg", ".png", ".webp", ".pdf"] }
+            { FileStoreCategory.Blog, [".jpg", ".jpeg", ".png", ".webp", ".pdf"] },
+            { FileStoreCategory.PersonnelPhoto, [".jpg", ".jpeg", ".png", ".webp"] },
+            { FileStoreCategory.PersonnelTraining, [".jpg", ".jpeg", ".png", ".webp"] },
+            { FileStoreCategory.PersonnelHealthCourse, [".jpg", ".jpeg", ".png", ".webp"] },
+            { FileStoreCategory.PersonnelHealthTest, [".jpg", ".jpeg", ".png", ".webp"] },
+            { FileStoreCategory.PersonnelGuarantor, [".jpg", ".jpeg", ".png", ".webp"] }
         };
 
     private static readonly Dictionary<FileStoreCategory, long> MaxFileSize =
@@ -22,7 +27,12 @@ public static class FileStoreRules
             { FileStoreCategory.Product, 5 * 1024 * 1024 },
             { FileStoreCategory.ProductGallery, 10 * 1024 * 1024 },
             { FileStoreCategory.Banner, 5 * 1024 * 1024 },
-            { FileStoreCategory.Blog, 20 * 1024 * 1024 }
+            { FileStoreCategory.Blog, 20 * 1024 * 1024 },
+            { FileStoreCategory.PersonnelPhoto, 5 * 1024 * 1024 },
+            { FileStoreCategory.PersonnelTraining, 5 * 1024 * 1024 },
+            { FileStoreCategory.PersonnelHealthCourse, 5 * 1024 * 1024 },
+            { FileStoreCategory.PersonnelHealthTest, 5 * 1024 * 1024 },
+            { FileStoreCategory.PersonnelGuarantor, 5 * 1024 * 1024 }
         };
 
     public static bool IsValidExtension(

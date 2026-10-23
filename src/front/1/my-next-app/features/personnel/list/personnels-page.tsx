@@ -38,15 +38,18 @@ import {
 } from "@/components/ui/table";
 
 import { PersonnelDetailsDialog } from "./personnel-details-dialog";
+import { PersonnelCreateDialog } from "./personnel-create-dialog";
 import { usePersonnels } from "./use-personnels";
 
 export function PersonnelsPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(
     null,
   );
-  const { data, error, loading } = usePersonnels(query, page);
+  const { data, error, loading } = usePersonnels(query, page, refreshKey);
   const totalPages = Math.max(1, data?.pagination.totalPages ?? 1);
   const personnels = data?.list ?? [];
 
@@ -69,7 +72,10 @@ export function PersonnelsPage() {
           </Breadcrumb>
 
           <div className="mt-1 flex flex-row-reverse items-center justify-between gap-3">
-            <Button className="h-8 shrink-0 bg-fuchsia-700 text-white hover:bg-fuchsia-800">
+            <Button
+              className="h-8 shrink-0 bg-fuchsia-700 text-white hover:bg-fuchsia-800"
+              onClick={() => setCreateDialogOpen(true)}
+            >
               <Plus className="size-4" />
               پرسنل جدید
             </Button>
@@ -271,6 +277,11 @@ export function PersonnelsPage() {
             setSelectedPersonnelId(null);
           }
         }}
+      />
+      <PersonnelCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={() => setRefreshKey((current) => current + 1)}
       />
     </div>
   );
