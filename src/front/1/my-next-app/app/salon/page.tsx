@@ -65,7 +65,7 @@ export default function CustomersPage() {
 
   const filtered = useMemo(
     () => DATA.filter((c) => c.name.includes(query.trim())),
-    [query]
+    [query],
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -116,7 +116,9 @@ export default function CustomersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-start">نام و نام خانوادگی</TableHead>
+                  <TableHead className="text-start">
+                    نام و نام خانوادگی
+                  </TableHead>
                   <TableHead className="text-start">تلفن همراه</TableHead>
                   <TableHead className="text-start">کدملی</TableHead>
                   <TableHead className="text-start">نوبت بعدی</TableHead>
@@ -142,7 +144,11 @@ export default function CustomersPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
-                            <Button variant="ghost" size="icon" className="size-8" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                            />
                           }
                         >
                           <MoreHorizontal className="size-4" />
@@ -178,7 +184,7 @@ export default function CustomersPage() {
 
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(
-                  (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1
+                  (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
                 )
                 .map((p, idx, arr) => (
                   <PaginationItem key={p}>
