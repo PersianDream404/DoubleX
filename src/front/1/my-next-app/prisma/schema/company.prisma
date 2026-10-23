@@ -1,0 +1,10 @@
+model Company {
+  id        Int        @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  status    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  customers Customer[]
+}
