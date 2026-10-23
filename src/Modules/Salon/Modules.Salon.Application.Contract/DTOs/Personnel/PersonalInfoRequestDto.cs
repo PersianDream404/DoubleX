@@ -16,6 +16,7 @@ public sealed class PersonalInfoRequestDto
     public string AddressText { get; init; }
     public bool IsCloseToSalon { get; init; }
     public string? PictureUrl { get; init; }
+    public bool ClearPicture { get; init; }
 
     public PersonalInfoRequestDto(
         string fullName,

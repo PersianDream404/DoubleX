@@ -449,11 +449,13 @@ export function PersonnelDetailsDialog({
   onOpenChange,
   onDeleteRequest,
   onToggleRequest,
+  onEditRequest,
 }: {
   personnelId: number | null;
   onOpenChange: (open: boolean) => void;
   onDeleteRequest: (id: number, fullName: string) => void;
   onToggleRequest: (id: number, fullName: string, status: boolean) => void;
+  onEditRequest: (id: number) => void;
 }) {
   const open = personnelId !== null;
   const [activeTab, setActiveTab] = useState<DetailsTab>("personal");
@@ -713,9 +715,8 @@ export function PersonnelDetailsDialog({
             <footer className="flex h-14 shrink-0 items-center justify-start gap-2 border-t border-slate-100 px-5">
               <Button
                 type="button"
-                disabled
                 className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white disabled:cursor-not-allowed disabled:opacity-100"
-                title="ویرایش اطلاعات هنوز در این بخش فعال نشده است"
+                onClick={() => onEditRequest(details.id)}
               >
                 ویرایش اطلاعات
               </Button>

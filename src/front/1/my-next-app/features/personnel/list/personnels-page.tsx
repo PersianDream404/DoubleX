@@ -55,6 +55,9 @@ export function PersonnelsPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingPersonnelId, setEditingPersonnelId] = useState<number | null>(
+    null,
+  );
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -80,6 +83,12 @@ export function PersonnelsPage() {
     setSelectedPersonnelId(null);
     setDeleteError(null);
     setDeleteTarget({ id, fullName });
+  }
+
+  function requestEdit(id: number) {
+    setSelectedPersonnelId(null);
+    setEditingPersonnelId(id);
+    setCreateDialogOpen(true);
   }
 
   async function confirmDelete() {
@@ -149,7 +158,10 @@ export function PersonnelsPage() {
           <div className="mt-1 flex flex-row-reverse items-center justify-between gap-3">
             <Button
               className="h-8 shrink-0 bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-              onClick={() => setCreateDialogOpen(true)}
+              onClick={() => {
+                setEditingPersonnelId(null);
+                setCreateDialogOpen(true);
+              }}
             >
               <Plus className="size-4" />
               پرسنل جدید
@@ -279,7 +291,11 @@ export function PersonnelsPage() {
                             >
                               مشاهده
                             </DropdownMenuItem>
-                            <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => requestEdit(personnel.id)}
+                            >
+                              ویرایش
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
                                 requestToggle(
@@ -384,10 +400,17 @@ export function PersonnelsPage() {
         }}
         onDeleteRequest={requestDelete}
         onToggleRequest={requestToggle}
+        onEditRequest={requestEdit}
       />
       <PersonnelCreateDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        personnelId={editingPersonnelId}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) {
+            setEditingPersonnelId(null);
+          }
+        }}
         onCreated={() => setRefreshKey((current) => current + 1)}
       />
       <Dialog

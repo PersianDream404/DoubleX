@@ -7,13 +7,17 @@ using Modules.Personnel.Application.Contract.DTOs.Personnel;
 using Modules.Personnel.Application.Contract.Interfaces;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Commands;
 using Modules.Personnel.Domain.Entities;
+using Modules.Personnel.Domain.Enums;
 using Modules.Personnel.Domain.Interface;
+using Modules.Personnel.Domain.ValueObjects;
+using Modules.Product.Application.Contract.Interface.Salons;
 
 namespace Modules.Personnel.Application.UseCase.Personnel.Commands;
 
 public class UpdatePersonnelCommandHandler(
     IPersonnelCommandRepository PersonnelCommandRepository,
-    IPersonnelQueryRepository PersonnelQueryRepository)
+    IPersonnelQueryRepository PersonnelQueryRepository,
+    ISalonQueryRepository SalonQueryRepository)
     : ICommandHandler<UpdatePersonnelCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpdatePersonnelCommand command, CancellationToken cancellationToken)
@@ -43,6 +47,22 @@ public class UpdatePersonnelCommandHandler(
                 });
             }
 
+            if (request.SalonId <= 0
+                || await SalonQueryRepository.GetByIdAsync(request.SalonId, cancellationToken) is null)
+            {
+                return Result.Invalid(new ValidationError
+                {
+                    Identifier = nameof(request.SalonId),
+                    ErrorMessage = "سالن انتخاب‌شده یافت نشد."
+                });
+            }
+
+            var salonResult = existing.AssignToSalon(request.SalonId);
+            if (!salonResult.IsSuccess)
+                return Result.Invalid(salonResult.ValidationErrors);
+
+            existing.Status = request.Status;
+
             var personalInfoResult = PersonalInfo.Create(
                 request.PersonalInfo.FullName,
                 request.PersonalInfo.NationalCode,
@@ -53,7 +73,9 @@ public class UpdatePersonnelCommandHandler(
                 request.PersonalInfo.LandlinePhone,
                 request.PersonalInfo.AddressText,
                 request.PersonalInfo.IsCloseToSalon,
-                request.PersonalInfo.PictureUrl);
+                request.PersonalInfo.ClearPicture
+                    ? null
+                    : request.PersonalInfo.PictureUrl ?? existing.PersonalInfo.Picture?.Value);
             if (!personalInfoResult.IsSuccess)
                 return Result.Invalid(personalInfoResult.ValidationErrors);
 
@@ -66,14 +88,14 @@ public class UpdatePersonnelCommandHandler(
                 personalInfoResult.Value.MobilePhone,
                 personalInfoResult.Value.LandlinePhone,
                 personalInfoResult.Value.Address,
-                personalInfoResult.Value.Picture ?? existing.PersonalInfo.Picture);
+                personalInfoResult.Value.Picture);
 
             var jobInfoUpdateResult = existing.JobInfo.Update(
                 request.JobInfo.JobTitle,
                 request.JobInfo.PersonnelCode,
                 request.JobInfo.CooperationStartDate,
                 request.JobInfo.WorkingShiftType,
-                request.JobInfo.Skills,
+                request.JobInfo.JobPictures ?? [],
                 request.JobInfo.WorkHistory);
             if (!jobInfoUpdateResult.IsSuccess)
                 return Result.Invalid(jobInfoUpdateResult.ValidationErrors);
@@ -104,10 +126,17 @@ public class UpdatePersonnelCommandHandler(
             var healthInfoUpdateResult = existing.HealthInfo.Update(
                 healthStatus,
                 allergyStatus,
-                request.HealthInfo.Diseases ?? existing.HealthInfo.Diseases,
-                request.HealthInfo.Allergies ?? existing.HealthInfo.Allergies,
-                existing.HealthInfo.PictureCourse,
-                existing.HealthInfo.PictureTest);
+                request.HealthInfo.Diseases,
+                request.HealthInfo.Allergies,
+                request.Documents is null
+                    ? existing.HealthInfo.PictureCourse
+                    : GetDocumentPictures(request.Documents, DocumentType.HealthCourse),
+                request.Documents is null
+                    ? existing.HealthInfo.PictureTest
+                    : GetDocumentPictures(
+                        request.Documents,
+                        DocumentType.MedicalDocument,
+                        DocumentType.HealthTest));
             if (!healthInfoUpdateResult.IsSuccess)
                 return Result.Invalid(healthInfoUpdateResult.ValidationErrors);
 
@@ -116,7 +145,11 @@ public class UpdatePersonnelCommandHandler(
                 request.GuarantorInfo.Relationship,
                 request.GuarantorInfo.GuarantorPhone,
                 request.GuarantorInfo.GuarantorLandlinePhone,
-                existing.GuarantorInfo.PictureGuaranties);
+                request.Documents is null
+                    ? existing.GuarantorInfo.PictureGuaranties
+                    : GetDocumentPictures(
+                        request.Documents,
+                        DocumentType.GuarantorDocument));
             if (!guarantorInfoUpdateResult.IsSuccess)
                 return Result.Invalid(guarantorInfoUpdateResult.ValidationErrors);
 
@@ -145,6 +178,18 @@ public class UpdatePersonnelCommandHandler(
 
         status = currentValue;
         return false;
+    }
+
+    private static List<Picture> GetDocumentPictures(
+        IReadOnlyList<DocumentRequestDto>? documents,
+        params DocumentType[] documentTypes)
+    {
+        return documents?
+            .Where(document =>
+                documentTypes.Contains(document.DocumentType)
+                && !string.IsNullOrWhiteSpace(document.Url))
+            .Select(document => Picture.Create(document.Url!).Value)
+            .ToList() ?? [];
     }
 }
 

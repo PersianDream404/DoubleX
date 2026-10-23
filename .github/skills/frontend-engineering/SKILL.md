@@ -107,6 +107,18 @@ Apply these rules to detail views opened from list pages or detail routes. For p
 - Use image cards for API-provided images with meaningful alternative text, keyboard-accessible links/actions, and a clear empty state when there are no images. Reuse the project's image and card patterns.
 - Compare the finished dialog against the reference images at a matching viewport and inspect every tab, not just the first. Check that the layout does not clip important fields or create unnecessary nested scrollbars.
 
+## Edit Forms and Dialogs
+
+When adding edit behavior to an existing create form, preserve its established layout and validation rather than building a separate, inconsistent form:
+
+- Inspect the current create dialog, detail DTO, update endpoint, request DTO, handler, and file-upload flow before implementation. Verify the HTTP method, route, required body fields, response shape, enum representations, and which fields are editable.
+- Reuse the create dialog for editing when its fields and workflow are substantially the same. Keep create behavior unchanged, and distinguish modes with an optional entity ID and clear Persian titles/actions such as «ویرایش پرسنل» and «ذخیره تغییرات».
+- Fetch the selected entity's current data when the edit dialog opens; display loading and error states, cancel or ignore stale requests, and prevent submission until the record has loaded. Map API enums and date-only values explicitly into the form's representation; Persian dates must be converted back to Gregorian only when building the API request.
+- Load existing images and preserve them in the update payload unless the user removes them. Support replacing/removing images and represent explicit removal in the API contract; do not silently clear images when no new upload is selected.
+- Reuse existing validation, upload restrictions, and API error handling. On successful update, close the dialog and refresh the list/detail data; on failure, retain the form and surface the error.
+- Change backend request/response DTOs and handlers only when inspection shows required edit data or update behavior is missing. Keep create and existing update behavior compatible, preserve optional fields deliberately, validate related entity IDs at the server boundary, and build the affected backend projects.
+- Wire edit entry points from list operations and detail actions to the same edit flow where both are available. Do not leave a working-looking edit action disabled or route it to a nonfunctional placeholder.
+
 ## Implementation Workflow
 
 For each task:

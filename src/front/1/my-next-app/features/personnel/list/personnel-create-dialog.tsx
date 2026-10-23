@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import DatePicker, { type DateObject } from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
-import { toGregorian } from "jalaali-js";
+import { toGregorian, toJalaali } from "jalaali-js";
 import {
   BadgeDollarSign,
   BriefcaseBusiness,
@@ -39,6 +39,7 @@ import { PersonnelCreateSchema } from "./personnel-create.schema";
 import { PersonnelService } from "./personnel.service";
 import type {
   CreatePersonnelRequest,
+  PersonnelDetailsDto,
   PersonnelDocumentRequest,
   PersonnelDocumentType,
 } from "./personnel.types";
@@ -51,6 +52,7 @@ type ImageField =
   | "healthTest"
   | "guarantor";
 type SelectedImage = { file: File; previewUrl: string };
+type ExistingImage = { url: string; fileName: string };
 type FormValues = {
   salonId: number;
   fullName: string;
@@ -81,6 +83,7 @@ type FormValues = {
   status: string;
 };
 type ImageFiles = Record<ImageField, SelectedImage[]>;
+type ExistingImageFiles = Record<ImageField, ExistingImage[]>;
 
 const TABS: { id: CreateTab; label: string; icon: typeof UserRound }[] = [
   { id: "personal", label: "اطلاعات شخصی", icon: UserRound },
@@ -121,6 +124,14 @@ const EMPTY_FORM: FormValues = {
 };
 
 const EMPTY_FILES: ImageFiles = {
+  profile: [],
+  training: [],
+  healthCourse: [],
+  healthTest: [],
+  guarantor: [],
+};
+
+const EMPTY_EXISTING_FILES: ExistingImageFiles = {
   profile: [],
   training: [],
   healthCourse: [],
@@ -175,6 +186,44 @@ function dateToApi(value: string) {
   return `${gregorian.gy}-${String(gregorian.gm).padStart(2, "0")}-${String(
     gregorian.gd,
   ).padStart(2, "0")}`;
+}
+
+function dateToJalali(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  const jalali = toJalaali(year, month, day);
+  return `${jalali.jy}/${String(jalali.jm).padStart(2, "0")}/${String(
+    jalali.jd,
+  ).padStart(2, "0")}`;
+}
+
+function enumValue(value: string, entries: Record<string, string>) {
+  return entries[value] ?? "";
+}
+
+function getExistingImages(personnel: PersonnelDetailsDto): ExistingImageFiles {
+  const images: ExistingImageFiles = {
+    profile: personnel.personalInfo.pictureUrl
+      ? [{ url: personnel.personalInfo.pictureUrl, fileName: "تصویر پرسنل" }]
+      : [],
+    training: personnel.jobInfo.jobPictures.map((url, index) => ({
+      url,
+      fileName: `تصویر دوره آموزشی ${index + 1}`,
+    })),
+    healthCourse: personnel.healthInfo.pictureCourse.map((url, index) => ({
+      url,
+      fileName: `تصویر دوره سلامت ${index + 1}`,
+    })),
+    healthTest: personnel.healthInfo.pictureTest.map((url, index) => ({
+      url,
+      fileName: `تصویر آزمایش ${index + 1}`,
+    })),
+    guarantor: personnel.guarantorInfo.pictureGuaranties.map((url, index) => ({
+      url,
+      fileName: `تصویر ضمانت ${index + 1}`,
+    })),
+  };
+
+  return images;
 }
 
 function toPersianDigits(value: string) {
@@ -348,14 +397,18 @@ function ImagePicker({
   label,
   name,
   files,
+  existingFiles,
   onChange,
+  onRemoveExisting,
   multiple = true,
   onValidationError,
 }: {
   label: string;
   name: string;
   files: SelectedImage[];
+  existingFiles: ExistingImage[];
   onChange: (files: SelectedImage[]) => void;
+  onRemoveExisting: (index: number) => void;
   multiple?: boolean;
   onValidationError: (message: string | null) => void;
 }) {
@@ -387,6 +440,7 @@ function ImagePicker({
     }));
     if (!multiple) {
       files.forEach((file) => URL.revokeObjectURL(file.previewUrl));
+      existingFiles.forEach((_, index) => onRemoveExisting(index));
     }
     onChange(multiple ? [...files, ...additions] : additions);
   }
@@ -402,6 +456,28 @@ function ImagePicker({
   return (
     <InfoCard title={label}>
       <div className="grid grid-cols-1 gap-2">
+        {existingFiles.map((file, index) => (
+          <div key={`${file.url}-${index}`} className="relative aspect-[1.1] overflow-hidden rounded-lg bg-fuchsia-50">
+            <Image
+              src={file.url}
+              alt={file.fileName}
+              fill
+              unoptimized
+              className="object-cover"
+              sizes="180px"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`حذف تصویر ${file.fileName}`}
+              onClick={() => onRemoveExisting(index)}
+              className="absolute bottom-2 start-2 size-8 rounded-full bg-white text-rose-600 hover:bg-rose-50"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ))}
         {files.map(({ file, previewUrl }, index) => (
           <div
             key={`${file.name}-${file.lastModified}-${index}`}
@@ -456,6 +532,7 @@ function ImagePicker({
 function makeRequest(
   values: FormValues,
   documents: PersonnelDocumentRequest[],
+  clearPicture = false,
 ): CreatePersonnelRequest {
   return {
     salonId: values.salonId,
@@ -472,6 +549,7 @@ function makeRequest(
       isCloseToSalon: values.isCloseToSalon,
       pictureUrl:
         documents.find((document) => document.documentType === 0)?.url ?? null,
+      clearPicture,
     },
     jobInfo: {
       jobTitle: values.jobTitle.trim(),
@@ -510,14 +588,18 @@ export function PersonnelCreateDialog({
   open,
   onOpenChange,
   onCreated,
+  personnelId = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  personnelId?: number | null;
 }) {
   const [activeTab, setActiveTab] = useState<CreateTab>("personal");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [files, setFiles] = useState<ImageFiles>(EMPTY_FILES);
+  const [existingFiles, setExistingFiles] =
+    useState<ExistingImageFiles>(EMPTY_EXISTING_FILES);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -525,6 +607,8 @@ export function PersonnelCreateDialog({
   const [salonsLoading, setSalonsLoading] = useState(false);
   const [salonsError, setSalonsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [personnelLoading, setPersonnelLoading] = useState(false);
+  const [personnelLoaded, setPersonnelLoaded] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -565,9 +649,11 @@ export function PersonnelCreateDialog({
           return;
         }
 
-        const activeSalons = allSalons.filter((salon) => salon.status);
+        const activeSalons = allSalons.filter(
+          (salon) => salon.status || personnelId !== null,
+        );
         setSalons(activeSalons);
-        if (activeSalons.length === 1) {
+        if (!personnelId && activeSalons.length === 1) {
           setValues((current) => ({ ...current, salonId: activeSalons[0].id }));
         } else if (activeSalons.length === 0) {
           setSalonsError("سالن فعالی برای ثبت پرسنل یافت نشد.");
@@ -585,7 +671,99 @@ export function PersonnelCreateDialog({
       });
 
     return () => controller.abort();
-  }, [open]);
+  }, [open, personnelId]);
+
+  useEffect(() => {
+    if (!open || personnelId === null) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const service = new PersonnelService();
+    Promise.resolve()
+      .then(() => {
+        if (controller.signal.aborted) {
+          return null;
+        }
+        setPersonnelLoading(true);
+        setPersonnelLoaded(false);
+        setFormError(null);
+        return service.getById(personnelId, { signal: controller.signal });
+      })
+      .then((response) => {
+        if (!response) {
+          return;
+        }
+        if (!response.data) {
+          throw new Error(response.message ?? "اطلاعات پرسنل دریافت نشد.");
+        }
+
+        const personnel = response.data;
+        setValues({
+          salonId: personnel.salonId,
+          fullName: personnel.personalInfo.fullName,
+          nationalCode: personnel.personalInfo.nationalCode,
+          birthDate: dateToJalali(personnel.personalInfo.birthDate),
+          maritalStatus:
+            enumValue(personnel.personalInfo.maritalStatus, {
+              Single: "0",
+              Married: "1",
+            }) || "0",
+          childrenCount: String(personnel.personalInfo.childrenCount),
+          mobilePhone: personnel.personalInfo.mobilePhone,
+          landlinePhone: personnel.personalInfo.landlinePhone ?? "",
+          addressText: personnel.personalInfo.addressText,
+          isCloseToSalon: personnel.personalInfo.isCloseToSalon,
+          jobTitle: personnel.jobInfo.jobTitle,
+          personnelCode: personnel.jobInfo.personnelCode,
+          cooperationStartDate: dateToJalali(
+            personnel.jobInfo.cooperationStartDate,
+          ),
+          workingShiftType: enumValue(personnel.jobInfo.workingShiftType, {
+            Commission: "1",
+            FixedAndCommission: "2",
+            Negotiable: "3",
+            Rental: "4",
+            FullTime: "5",
+            PartTimeMorning: "6",
+            PartTimeEvening: "7",
+          }),
+          workHistory: personnel.jobInfo.workHistory ?? "",
+          salaryType: enumValue(personnel.financialInfo.salaryType, {
+            Fixed: "0",
+            Commission: "1",
+            ChairRental: "2",
+            RoomRental: "3",
+          }),
+          cardNumber: personnel.financialInfo.cardNumber,
+          accountNumber: personnel.financialInfo.accountNumber,
+          healthStatus: String(personnel.healthInfo.healthStatus),
+          diseases: personnel.healthInfo.diseases ?? "",
+          allergyStatus: String(personnel.healthInfo.allergyStatus),
+          allergies: personnel.healthInfo.allergies ?? "",
+          guarantorName: personnel.guarantorInfo.guarantorName,
+          relationship: personnel.guarantorInfo.relationship,
+          guarantorPhone: personnel.guarantorInfo.guarantorPhone,
+          guarantorLandlinePhone:
+            personnel.guarantorInfo.guarantorLandlinePhone ?? "",
+          status: String(personnel.status),
+        });
+        setExistingFiles(getExistingImages(personnel));
+        setPersonnelLoaded(true);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setFormError(handleApiError(error));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setPersonnelLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [open, personnelId]);
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -610,14 +788,24 @@ export function PersonnelCreateDialog({
       .forEach((file) => URL.revokeObjectURL(file.previewUrl));
   }
 
+  function removeExistingFile(field: ImageField, index: number) {
+    setExistingFiles((current) => ({
+      ...current,
+      [field]: current[field].filter((_, fileIndex) => fileIndex !== index),
+    }));
+  }
+
   function closeDialog() {
     clearFiles(files);
     setValues(EMPTY_FORM);
     setFiles(EMPTY_FILES);
+    setExistingFiles(EMPTY_EXISTING_FILES);
     setFieldErrors({});
     setFormError(null);
     setFileError(null);
     setUploadMessage(null);
+    setPersonnelLoading(false);
+    setPersonnelLoaded(false);
     setActiveTab("personal");
     onOpenChange(false);
   }
@@ -680,7 +868,10 @@ export function PersonnelCreateDialog({
       return;
     }
 
-    if (salonsLoading || salons.length === 0) {
+    if (
+      (!personnelId && salonsLoading) ||
+      (!personnelId && salons.length === 0)
+    ) {
       setFormError(
         salonsError ?? "برای ثبت پرسنل ابتدا باید یک سالن فعال انتخاب شود.",
       );
@@ -691,6 +882,34 @@ export function PersonnelCreateDialog({
     setFormError(null);
     const uploadFiles = filesForUpload();
     const documents: PersonnelDocumentRequest[] = [];
+    const existingImageDocuments: PersonnelDocumentRequest[] = [
+      ...existingFiles.profile.map((file) => ({
+        documentType: 0 as const,
+        fileName: file.fileName,
+        url: file.url,
+      })),
+      ...existingFiles.training.map((file) => ({
+        documentType: 1 as const,
+        fileName: file.fileName,
+        url: file.url,
+      })),
+      ...existingFiles.guarantor.map((file) => ({
+        documentType: 3 as const,
+        fileName: file.fileName,
+        url: file.url,
+      })),
+      ...existingFiles.healthCourse.map((file) => ({
+        documentType: 4 as const,
+        fileName: file.fileName,
+        url: file.url,
+      })),
+      ...existingFiles.healthTest.map((file) => ({
+        documentType: 5 as const,
+        fileName: file.fileName,
+        url: file.url,
+      })),
+    ];
+    documents.push(...existingImageDocuments);
     const fileService = new PersonnelFileService();
     const uploadedFileIds: number[] = [];
     let createRequestStarted = false;
@@ -723,13 +942,26 @@ export function PersonnelCreateDialog({
         });
       }
 
-      setUploadMessage("در حال ثبت اطلاعات پرسنل...");
-      const request = makeRequest(values, documents);
+      setUploadMessage(
+        personnelId ? "در حال ذخیره تغییرات پرسنل..." : "در حال ثبت اطلاعات پرسنل...",
+      );
+      const request = makeRequest(
+        values,
+        documents,
+        personnelId !== null &&
+          !documents.some((document) => document.documentType === 0),
+      );
       createRequestStarted = true;
-      const createResponse = await new PersonnelService().create(request);
-      if (createResponse.statusCode < 200 || createResponse.statusCode >= 300) {
+      const service = new PersonnelService();
+      const saveResponse = personnelId
+        ? await service.update(personnelId, request)
+        : await service.create(request);
+      if (saveResponse.statusCode < 200 || saveResponse.statusCode >= 300) {
         throw new Error(
-          createResponse.message ?? "ثبت اطلاعات پرسنل انجام نشد.",
+          saveResponse.message ??
+            (personnelId
+              ? "ذخیره تغییرات پرسنل انجام نشد."
+              : "ثبت اطلاعات پرسنل انجام نشد."),
         );
       }
 
@@ -952,8 +1184,10 @@ export function PersonnelCreateDialog({
               label="تصویر پرسنل"
               name="profile"
               files={files.profile}
+              existingFiles={existingFiles.profile}
               multiple={false}
               onChange={(nextFiles) => updateFiles("profile", nextFiles)}
+              onRemoveExisting={(index) => removeExistingFile("profile", index)}
               onValidationError={setImageError}
             />
           </div>
@@ -1048,7 +1282,9 @@ export function PersonnelCreateDialog({
               label="تصاویر دوره آموزشی"
               name="training"
               files={files.training}
+              existingFiles={existingFiles.training}
               onChange={(nextFiles) => updateFiles("training", nextFiles)}
+              onRemoveExisting={(index) => removeExistingFile("training", index)}
               onValidationError={setImageError}
             />
           </div>
@@ -1185,14 +1421,22 @@ export function PersonnelCreateDialog({
               label="تصاویر آزمایش‌ها"
               name="healthTest"
               files={files.healthTest}
+              existingFiles={existingFiles.healthTest}
               onChange={(nextFiles) => updateFiles("healthTest", nextFiles)}
+              onRemoveExisting={(index) =>
+                removeExistingFile("healthTest", index)
+              }
               onValidationError={setImageError}
             />
             <ImagePicker
               label="تصاویر دوره‌ها"
               name="healthCourse"
               files={files.healthCourse}
+              existingFiles={existingFiles.healthCourse}
               onChange={(nextFiles) => updateFiles("healthCourse", nextFiles)}
+              onRemoveExisting={(index) =>
+                removeExistingFile("healthCourse", index)
+              }
               onValidationError={setImageError}
             />
           </div>
@@ -1283,7 +1527,9 @@ export function PersonnelCreateDialog({
               label="تصاویر ضمانت"
               name="guarantor"
               files={files.guarantor}
+              existingFiles={existingFiles.guarantor}
               onChange={(nextFiles) => updateFiles("guarantor", nextFiles)}
+              onRemoveExisting={(index) => removeExistingFile("guarantor", index)}
               onValidationError={setImageError}
             />
           </div>
@@ -1292,6 +1538,7 @@ export function PersonnelCreateDialog({
   }
 
   const avatar = files.profile[0];
+  const existingAvatar = existingFiles.profile[0];
   const selectedSalon = salons.find((salon) => salon.id === values.salonId);
 
   return (
@@ -1313,14 +1560,14 @@ export function PersonnelCreateDialog({
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
           <header className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 px-5">
             <DialogTitle className="text-sm font-semibold text-fuchsia-950">
-              ثبت پرسنل
+              {personnelId ? "ویرایش پرسنل" : "ثبت پرسنل"}
             </DialogTitle>
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="بستن فرم ثبت پرسنل"
-              disabled={submitting}
+              aria-label="بستن فرم پرسنل"
+              disabled={submitting || personnelLoading}
               onClick={closeDialog}
               className="text-slate-500"
             >
@@ -1331,9 +1578,9 @@ export function PersonnelCreateDialog({
           <section className="grid shrink-0 grid-cols-1 items-center gap-3 border-b border-slate-100 px-5 py-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)]">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sky-100 text-sky-700">
-                {avatar ? (
+                {avatar || existingAvatar ? (
                   <Image
-                    src={avatar.previewUrl}
+                    src={avatar?.previewUrl ?? existingAvatar.url}
                     alt=""
                     fill
                     unoptimized
@@ -1426,9 +1673,16 @@ export function PersonnelCreateDialog({
             </div>
           </section>
 
-          <fieldset disabled={submitting} className="contents">
+          <fieldset
+            disabled={
+              submitting ||
+              personnelLoading ||
+              (personnelId !== null && !personnelLoaded)
+            }
+            className="contents"
+          >
             <nav
-              aria-label="بخش‌های فرم ثبت پرسنل"
+              aria-label="بخش‌های فرم پرسنل"
               role="tablist"
               className="flex h-[42px] shrink-0 overflow-x-auto border-b border-slate-200 px-3"
             >
@@ -1489,6 +1743,11 @@ export function PersonnelCreateDialog({
                   {formError}
                 </div>
               )}
+              {personnelLoading && (
+                <p className="mb-3 text-sm text-slate-500" role="status">
+                  در حال دریافت اطلاعات پرسنل...
+                </p>
+              )}
               {fileError && (
                 <div
                   className="mb-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700"
@@ -1513,15 +1772,26 @@ export function PersonnelCreateDialog({
           <footer className="flex min-h-14 shrink-0 items-center justify-start gap-2 border-t border-slate-100 px-5">
             <Button
               type="submit"
-              disabled={submitting || salonsLoading}
+              disabled={
+                submitting ||
+                salonsLoading ||
+                personnelLoading ||
+                (personnelId !== null && !personnelLoaded)
+              }
               className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800 disabled:opacity-70"
             >
-              {submitting ? "در حال ثبت..." : "ثبت پرسنل"}
+              {submitting
+                ? personnelId
+                  ? "در حال ذخیره..."
+                  : "در حال ثبت..."
+                : personnelId
+                  ? "ذخیره تغییرات"
+                  : "ثبت پرسنل"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              disabled={submitting}
+              disabled={submitting || personnelLoading}
               onClick={closeDialog}
               className="h-8 rounded-lg border-rose-500 px-3 text-xs text-rose-600"
             >

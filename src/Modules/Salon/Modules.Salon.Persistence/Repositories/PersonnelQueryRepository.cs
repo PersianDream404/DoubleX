@@ -35,6 +35,7 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
         return new GetByIdPersonnelResponseDto(
             personnel.Id,
             personnel.Status,
+            personnel.SalonId,
             new PersonalInfoDto(
                 personnel.PersonalInfo.FullName,
                 personnel.PersonalInfo.NationalCode.Value,

@@ -6,6 +6,7 @@ import type {
   CreatePersonnelRequest,
   PersonnelDetailsDto,
   PersonnelListResult,
+  UpdatePersonnelRequest,
 } from "./personnel.types";
 
 export class PersonnelService {
@@ -40,6 +41,13 @@ export class PersonnelService {
   create(request: CreatePersonnelRequest): Promise<ApiResponse<string>> {
     return this.api.post<string, CreatePersonnelRequest>(
       "/api/Personnel",
+      request,
+    );
+  }
+
+  update(id: number, request: UpdatePersonnelRequest): Promise<ApiResponse<string>> {
+    return this.api.put<string, UpdatePersonnelRequest>(
+      `/api/Personnel/${id}`,
       request,
     );
   }

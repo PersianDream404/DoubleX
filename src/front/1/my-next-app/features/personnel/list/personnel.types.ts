@@ -14,6 +14,7 @@ export interface PersonnelDto {
 export interface PersonnelDetailsDto {
   id: number;
   status: boolean;
+  salonId: number;
   personalInfo: {
     fullName: string;
     nationalCode: string;
@@ -83,6 +84,7 @@ export interface CreatePersonnelRequest {
     addressText: string;
     isCloseToSalon: boolean;
     pictureUrl: string | null;
+    clearPicture?: boolean;
   };
   jobInfo: {
     jobTitle: string;
@@ -123,3 +125,11 @@ export type GetAllPersonnelRequest = PageParams & {
 };
 
 export type PersonnelListResult = PagedResult<PersonnelDto>;
+
+export type UpdatePersonnelRequest = Omit<CreatePersonnelRequest, "documents"> & {
+  documents: {
+    documentType: PersonnelDocumentType;
+    fileName: string;
+    url: string | null;
+  }[];
+};
