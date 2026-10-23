@@ -20,7 +20,7 @@ public static class GetByIdPersonnelEndpoint
             app.MapGet($"{ApiInfo.Prefix}/{{id}}", handler: async (
 
 
-                    int id,
+                    long id,
                   [FromServices] IQueryBus _queryBus, CancellationToken ct
                 ) =>
             {

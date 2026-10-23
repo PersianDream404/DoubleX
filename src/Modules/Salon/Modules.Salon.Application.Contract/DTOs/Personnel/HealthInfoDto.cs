@@ -1,5 +1,9 @@
 namespace Modules.Personnel.Application.Contract.DTOs.Personnel;
 
 public sealed record HealthInfoDto(
-    string? HealthStatus,
-    string? AllergyStatus);
+    bool HealthStatus,
+    string? Diseases,
+    bool AllergyStatus,
+    string? Allergies,
+    IReadOnlyList<string> PictureCourse,
+    IReadOnlyList<string> PictureTest);

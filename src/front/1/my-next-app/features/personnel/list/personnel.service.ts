@@ -3,6 +3,7 @@ import type { ApiResponse } from "@/lib/api/types/api-response";
 
 import type {
   GetAllPersonnelRequest,
+  PersonnelDetailsDto,
   PersonnelListResult,
 } from "./personnel.types";
 
@@ -20,6 +21,17 @@ export class PersonnelService {
     return this.api.get<PersonnelListResult>(
       "/api/Personnel",
       query,
+      config,
+    );
+  }
+
+  getById(
+    id: number,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<PersonnelDetailsDto>> {
+    return this.api.get<PersonnelDetailsDto>(
+      `/api/Personnel/${id}`,
+      undefined,
       config,
     );
   }

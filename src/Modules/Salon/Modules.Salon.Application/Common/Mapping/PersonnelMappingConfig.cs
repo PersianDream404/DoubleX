@@ -72,29 +72,5 @@ public static class PersonnelMappingConfig
             .Map(dest => dest.GuarantorInfo, src => src.GuarantorInfo.Adapt<GuarantorInfo>());
         //  .Map(dest => dest.Documents, src => src.Documents.Select(x => x.Adapt<PersonnelDocument>()).ToList());
 
-        TypeAdapterConfig<Domain.Entities.Personnel, GetByIdPersonnelResponseDto>
-            .NewConfig()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.PersonalInfo, src => src.PersonalInfo.Adapt<PersonalInfoDto>())
-            .Map(dest => dest.JobInfo, src => src.JobInfo.Adapt<JobInfoDto>())
-            .Map(dest => dest.FinancialInfo, src => src.FinancialInfo.Adapt<FinancialInfoDto>())
-            .Map(dest => dest.HealthInfo, src => src.HealthInfo.Adapt<HealthInfoDto>())
-            .Map(dest => dest.GuarantorInfo, src => src.GuarantorInfo.Adapt<GuarantorInfoDto>());
-          //  .Map(dest => dest.Documents, src => src.Documents.Select(x => x.Adapt<DocumentDto>()).ToList());
-
-        TypeAdapterConfig<PersonalInfo, PersonalInfoDto>
-            .NewConfig();
-
-        TypeAdapterConfig<JobInfo, JobInfoDto>
-            .NewConfig();
-
-        TypeAdapterConfig<FinancialInfo, FinancialInfoDto>
-            .NewConfig();
-
-        TypeAdapterConfig<HealthInfo, HealthInfoDto>
-            .NewConfig();
-
-        TypeAdapterConfig<GuarantorInfo, GuarantorInfoDto>
-            .NewConfig();
     }
 }

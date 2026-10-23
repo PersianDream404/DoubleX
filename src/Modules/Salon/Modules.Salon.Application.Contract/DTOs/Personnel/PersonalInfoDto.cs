@@ -9,7 +9,8 @@ public sealed record PersonalInfoDto(
     string MobilePhone,
     string? LandlinePhone,
     string AddressText,
-    bool IsCloseToSalon);
+    bool IsCloseToSalon,
+    string? PictureUrl);
 
 public sealed record GetAllPersonalResponseDto(
     long Id,

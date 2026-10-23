@@ -37,11 +37,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { PersonnelDetailsDialog } from "./personnel-details-dialog";
 import { usePersonnels } from "./use-personnels";
 
 export function PersonnelsPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(
+    null,
+  );
   const { data, error, loading } = usePersonnels(query, page);
   const totalPages = Math.max(1, data?.pagination.totalPages ?? 1);
   const personnels = data?.list ?? [];
@@ -135,7 +139,13 @@ export function PersonnelsPage() {
                   personnels.map((personnel) => (
                     <TableRow key={personnel.id} className="h-9">
                       <TableCell className="px-2 py-2 text-sm">
-                        {personnel.fullName}
+                        <button
+                          type="button"
+                          className="rounded-sm text-start hover:text-fuchsia-700 focus-visible:outline-2 focus-visible:outline-fuchsia-600"
+                          onClick={() => setSelectedPersonnelId(personnel.id)}
+                        >
+                          {personnel.fullName}
+                        </button>
                       </TableCell>
                       <TableCell className="px-2 py-2 text-sm">
                         {personnel.nationalCode}
@@ -169,7 +179,13 @@ export function PersonnelsPage() {
                             <MoreHorizontal className="size-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start">
-                            <DropdownMenuItem>مشاهده</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setSelectedPersonnelId(personnel.id)
+                              }
+                            >
+                              مشاهده
+                            </DropdownMenuItem>
                             <DropdownMenuItem>ویرایش</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive">
                               حذف
@@ -247,6 +263,15 @@ export function PersonnelsPage() {
           </Pagination>
         </div>
       </main>
+      <PersonnelDetailsDialog
+        key={selectedPersonnelId ?? "closed"}
+        personnelId={selectedPersonnelId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedPersonnelId(null);
+          }
+        }}
+      />
     </div>
   );
 }
