@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -37,76 +37,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSalons } from "@/features/salons/list/use-salons";
 
-type Customer = {
-  id: number;
-  name: string;
-  phone: string;
-  nationalId: string;
-  nextAppointment: string;
-  vip: boolean;
-};
-
-// داده‌ی نمونه — بعداً با fetch از API جایگزین کن
-const DATA: Customer[] = Array.from({ length: 53 }, (_, i) => ({
-  id: i + 1,
-  name: i === 0 ? "سارا زمانی" : "ناخن کار",
-  phone: "۰۹۱۲۳۴۵۶۷۸۹",
-  nationalId: "۰۰۱۲۳۴۵۶۷۸",
-  nextAppointment: "۱۴۰۴/۰۹/۱۲",
-  vip: i === 0,
-}));
-
-const PAGE_SIZE = 10;
-
-export default function CustomersPage() {
+export default function SalonsPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-
-  const filtered = useMemo(
-    () => DATA.filter((c) => c.name.includes(query.trim())),
-    [query],
-  );
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { data, error, loading } = useSalons(query, page);
+  const totalPages = Math.max(1, data?.pagination.totalPages ?? 1);
+  const salons = data?.list ?? [];
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* هدر تیره بالای صفحه */}
       <div className="bg-black px-6 pb-24 pt-4">
         <Breadcrumb>
           <BreadcrumbList className="text-white/70">
             <BreadcrumbItem>
-              <BreadcrumbLink href="/customers">مدیریت مشتریان</BreadcrumbLink>
+              <BreadcrumbLink href="/salon">مدیریت سالن‌ها</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage className="text-white">
-                ثبت مشتریان
+                فهرست سالن‌ها
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
-      {/* کارت اصلی که روی هدر می‌افتد */}
       <main className="-mt-16 px-6">
         <div className="rounded-xl bg-background p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-4">
             <Button className="bg-fuchsia-700 text-white hover:bg-fuchsia-800">
               <Plus className="size-4" />
-              مشتری جدید
+              سالن جدید
             </Button>
 
             <div className="relative w-full max-w-sm">
               <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
+                onChange={(event) => {
+                  setQuery(event.target.value);
                   setPage(1);
                 }}
-                placeholder="جستجو بر اساس نام مشتری و عنوان شغلی..."
+                placeholder="جستجو بر اساس نام سالن..."
                 className="ps-9"
               />
             </div>
@@ -116,88 +90,112 @@ export default function CustomersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-start">
-                    نام و نام خانوادگی
-                  </TableHead>
-                  <TableHead className="text-start">تلفن همراه</TableHead>
-                  <TableHead className="text-start">کدملی</TableHead>
-                  <TableHead className="text-start">نوبت بعدی</TableHead>
+                  <TableHead className="text-start">نام سالن</TableHead>
                   <TableHead className="text-start">وضعیت</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>{c.name}</TableCell>
-                    <TableCell>{c.phone}</TableCell>
-                    <TableCell>{c.nationalId}</TableCell>
-                    <TableCell>{c.nextAppointment}</TableCell>
-                    <TableCell>
-                      {c.vip && (
-                        <Badge className="bg-fuchsia-700 text-white hover:bg-fuchsia-700">
-                          VIP
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                            />
-                          }
-                        >
-                          <MoreHorizontal className="size-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem>مشاهده</DropdownMenuItem>
-                          <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            حذف
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {error ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="py-8 text-center text-destructive"
+                      role="alert"
+                    >
+                      {error}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : loading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="py-8 text-center">
+                      در حال دریافت سالن‌ها...
+                    </TableCell>
+                  </TableRow>
+                ) : salons.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="py-8 text-center">
+                      سالنی یافت نشد.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  salons.map((salon) => (
+                    <TableRow key={salon.id}>
+                      <TableCell>{salon.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            salon.status
+                              ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                              : "bg-muted text-muted-foreground hover:bg-muted"
+                          }
+                        >
+                          {salon.status ? "فعال" : "غیرفعال"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                              />
+                            }
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem>مشاهده</DropdownMenuItem>
+                            <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              حذف
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
 
-          {/* صفحه‌بندی */}
           <Pagination className="mt-4">
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
                   href="#"
                   text="قبلی"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setPage((p) => Math.max(1, p - 1));
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((currentPage) => Math.max(1, currentPage - 1));
                   }}
                 />
               </PaginationItem>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
+              {Array.from({ length: totalPages }, (_, index) => index + 1)
                 .filter(
-                  (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1,
+                  (pageNumber) =>
+                    pageNumber === 1 ||
+                    pageNumber === totalPages ||
+                    Math.abs(pageNumber - page) <= 1,
                 )
-                .map((p, idx, arr) => (
-                  <PaginationItem key={p}>
-                    {idx > 0 && p - arr[idx - 1] > 1 && <PaginationEllipsis />}
+                .map((pageNumber, index, pages) => (
+                  <PaginationItem key={pageNumber}>
+                    {index > 0 && pageNumber - pages[index - 1] > 1 && (
+                      <PaginationEllipsis />
+                    )}
                     <PaginationLink
                       href="#"
-                      isActive={p === page}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPage(p);
+                      isActive={pageNumber === page}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setPage(pageNumber);
                       }}
                     >
-                      {p.toLocaleString("fa-IR")}
+                      {pageNumber.toLocaleString("fa-IR")}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
@@ -206,9 +204,11 @@ export default function CustomersPage() {
                 <PaginationNext
                   href="#"
                   text="بعدی"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setPage((p) => Math.min(totalPages, p + 1));
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setPage((currentPage) =>
+                      Math.min(totalPages, currentPage + 1),
+                    );
                   }}
                 />
               </PaginationItem>
