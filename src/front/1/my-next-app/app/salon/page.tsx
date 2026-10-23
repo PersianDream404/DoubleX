@@ -87,14 +87,14 @@ export default function SalonsPage() {
       </section>
 
       <main className="mx-auto -mt-[114px] w-[84%] max-w-[1200px] pb-8">
-        <div className="flex min-h-[368px] flex-col rounded-xl border border-fuchsia-100 bg-background px-3 pb-3 pt-1 shadow-sm">
+        <div className="flex min-h-[368px] flex-col rounded-xl border border-fuchsia-100 bg-background px-2 pb-2 pt-1 shadow-sm">
           <div className="overflow-hidden rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/60 hover:bg-muted/60">
-                  <TableHead className="h-9 text-start">نام سالن</TableHead>
-                  <TableHead className="h-9 w-32 text-start">وضعیت</TableHead>
-                  <TableHead className="h-9 w-14" />
+                  <TableHead className="h-9 px-2 text-start">نام سالن</TableHead>
+                  <TableHead className="h-9 w-32 px-2 text-start">وضعیت</TableHead>
+                  <TableHead className="h-9 w-14 px-2" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,8 +123,8 @@ export default function SalonsPage() {
                 ) : (
                   salons.map((salon) => (
                     <TableRow key={salon.id} className="h-9">
-                      <TableCell className="py-2 text-sm">{salon.name}</TableCell>
-                      <TableCell className="py-2">
+                      <TableCell className="px-2 py-2 text-sm">{salon.name}</TableCell>
+                      <TableCell className="px-2 py-2">
                         <Badge
                           className={
                             salon.status
@@ -135,7 +135,7 @@ export default function SalonsPage() {
                           {salon.status ? "فعال" : "غیرفعال"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 py-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={

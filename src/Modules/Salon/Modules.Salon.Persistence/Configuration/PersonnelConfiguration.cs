@@ -48,6 +48,7 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             {
                 pic.ToTable("PersonnelPicture");
             });
+            personal.Navigation(x => x.Picture).IsRequired(false);
             personal.OwnsOne(x => x.Address, address =>
             {
                 address.Property(p => p.Text).HasColumnName("AddressText").HasMaxLength(1000);

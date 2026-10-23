@@ -11,7 +11,7 @@ public sealed record PersonalInfo
     public DateOnly BirthDate { get; private set; }
     public MaritalStatus MaritalStatus { get; private set; }
     public int? ChildrenCount { get; private set; }
-    public Picture Picture{ get; private set; }
+    public Picture? Picture { get; private set; }
     public PhoneNumber MobilePhone { get; private set; }
     public PhoneNumber? LandlinePhone { get; private set; }
     public Address Address { get; private set; }
@@ -504,5 +504,4 @@ public sealed record GuarantorInfo
         GuarantorLandlinePhone = default!;
     }
 }
-
 

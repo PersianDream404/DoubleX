@@ -144,6 +144,20 @@ public sealed class Personnel : BaseEntityIdentity
         return Result.Success();
     }
 
+    public Result AssignToSalon(long salonId)
+    {
+        if (salonId <= 0)
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = nameof(SalonId),
+                ErrorMessage = "شناسه سالن باید بزرگتر از صفر باشد."
+            });
+        }
+
+        SalonId = salonId;
+        return Result.Success();
+    }
 
     public void ReplaceDocuments(IEnumerable<PersonnelDocument> documents)
     {
