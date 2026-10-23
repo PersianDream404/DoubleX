@@ -68,7 +68,9 @@ Apply this convention to **all list pages** added or refactored in this project,
 - Give every data row an operations column with a three-dot dropdown containing **مشاهده**, **ویرایش**, and **حذف** actions.
 - Use the shared pagination components with the established compact rounded fuchsia styling, previous/next controls, and current/first/last page treatment.
 - Preserve responsive behavior, accessible action labels (including row context for icon-only triggers), keyboard interaction, and loading, error, and empty states.
-- Keep actions honest: wire view/edit/delete to verified routes or API operations when they exist. Do not invent endpoints or present nonfunctional controls as working; if an operation is not yet available, make that limitation clear and follow the project’s established UX for unavailable actions.
+- If the domain supports an active/inactive status, show its current state and offer an operation-menu action labeled according to the next state (for example, **غیرفعال کردن** or **فعال کردن**). Verify the actual toggle endpoint and HTTP method, request/response contract, and update the relevant types/service instead of guessing. Refresh or update the list after success; surface failures without showing a success-shaped state.
+- Wire delete only to a verified API operation. Because deletion is destructive, ask for explicit confirmation that identifies the selected record, prevent duplicate submissions while pending, show API errors, and refresh the list after success. Reuse the same verified mutation/confirmation flow for delete actions opened from both the list menu and a detail dialog when both surfaces expose deletion.
+- Keep all actions honest: wire view/edit/status/delete only to verified routes or API operations. Do not invent endpoints or present nonfunctional controls as working; if an operation is unavailable, make that limitation clear and follow the project’s established UX.
 
 ## API-Backed List Features
 

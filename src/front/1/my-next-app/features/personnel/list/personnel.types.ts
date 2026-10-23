@@ -2,6 +2,7 @@ import type { PagedResult, PageParams } from "@/lib/api/types/paged-result";
 
 export interface PersonnelDto {
   id: number;
+  status: boolean;
   fullName: string;
   nationalCode: string;
   jobTitle: string;

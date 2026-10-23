@@ -14,6 +14,7 @@ public sealed record PersonalInfoDto(
 
 public sealed record GetAllPersonalResponseDto(
     long Id,
+    bool Status,
     string FullName,
     string NationalCode,
     string JobTitle,

@@ -47,4 +47,11 @@ export class PersonnelService {
   delete(id: number): Promise<ApiResponse<void>> {
     return this.api.delete<void>(`/api/Personnel/${id}`);
   }
+
+  toggle(id: number): Promise<ApiResponse<string>> {
+    return this.api.put<string, undefined>(
+      `/api/Personnel/${id}/Toggle`,
+      undefined,
+    );
+  }
 }

@@ -448,10 +448,12 @@ export function PersonnelDetailsDialog({
   personnelId,
   onOpenChange,
   onDeleteRequest,
+  onToggleRequest,
 }: {
   personnelId: number | null;
   onOpenChange: (open: boolean) => void;
   onDeleteRequest: (id: number, fullName: string) => void;
+  onToggleRequest: (id: number, fullName: string, status: boolean) => void;
 }) {
   const open = personnelId !== null;
   const [activeTab, setActiveTab] = useState<DetailsTab>("personal");
@@ -576,6 +578,21 @@ export function PersonnelDetailsDialog({
                     >
                       {details.status ? "فعال" : "غیرفعال"}
                     </Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 rounded-md px-2 text-xs"
+                      onClick={() =>
+                        onToggleRequest(
+                          details.id,
+                          details.personalInfo.fullName,
+                          details.status,
+                        )
+                      }
+                    >
+                      {details.status ? "غیرفعال کردن" : "فعال کردن"}
+                    </Button>
                   </div>
                   <p className="mt-1 text-xs text-fuchsia-700">
                     {details.jobInfo.jobTitle}

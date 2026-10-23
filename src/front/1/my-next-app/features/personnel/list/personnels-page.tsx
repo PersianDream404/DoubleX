@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,6 +62,13 @@ export function PersonnelsPage() {
   } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<{
+    id: number;
+    fullName: string;
+    status: boolean;
+  } | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+  const [toggling, setToggling] = useState(false);
   const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(
     null,
   );
@@ -91,6 +99,32 @@ export function PersonnelsPage() {
       setDeleteError(handleApiError(error));
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function requestToggle(id: number, fullName: string, status: boolean) {
+    setSelectedPersonnelId(null);
+    setToggleError(null);
+    setToggleTarget({ id, fullName, status });
+  }
+
+  async function confirmToggle() {
+    if (!toggleTarget || toggling) {
+      return;
+    }
+
+    setToggling(true);
+    setToggleError(null);
+
+    try {
+      await new PersonnelService().toggle(toggleTarget.id);
+      setToggleTarget(null);
+      setSelectedPersonnelId(null);
+      setRefreshKey((current) => current + 1);
+    } catch (error: unknown) {
+      setToggleError(handleApiError(error));
+    } finally {
+      setToggling(false);
     }
   }
 
@@ -152,6 +186,7 @@ export function PersonnelsPage() {
                   <TableHead className="h-9 px-2 text-start">شماره کارت</TableHead>
                   <TableHead className="h-9 px-2 text-start">تاریخ تولد</TableHead>
                   <TableHead className="h-9 px-2 text-start">شماره همراه</TableHead>
+                  <TableHead className="h-9 px-2 text-start">وضعیت</TableHead>
                   <TableHead className="h-9 w-14 px-2" />
                 </TableRow>
               </TableHeader>
@@ -159,7 +194,7 @@ export function PersonnelsPage() {
                 {error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="py-8 text-center text-sm text-destructive"
                       role="alert"
                     >
@@ -169,7 +204,7 @@ export function PersonnelsPage() {
                 ) : loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="py-8 text-center text-sm"
                       role="status"
                     >
@@ -178,7 +213,7 @@ export function PersonnelsPage() {
                   </TableRow>
                 ) : personnels.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-sm">
+                    <TableCell colSpan={8} className="py-8 text-center text-sm">
                       پرسنلی یافت نشد.
                     </TableCell>
                   </TableRow>
@@ -212,6 +247,17 @@ export function PersonnelsPage() {
                         {personnel.mobilePhone}
                       </TableCell>
                       <TableCell className="px-2 py-2">
+                        <Badge
+                          className={
+                            personnel.status
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-100"
+                          }
+                        >
+                          {personnel.status ? "فعال" : "غیرفعال"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-2 py-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
@@ -234,6 +280,19 @@ export function PersonnelsPage() {
                               مشاهده
                             </DropdownMenuItem>
                             <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                requestToggle(
+                                  personnel.id,
+                                  personnel.fullName,
+                                  personnel.status,
+                                )
+                              }
+                            >
+                              {personnel.status
+                                ? "غیرفعال کردن"
+                                : "فعال کردن"}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() =>
@@ -324,12 +383,59 @@ export function PersonnelsPage() {
           }
         }}
         onDeleteRequest={requestDelete}
+        onToggleRequest={requestToggle}
       />
       <PersonnelCreateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={() => setRefreshKey((current) => current + 1)}
       />
+      <Dialog
+        open={toggleTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !toggling) {
+            setToggleTarget(null);
+            setToggleError(null);
+          }
+        }}
+      >
+        <DialogContent dir="rtl" className="gap-4 sm:max-w-md">
+          <div className="space-y-2">
+            <DialogTitle className="text-right">
+              تغییر وضعیت پرسنل
+            </DialogTitle>
+            <DialogDescription className="text-right leading-6">
+              وضعیت «{toggleTarget?.fullName}» به{" "}
+              {toggleTarget?.status ? "غیرفعال" : "فعال"} تغییر کند؟
+            </DialogDescription>
+          </div>
+          {toggleError && (
+            <p className="text-sm text-destructive" role="alert">
+              {toggleError}
+            </p>
+          )}
+          <DialogFooter className="flex-row-reverse">
+            <Button
+              type="button"
+              disabled={toggling}
+              onClick={() => void confirmToggle()}
+            >
+              {toggling ? "در حال تغییر..." : "تأیید تغییر"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={toggling}
+              onClick={() => {
+                setToggleTarget(null);
+                setToggleError(null);
+              }}
+            >
+              انصراف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {

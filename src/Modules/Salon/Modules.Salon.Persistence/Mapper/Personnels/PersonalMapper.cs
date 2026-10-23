@@ -27,6 +27,7 @@ public static class PersonalMapper
         return x => new GetAllPersonalResponseDto(
 
             Id: x.Id,
+            Status: x.Status,
             FullName: x.PersonalInfo.FullName,
             NationalCode: x.PersonalInfo.NationalCode.Value,
             JobTitle: x.JobInfo.JobTitle,
