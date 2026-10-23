@@ -86,6 +86,23 @@ When a task adds an API-backed list feature, such as a personnel list:
 
 For example, implement a personnel list using the verified `/api/Personnel` endpoint and its actual paged request/response contract, not guessed field names or a mock response.
 
+## Detail Page and Dialog Convention
+
+Apply these rules to detail views opened from list pages or detail routes. For personnel details, use the existing dialog and the reference images in `src/front/1/my-next-app/img/personnel/` as the project's visual and content reference:
+
+- Inspect the entity's detail DTO and API before building the view. For personnel, the verified endpoint is `GET /api/Personnel/{id}`; use the feature service and typed response, and do not invent fields or show fabricated values for data the API does not provide.
+- Preserve the established detail-dialog composition: a clear title and close action, a compact entity summary with identity/status and key domain fields, icon actions where supported, a tab bar for related information, compact bordered information cards, and a footer for available actions.
+- Personnel details use the five domain tabs: personal, job, financial, health, and legal/guarantor information. Keep fields and images in the appropriate tab and map verified enum values to the project's Persian labels.
+- Match the reference's RTL layout, fuchsia accents, card proportions, spacing, and compact appearance. Keep the dialog responsive; at smaller viewports constrain its height and width, and make the detail content—not the header, tabs, or footer—the scrollable area.
+- Use accessible dialog and tab semantics, visible focus, descriptive labels for icon-only buttons, and keyboard-operable tabs (including arrow-key movement when using a tab pattern).
+- Fetch detail data for the selected ID using the existing API service. Represent loading, API error, empty/unselected, and populated states explicitly; cancel or ignore stale requests when the dialog closes or the selected ID changes. Do not use mock data in production.
+- Keep actions honest. Wire print, download, edit, or delete only when their behavior is supported; otherwise omit them or show a clearly disabled control with an explanation rather than implying the action works.
+- Render missing optional values with the existing empty-value convention. Preserve sensitive values according to the product's privacy expectations (for example, mask national identifiers and bank numbers); never expose credentials or tokens.
+- Format API dates without accidentally converting date-only values through the browser timezone or converting a Persian-calendar year a second time. Use the verified API representation and existing date utilities.
+- For reusable definition-list fields, make text direction an optional prop typed as `"ltr" | "rtl" | "auto"` and default it to `"auto"`. Override direction only for values whose format or product requirement needs it, such as phone or card numbers, and verify their displayed ordering in RTL.
+- Use image cards for API-provided images with meaningful alternative text, keyboard-accessible links/actions, and a clear empty state when there are no images. Reuse the project's image and card patterns.
+- Compare the finished dialog against the reference images at a matching viewport and inspect every tab, not just the first. Check that the layout does not clip important fields or create unnecessary nested scrollbars.
+
 ## Implementation Workflow
 
 For each task:
