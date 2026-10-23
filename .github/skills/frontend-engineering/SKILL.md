@@ -57,6 +57,17 @@ Treat this context as a starting point, not a substitute for inspecting the rele
 - Do not expose credentials, access tokens, or private environment variables.
 - Avoid mock data in production features unless explicitly requested.
 
+## List Page Convention
+
+Apply this convention to **all list pages** added or refactored in this project, regardless of entity or feature. Use `features/salons/list/salons-page.tsx` as the visual and structural reference, while keeping each list's columns and data specific to its verified domain:
+
+- Keep list UI in a focused feature component. Use the established Persian RTL breadcrumb/header with the dark fuchsia gradient, a primary create action and search field where relevant, followed by the overlapping content area.
+- Use the shared table components inside the bordered, rounded panel. Match the established compact header/row sizing, spacing, and colors.
+- Give every data row an operations column with a three-dot dropdown containing **مشاهده**, **ویرایش**, and **حذف** actions.
+- Use the shared pagination components with the established compact rounded fuchsia styling, previous/next controls, and current/first/last page treatment.
+- Preserve responsive behavior, accessible action labels (including row context for icon-only triggers), keyboard interaction, and loading, error, and empty states.
+- Keep actions honest: wire view/edit/delete to verified routes or API operations when they exist. Do not invent endpoints or present nonfunctional controls as working; if an operation is not yet available, make that limitation clear and follow the project’s established UX for unavailable actions.
+
 ## API-Backed List Features
 
 When a task adds an API-backed list feature, such as a personnel list:
@@ -70,7 +81,7 @@ When a task adds an API-backed list feature, such as a personnel list:
    - `<feature>.schema.ts` for relevant Zod validation, such as actual list filters or query parameters; do not add unrelated form schemas.
 4. Put the feature UI in a focused feature component (for example, `personnels-page.tsx`) and have the hook/service provide it with typed data. Include the applicable loading, error, empty, and populated states.
 5. Add the Next.js App Router entry point at `src/front/1/my-next-app/app/<route>/page.tsx` if it does not already exist. Keep it as a Server Component unless the route itself needs client behavior; otherwise render the feature component from the route. If a route already exists, inspect and integrate with it instead of overwriting it.
-6. Reuse established UI components and preserve responsive behavior, Persian text, and RTL conventions. Only change navigation or unrelated routes when the task requires it.
+6. Follow the shared [List Page Convention](#list-page-convention), using the salon list as the visual reference while retaining feature-specific columns. Only change navigation or unrelated routes when the task requires it.
 7. Run the relevant lint and build/type checks available in the package scripts and report exactly what was executed.
 
 For example, implement a personnel list using the verified `/api/Personnel` endpoint and its actual paged request/response contract, not guessed field names or a mock response.
