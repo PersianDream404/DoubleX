@@ -4,6 +4,7 @@ namespace Modules.Personnel.Application.Contract.DTOs.Personnel;
 
 public sealed record GetByIdPersonnelResponseDto(
     long Id,
+    bool Status,
     PersonalInfoDto PersonalInfo,
     JobInfoDto JobInfo,
     FinancialInfoDto FinancialInfo,

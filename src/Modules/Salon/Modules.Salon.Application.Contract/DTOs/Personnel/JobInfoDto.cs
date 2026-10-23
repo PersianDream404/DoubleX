@@ -5,5 +5,5 @@ public sealed record JobInfoDto(
     string PersonnelCode,
     DateOnly CooperationStartDate,
     string WorkingShiftType,
-    IReadOnlyList<string> Skills,
+    IReadOnlyList<string> JobPictures,
     string? WorkHistory);

@@ -12,6 +12,7 @@ export interface PersonnelDto {
 
 export interface PersonnelDetailsDto {
   id: number;
+  status: boolean;
   personalInfo: {
     fullName: string;
     nationalCode: string;
@@ -29,7 +30,7 @@ export interface PersonnelDetailsDto {
     personnelCode: string;
     cooperationStartDate: string;
     workingShiftType: string;
-    skills: string[];
+    jobPictures: string[];
     workHistory: string | null;
   };
   financialInfo: {

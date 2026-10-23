@@ -6,21 +6,19 @@ import {
   BadgeDollarSign,
   BriefcaseBusiness,
   ContactRound,
+  Download,
   HeartPulse,
-  ImageIcon,
   MapPin,
+  MoveUpRight,
   Phone,
+  Printer,
   UserRound,
   X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { handleApiError } from "@/lib/api/handle-api-error";
 
 import { PersonnelService } from "./personnel.service";
@@ -66,18 +64,31 @@ function displayEnum(value: string) {
 }
 
 function formatDate(value: string) {
-  const date = new Date(`${value}T00:00:00`);
+  const [year, month, day] = value.slice(0, 10).split("-");
 
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString("fa-IR");
+  return year && month && day ? `${year}/${month}/${day}` : value;
 }
 
-function maskedNumber(value: string) {
+function maskedNumber(value: string, visiblePrefix = 4, visibleSuffix = 4) {
   const digits = value.replace(/\D/g, "");
-  const visibleDigits = new Set(
-    [...digits].slice(-4).map((_, index) => digits.length - 4 + index),
-  );
+  const visibleDigits = new Set<number>();
+
+  for (
+    let index = 0;
+    index < Math.min(visiblePrefix, digits.length);
+    index += 1
+  ) {
+    visibleDigits.add(index);
+  }
+
+  for (
+    let index = Math.max(visiblePrefix, digits.length - visibleSuffix);
+    index < digits.length;
+    index += 1
+  ) {
+    visibleDigits.add(index);
+  }
+
   let digitIndex = 0;
 
   return [...value]
@@ -93,20 +104,46 @@ function maskedNumber(value: string) {
     .join("");
 }
 
+function downloadPersonnelDetails(details: PersonnelDetailsDto) {
+  const file = new Blob([JSON.stringify(details, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `personnel-${details.id}.json`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 function InfoCard({
   title,
   icon: Icon,
+  action,
+  centerTitle = false,
   children,
 }: {
   title: string;
   icon?: typeof UserRound;
+  action?: React.ReactNode;
+  centerTitle?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-slate-100 bg-white p-4">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-800">
-        {Icon && <Icon aria-hidden="true" className="size-4 text-fuchsia-700" />}
-        {title}
+    <section className="min-w-0 rounded-lg border border-slate-100 bg-white p-3">
+      <h3
+        className={`mb-3 flex min-h-5 items-center gap-2 text-sm font-semibold text-slate-800 ${
+          centerTitle ? "justify-center" : "justify-start"
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          {Icon && (
+            <Icon aria-hidden="true" className="size-4 text-slate-500" />
+          )}
+          {title}
+        </span>
+        {action}
       </h3>
       {children}
     </section>
@@ -116,14 +153,16 @@ function InfoCard({
 function InfoField({
   label,
   value,
+  dir = "auto",
 }: {
   label: string;
   value: React.ReactNode;
+  dir?: "ltr" | "rtl" | "auto";
 }) {
   return (
     <div className="min-w-0 space-y-1">
       <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="break-words text-sm leading-6 text-slate-800">
+      <dd dir={dir} className="break-words text-sm leading-6 text-slate-800">
         {value ?? "—"}
       </dd>
     </div>
@@ -133,14 +172,16 @@ function InfoField({
 function PictureCard({
   title,
   urls,
+  aspectClass = "aspect-square",
 }: {
   title: string;
   urls: string[];
+  aspectClass?: string;
 }) {
   return (
-    <InfoCard title={title} icon={ImageIcon}>
+    <InfoCard title={title} centerTitle>
       {urls.length > 0 ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           {urls.map((url, index) => (
             <a
               key={`${url}-${index}`}
@@ -148,7 +189,7 @@ function PictureCard({
               target="_blank"
               rel="noreferrer"
               aria-label={`مشاهده ${title} ${index + 1}`}
-              className="relative aspect-square overflow-hidden rounded-lg bg-fuchsia-50 focus-visible:outline-2 focus-visible:outline-fuchsia-600"
+              className={`group relative ${aspectClass} overflow-hidden rounded-lg bg-fuchsia-50 focus-visible:outline-2 focus-visible:outline-fuchsia-600`}
             >
               <Image
                 src={url}
@@ -158,6 +199,9 @@ function PictureCard({
                 className="object-cover"
                 sizes="180px"
               />
+              <span className="absolute bottom-2 start-2 flex size-9 items-center justify-center rounded-full bg-white text-fuchsia-600">
+                <MoveUpRight aria-hidden="true" className="size-4" />
+              </span>
             </a>
           ))}
         </div>
@@ -165,9 +209,11 @@ function PictureCard({
         <div
           role="img"
           aria-label="تصویری ثبت نشده است"
-          className="flex aspect-square items-center justify-center rounded-lg bg-fuchsia-50 text-fuchsia-400"
+          className={`relative flex ${aspectClass} items-center justify-center rounded-lg bg-fuchsia-50 text-fuchsia-200`}
         >
-          <ImageIcon aria-hidden="true" className="size-8" />
+          <span className="absolute bottom-2 start-2 flex size-9 items-center justify-center rounded-full bg-white text-fuchsia-600">
+            <MoveUpRight aria-hidden="true" className="size-4" />
+          </span>
         </div>
       )}
     </InfoCard>
@@ -187,34 +233,64 @@ function PersonnelDetailsContent({
   switch (activeTab) {
     case "personal":
       return (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(170px,.9fr)_minmax(130px,.7fr)]">
-          <InfoCard title="اطلاعات فردی" icon={UserRound}>
-            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-              <InfoField label="نام و نام خانوادگی" value={personalInfo.fullName} />
-              <InfoField label="کد ملی" value={personalInfo.nationalCode} />
-              <InfoField
-                label="تاریخ تولد"
-                value={formatDate(personalInfo.birthDate)}
-              />
-              <InfoField
-                label="وضعیت تأهل"
-                value={displayEnum(personalInfo.maritalStatus)}
-              />
-              <InfoField label="تعداد فرزندان" value={personalInfo.childrenCount} />
-              <InfoField
-                label="نزدیک محل کار"
-                value={personalInfo.isCloseToSalon ? "بله" : "خیر"}
-              />
-            </dl>
-            <div className="mt-5 border-t border-slate-100 pt-4">
-              <InfoField label="آدرس" value={personalInfo.addressText} />
-            </div>
-          </InfoCard>
+        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,2.65fr)_minmax(0,1.28fr)_minmax(0,1fr)]">
+          <div className="grid gap-3">
+            <InfoCard
+              title="اطلاعات فردی"
+              action={
+                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                  {personnel.status ? "فعال" : "غیرفعال"}
+                </Badge>
+              }
+            >
+              <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+                <InfoField label="نام خانوادگی" value={personalInfo.fullName} />
+                <InfoField
+                  dir="rtl"
+                  label="کد ملی"
+                  value={maskedNumber(personalInfo.nationalCode, 3, 0)}
+                />
+                <InfoField
+                  label="تاریخ تولد"
+                  dir="rtl"
+                  value={formatDate(personalInfo.birthDate)}
+                />
+                <InfoField
+                  label="وضعیت تأهل"
+                  value={`${displayEnum(personalInfo.maritalStatus)}${personalInfo.childrenCount ? ` - ${personalInfo.childrenCount} فرزند` : ""}`}
+                />
+              </dl>
+            </InfoCard>
+
+            <InfoCard
+              title="آدرس"
+              icon={MapPin}
+              action={
+                personalInfo.isCloseToSalon ? (
+                  <Badge className="bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-50">
+                    نزدیک محل کار
+                  </Badge>
+                ) : null
+              }
+            >
+              <dl>
+                <InfoField label="آدرس" value={personalInfo.addressText} />
+              </dl>
+            </InfoCard>
+          </div>
 
           <InfoCard title="شماره تماس" icon={Phone}>
-            <dl className="space-y-5">
-              <InfoField label="تلفن همراه" value={personalInfo.mobilePhone} />
-              <InfoField label="تلفن ثابت" value={personalInfo.landlinePhone} />
+            <dl className="space-y-4">
+              <InfoField
+                dir="rtl"
+                label="تلفن همراه"
+                value={personalInfo.mobilePhone}
+              />
+              <InfoField
+                dir="rtl"
+                label="تلفن ثابت"
+                value={personalInfo.landlinePhone}
+              />
             </dl>
           </InfoCard>
 
@@ -227,13 +303,14 @@ function PersonnelDetailsContent({
 
     case "job":
       return (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(220px,1fr)_minmax(180px,.8fr)]">
-          <InfoCard title="اطلاعات شغلی" icon={BriefcaseBusiness}>
-            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)_minmax(0,.82fr)]">
+          <InfoCard title="اطلاعات شغلی">
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
               <InfoField label="عنوان شغلی" value={jobInfo.jobTitle} />
-              <InfoField label="کد پرسنلی" value={jobInfo.personnelCode} />
+              <InfoField  dir="rtl" label="کد پرسنلی" value={jobInfo.personnelCode} />
               <InfoField
                 label="تاریخ شروع همکاری"
+                 dir="rtl"
                 value={formatDate(jobInfo.cooperationStartDate)}
               />
               <InfoField
@@ -244,24 +321,24 @@ function PersonnelDetailsContent({
           </InfoCard>
           <InfoCard title="سوابق کاری">
             <dl className="space-y-4">
-              <InfoField label="سوابق" value={jobInfo.workHistory} />
-              <InfoField
-                label="مهارت‌ها"
-                value={jobInfo.skills?.length ? jobInfo.skills.join("، ") : "—"}
-              />
+              <InfoField  dir="rtl" label="سوابق" value={jobInfo.workHistory} />
             </dl>
           </InfoCard>
-          <PictureCard title="تصاویر دوره آموزشی" urls={[]} />
+          <PictureCard
+            title="تصاویر دوره آموزشی"
+            urls={jobInfo.jobPictures}
+            aspectClass="aspect-[1.55]"
+          />
         </div>
       );
 
     case "financial":
       return (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <InfoCard title="حقوق و دستمزد" icon={BadgeDollarSign}>
-            <dl className="grid gap-5 sm:grid-cols-2">
+        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+          <InfoCard title="حقوق و دستمزد">
+            <dl>
               <InfoField
-                label="نوع حقوق و دستمزد"
+                label="نوع پرداخت"
                 value={displayEnum(financialInfo.salaryType)}
               />
             </dl>
@@ -269,11 +346,11 @@ function PersonnelDetailsContent({
           <InfoCard title="اطلاعات حساب بانکی">
             <dl className="grid gap-5 sm:grid-cols-2">
               <InfoField
-                label="شماره کارت"
+                label="شماره کارت"  dir="rtl"
                 value={maskedNumber(financialInfo.cardNumber)}
               />
               <InfoField
-                label="شماره حساب"
+                label="شماره حساب"  dir="rtl"
                 value={maskedNumber(financialInfo.accountNumber)}
               />
             </dl>
@@ -283,48 +360,77 @@ function PersonnelDetailsContent({
 
     case "health":
       return (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(160px,.8fr)_minmax(160px,.8fr)]">
-          <InfoCard title="اطلاعات سلامتی" icon={HeartPulse}>
-            <div className="mb-5 flex flex-wrap gap-2">
-              <Badge
-                className={
-                  healthInfo.healthStatus
-                    ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
-                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,2.9fr)_minmax(0,1fr)_minmax(0,1fr)]">
+          <InfoCard
+            title="اطلاعات سلامتی"
+            action={
+              <span className="flex flex-wrap gap-2">
+                <Badge
+                  className={
+                    healthInfo.healthStatus
+                      ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
+                      : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                  }
+                >
+                  {healthInfo.healthStatus ? "بیمار است" : "سالم"}
+                </Badge>
+                <Badge
+                  className={
+                    healthInfo.allergyStatus
+                      ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-100"
+                      : "bg-muted text-muted-foreground hover:bg-muted"
+                  }
+                >
+                  {healthInfo.allergyStatus ? "حساسیت دارد" : "بدون حساسیت"}
+                </Badge>
+              </span>
+            }
+          >
+            <dl className="space-y-5">
+              <InfoField
+                label="وضعیت بیماری"
+                value={
+                  healthInfo.diseases ||
+                  (healthInfo.healthStatus ? "بیمار است" : "سالم")
                 }
-              >
-                {healthInfo.healthStatus ? "بیمار است" : "سالم"}
-              </Badge>
-              <Badge
-                className={
-                  healthInfo.allergyStatus
-                    ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-100"
-                    : "bg-muted text-muted-foreground hover:bg-muted"
+              />
+              <InfoField
+                label="وضعیت حساسیت"
+                value={
+                  healthInfo.allergies ||
+                  (healthInfo.allergyStatus ? "حساسیت دارد" : "حساسیت ندارد")
                 }
-              >
-                {healthInfo.allergyStatus ? "حساسیت دارد" : "بدون حساسیت"}
-              </Badge>
-            </div>
-            <dl className="grid gap-5 sm:grid-cols-2">
-              <InfoField label="وضعیت بیماری" value={healthInfo.diseases} />
-              <InfoField label="وضعیت حساسیت" value={healthInfo.allergies} />
+              />
             </dl>
           </InfoCard>
-          <PictureCard title="تصاویر آزمایش‌ها" urls={healthInfo.pictureTest} />
           <PictureCard title="تصاویر دوره‌ها" urls={healthInfo.pictureCourse} />
+          <PictureCard title="تصاویر آزمایش‌ها" urls={healthInfo.pictureTest} />
         </div>
       );
 
     case "guarantor":
       return (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(220px,1fr)]">
-          <InfoCard title="اطلاعات معرف" icon={ContactRound}>
-            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-              <InfoField label="نام معرف یا ضامن" value={guarantorInfo.guarantorName} />
-              <InfoField label="نسبت با پرسنل" value={guarantorInfo.relationship} />
-              <InfoField label="تلفن همراه" value={guarantorInfo.guarantorPhone} />
+        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,.55fr)]">
+          <InfoCard title="اطلاعات معرف">
+            <dl className="space-y-5">
               <InfoField
-                label="تلفن ثابت"
+                label="نام معرف یا ضامن"
+                value={guarantorInfo.guarantorName}
+              />
+              <InfoField
+                label="نسبت با پرسنل"
+                value={guarantorInfo.relationship}
+              />
+            </dl>
+          </InfoCard>
+          <InfoCard title="اطلاعات تماس معرف" icon={Phone}>
+            <dl className="space-y-5">
+              <InfoField
+                label="تلفن همراه"  dir="rtl"
+                value={guarantorInfo.guarantorPhone}
+              />
+              <InfoField
+                label="تلفن ثابت"  dir="rtl"
                 value={guarantorInfo.guarantorLandlinePhone}
               />
             </dl>
@@ -391,10 +497,8 @@ export function PersonnelDetailsDialog({
 
   const loading =
     open && personnelId !== null && state.personnelId !== personnelId;
-  const details =
-    state.personnelId === personnelId ? state.data : null;
-  const error =
-    state.personnelId === personnelId ? state.error : null;
+  const details = state.personnelId === personnelId ? state.data : null;
+  const error = state.personnelId === personnelId ? state.error : null;
 
   return (
     <Dialog
@@ -405,7 +509,7 @@ export function PersonnelDetailsDialog({
     >
       <DialogContent
         showCloseButton={false}
-        className="flex h-[min(540px,90dvh)] w-[min(980px,calc(100vw-1rem))] max-w-none flex-col gap-0 overflow-hidden rounded-2xl border border-fuchsia-200 bg-white p-0 text-slate-800 shadow-xl sm:max-w-none"
+        className="flex h-[min(520px,94dvh)] w-[min(980px,calc(100vw-1rem))] max-w-none flex-col gap-0 overflow-hidden rounded-[18px] border border-[#d9b4da] bg-white p-0 text-slate-800 shadow-xl sm:max-w-none"
         dir="rtl"
       >
         <header className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 px-5">
@@ -425,7 +529,10 @@ export function PersonnelDetailsDialog({
         </header>
 
         {loading ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500" role="status">
+          <div
+            className="flex flex-1 items-center justify-center text-sm text-slate-500"
+            role="status"
+          >
             در حال دریافت جزئیات پرسنل...
           </div>
         ) : error ? (
@@ -437,8 +544,8 @@ export function PersonnelDetailsDialog({
           </div>
         ) : details ? (
           <>
-            <section className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3">
-              <div className="flex items-center gap-3">
+            <section className="grid shrink-0 grid-cols-1 items-center gap-3 border-b border-slate-100 px-5 py-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)]">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sky-100 text-sky-700">
                   {details.personalInfo.pictureUrl ? (
                     <Image
@@ -453,36 +560,84 @@ export function PersonnelDetailsDialog({
                     <UserRound aria-hidden="true" className="size-7" />
                   )}
                 </div>
-                <div>
-                  <p className="font-semibold">{details.personalInfo.fullName}</p>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold">
+                      {details.personalInfo.fullName}
+                    </p>
+                    <Badge
+                      className={
+                        details.status
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-100"
+                      }
+                    >
+                      {details.status ? "فعال" : "غیرفعال"}
+                    </Badge>
+                  </div>
                   <p className="mt-1 text-xs text-fuchsia-700">
                     {details.jobInfo.jobTitle}
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
-                <span>
-                  کد پرسنلی:{" "}
+              <div className="grid gap-1 border-slate-200 text-xs text-slate-600 sm:border-e sm:pe-5">
+                <span className="flex items-center gap-2">
+                  <BriefcaseBusiness
+                    aria-hidden="true"
+                    className="size-3.5 text-fuchsia-700"
+                  />
                   <strong className="font-medium text-slate-800">
-                    {details.jobInfo.personnelCode}
+                    کد پرسنلی
                   </strong>
+                  {details.jobInfo.personnelCode}
                 </span>
-                <span className="flex items-center gap-1">
-                  <MapPin aria-hidden="true" className="size-3.5 text-fuchsia-700" />
+                <span className="flex items-center gap-2">
+                  <ContactRound
+                    aria-hidden="true"
+                    className="size-3.5 text-fuchsia-700"
+                  />
                   {displayEnum(details.jobInfo.workingShiftType)}
                 </span>
+                <span className="text-slate-500">
+                  شروع همکاری:{" "}
+                  {formatDate(details.jobInfo.cooperationStartDate)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 sm:justify-self-end">
                 {details.personalInfo.isCloseToSalon && (
-                  <Badge className="bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-50">
+                  <Badge className="me-2 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-50">
                     نزدیک محل کار
                   </Badge>
                 )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="چاپ جزئیات پرسنل"
+                  title="چاپ"
+                  onClick={() => window.print()}
+                  className="text-slate-500 hover:text-fuchsia-700"
+                >
+                  <Printer className="size-5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="دریافت فایل جزئیات پرسنل"
+                  title="دریافت جزئیات"
+                  onClick={() => downloadPersonnelDetails(details)}
+                  className="text-slate-500 hover:text-fuchsia-700"
+                >
+                  <Download className="size-5" />
+                </Button>
               </div>
             </section>
 
             <nav
               aria-label="دسته‌بندی جزئیات پرسنل"
               role="tablist"
-              className="flex shrink-0 overflow-x-auto border-b border-slate-200 px-3"
+              className="flex h-[38px] shrink-0 overflow-x-auto border-b border-slate-200 px-3"
             >
               {TABS.map(({ id, label, icon: Icon }) => (
                 <button
@@ -494,7 +649,10 @@ export function PersonnelDetailsDialog({
                   aria-controls="personnel-details-panel"
                   onClick={() => setActiveTab(id)}
                   onKeyDown={(event) => {
-                    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+                    if (
+                      event.key !== "ArrowLeft" &&
+                      event.key !== "ArrowRight"
+                    ) {
                       return;
                     }
 
@@ -510,7 +668,7 @@ export function PersonnelDetailsDialog({
                       .getElementById(`personnel-tab-${nextTab.id}`)
                       ?.focus();
                   }}
-                  className={`flex min-w-max items-center justify-center gap-2 border-b-2 px-4 py-3 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-fuchsia-600 ${
+                  className={`flex min-w-[145px] flex-1 items-center justify-center gap-2 border-b-2 px-3 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-fuchsia-600 ${
                     activeTab === id
                       ? "border-fuchsia-600 text-fuchsia-700"
                       : "border-transparent text-slate-500 hover:text-fuchsia-700"
@@ -526,18 +684,18 @@ export function PersonnelDetailsDialog({
               id="personnel-details-panel"
               role="tabpanel"
               aria-labelledby={`personnel-tab-${activeTab}`}
-              className="flex-1 overflow-y-auto bg-white px-5 py-4"
+              className="flex-1 overflow-y-auto bg-white px-5 py-1"
             >
               <PersonnelDetailsContent
                 personnel={details}
                 activeTab={activeTab}
               />
             </div>
-            <footer className="flex shrink-0 justify-start gap-2 border-t border-slate-100 px-5 py-3">
+            <footer className="flex h-14 shrink-0 items-center justify-start gap-2 border-t border-slate-100 px-5">
               <Button
                 type="button"
                 disabled
-                className="bg-fuchsia-700 text-white"
+                className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white disabled:cursor-not-allowed disabled:opacity-100"
                 title="ویرایش اطلاعات هنوز در این بخش فعال نشده است"
               >
                 ویرایش اطلاعات
@@ -546,7 +704,7 @@ export function PersonnelDetailsDialog({
                 type="button"
                 variant="outline"
                 disabled
-                className="border-rose-500 text-rose-600"
+                className="h-8 rounded-lg border-rose-500 px-3 text-xs text-rose-600 disabled:cursor-not-allowed disabled:opacity-100"
                 title="حذف پرسنل هنوز در این بخش فعال نشده است"
               >
                 حذف پرسنل

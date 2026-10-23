@@ -34,6 +34,7 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
 
         return new GetByIdPersonnelResponseDto(
             personnel.Id,
+            personnel.Status,
             new PersonalInfoDto(
                 personnel.PersonalInfo.FullName,
                 personnel.PersonalInfo.NationalCode.Value,
@@ -50,7 +51,7 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
                 personnel.JobInfo.PersonnelCode,
                 personnel.JobInfo.CooperationStartDate,
                 personnel.JobInfo.WorkingShiftType.ToString(),
-                personnel.JobInfo.JobPictures?.ToArray() ?? [],
+                personnel.JobInfo.JobPictures.ToArray(),
                 personnel.JobInfo.WorkHistory),
             new FinancialInfoDto(
                 personnel.FinancialInfo.SalaryType.ToString(),
