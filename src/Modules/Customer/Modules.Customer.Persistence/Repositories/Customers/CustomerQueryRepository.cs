@@ -48,6 +48,30 @@ public sealed class CustomerQueryRepository(CustomerReadDbContext context)
             .ToPagedList(request.PageNumber, request.PageSize, cancellationToken);
     }
 
+    public async Task<PagedList<GetSelectListCustomerResponseDto>> GetSelectListProjectedAsync(
+        GetSelectListCustomerRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var query = context.Customers
+            .AsNoTracking()
+            .Where(customer => customer.SalonId == request.SalonId)
+            .Where(customer => customer.Status);
+
+        if (!string.IsNullOrWhiteSpace(request.Q))
+        {
+            var term = request.Q.Trim();
+            query = query.Where(customer =>
+                customer.FullName.Contains(term) ||
+                customer.NationalCode.Contains(term) ||
+                customer.MobilePhone.Contains(term));
+        }
+
+        return await query
+            .OrderBy(customer => customer.FullName)
+            .Select(CustomerMapper.ToGetSelectListDto())
+            .ToPagedList(request.PageNumber, request.PageSize, cancellationToken);
+    }
+
     public async Task<CustomerDetailsDto?> GetByIdProjectedAsync(
         long id,
         CancellationToken cancellationToken)

@@ -38,4 +38,13 @@ public static class CustomerMapper
             MobilePhone = customer.MobilePhone,
             Status = customer.Status
         };
+
+    public static Expression<Func<CustomerEntity, GetSelectListCustomerResponseDto>>
+        ToGetSelectListDto() =>
+        customer => new GetSelectListCustomerResponseDto
+        {
+            Id = customer.Id,
+            FullName = customer.FullName,
+            Status = customer.Status
+        };
 }

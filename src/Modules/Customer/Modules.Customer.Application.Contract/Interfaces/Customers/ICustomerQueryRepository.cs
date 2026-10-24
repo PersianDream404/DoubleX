@@ -12,6 +12,10 @@ public interface ICustomerQueryRepository : IQueryRepository<CustomerEntity>
         GetCustomersRequestDto request,
         CancellationToken cancellationToken);
 
+    Task<PagedList<GetSelectListCustomerResponseDto>> GetSelectListProjectedAsync(
+        GetSelectListCustomerRequestDto request,
+        CancellationToken cancellationToken);
+
     Task<CustomerDetailsDto?> GetByIdProjectedAsync(
         long id,
         CancellationToken cancellationToken);
