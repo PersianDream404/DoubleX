@@ -40,7 +40,7 @@ public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDepen
         claims.Add(new(CustomClaims.SalonId, SalonId.ToString()));
         foreach (var role in roles)
         {
-            claims.Add(new(CustomClaims.AccessLevel, nameof(role)));
+            claims.Add(new(CustomClaims.AccessLevel, role));
         }
 
         var token = GenerateToken(claims, expiredDate, secretKey);

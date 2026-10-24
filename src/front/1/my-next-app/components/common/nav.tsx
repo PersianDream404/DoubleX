@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, ChevronDown, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/auth/logout-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +24,10 @@ const NAV_ITEMS: NavItem[] = [
   { label: "مدیریت داشبورد", href: "/dashboard" },
   {
     label: "مدیریت پرسنل",
-    href: "/staff",
+    href: "/personnel",
     children: [
-      { label: "لیست پرسنل", href: "/staff" },
-      { label: "ثبت پرسنل", href: "/staff/new" },
+      { label: "لیست پرسنل", href: "/personnel" },
+      { label: "ثبت پرسنل", href: "/personnel/new" },
     ],
   },
   {
@@ -42,6 +43,10 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Navbar() {
   const pathname = usePathname();
+
+  if (pathname === "/login") {
+    return null;
+  }
 
   return (
     <header className="flex h-16 items-center justify-between bg-black px-6 text-white">
@@ -94,6 +99,7 @@ export function Navbar() {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="تقویم"
           className="hover:bg-white/10 hover:text-white"
         >
           <CalendarDays className="size-5" />
@@ -101,10 +107,12 @@ export function Navbar() {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="تنظیمات"
           className="hover:bg-white/10 hover:text-white"
         >
           <Settings className="size-5" />
         </Button>
+        <LogoutButton />
       </div>
     </header>
   );
