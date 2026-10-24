@@ -30,8 +30,8 @@ public class SalonModule : IModule
         });
     }
 
-    public async void RegisterBuilder(IApplicationBuilder builder)
-    {
-        await builder.ApplicationServices.SeedSalonAsync();
-    }
+    public void RegisterBuilder(IApplicationBuilder builder) =>
+        builder.ApplicationServices.SeedSalonAsync()
+            .GetAwaiter()
+            .GetResult();
 }

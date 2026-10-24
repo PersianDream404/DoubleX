@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Customer.Domain\Modules.Customer.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Resources\Customers\CustomerFieldNames.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CustomerFieldNames.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Resources\Customers\CustomerFieldNames.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CustomerFieldNames.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

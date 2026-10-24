@@ -10,6 +10,13 @@
     <Project Path="src/BuildingBlocks/SharedKernel/SharedKernel.csproj" Id="e9d5425e-3d9f-4088-8ccd-fd9edb22ee23" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Customer/">
+    <Project Path="src/Modules/Customer/Modules.Customer.Application.Contract/Modules.Customer.Application.Contract.csproj" />
+    <Project Path="src/Modules/Customer/Modules.Customer.Application/Modules.Customer.Application.csproj" />
+    <Project Path="src/Modules/Customer/Modules.Customer.Domain/Modules.Customer.Domain.csproj" />
+    <Project Path="src/Modules/Customer/Modules.Customer.Persistence/Modules.Customer.Persistence.csproj" />
+    <Project Path="src/Modules/Customer/Modules.Customer.Presentation/Modules.Customer.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Banner/">
     <Project Path="src/Modules/Banner/Modules.Banner.Application.Contract/Modules.Banner.Application.Contract.csproj" />
     <Project Path="src/Modules/Banner/Modules.Banner.Application/Modules.Banner.Application.csproj" />
