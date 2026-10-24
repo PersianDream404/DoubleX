@@ -12,6 +12,15 @@ builder.AddServiceDefaults();
 builder
     .AddSqlServerDbContext<ApplicationDbContext>
         (AppSetting.ConnectionString);
+builder.Services.AddSerilog((services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .ReadFrom.Services(services);
+});
+
 
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
