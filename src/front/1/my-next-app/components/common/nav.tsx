@@ -38,6 +38,14 @@ const NAV_ITEMS: NavItem[] = [
       { label: "ثبت مشتری", href: "/customers/new" },
     ],
   },
+  {
+    label: "مدیریت انبار",
+    href: "/inventory",
+    children: [
+      { label: "واحدهای اندازه‌گیری", href: "/inventory/units" },
+      { label: "مواد و کالاها", href: "/inventory/materials" },
+    ],
+  },
   { label: "رزرو و نوبت", href: "/bookings" },
 ];
 
