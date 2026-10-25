@@ -10,6 +10,7 @@
 		<ProjectReference Include="..\..\Modules\Identity\Identity.Presentation\Identity.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\Salon\Modules.Salon.Presentation\Modules.Salon.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\Customer\Modules.Customer.Presentation\Modules.Customer.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Inventory\Modules.Inventory.Presentation\Modules.Inventory.Presentation.csproj" />
 
 		<ProjectReference Include="..\Aspire\Project.ServiceDefaults\Project.ServiceDefaults.csproj" />
 	</ItemGroup>

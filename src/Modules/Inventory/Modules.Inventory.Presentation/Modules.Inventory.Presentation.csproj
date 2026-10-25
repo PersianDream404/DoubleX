@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Inventory.Application\Modules.Inventory.Application.csproj" />
+    <ProjectReference Include="..\Modules.Inventory.Application.Contract\Modules.Inventory.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Inventory.Persistence\Modules.Inventory.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+</Project>
