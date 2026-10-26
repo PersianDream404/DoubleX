@@ -106,6 +106,19 @@ export class ApiClient {
     return response.data;
   }
 
+  async patch<TData, TBody>(
+    path: string,
+    body: TBody,
+    config?: AxiosRequestConfig,
+  ): Promise<ApiResponse<TData>> {
+    const response = await this.client.patch<ApiResponse<TData>>(
+      path,
+      body,
+      config,
+    );
+    return response.data;
+  }
+
   async delete<TData = void>(
     path: string,
     config?: AxiosRequestConfig,

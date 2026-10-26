@@ -39,6 +39,11 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    label: "مدیریت خدمات",
+    href: "/services",
+    children: [{ label: "فهرست خدمات", href: "/services" }],
+  },
+  {
     label: "مدیریت انبار",
     href: "/inventory",
     children: [
