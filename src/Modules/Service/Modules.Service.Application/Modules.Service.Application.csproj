@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules.Service.Application.Contract\Modules.Service.Application.Contract.csproj" />
     <ProjectReference Include="..\Modules.Service.Domain\Modules.Service.Domain.csproj" />
+    <ProjectReference Include="..\..\Salon\Modules.Salon.Application.Contract\Modules.Salon.Application.Contract.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
   </ItemGroup>
   <ItemGroup>

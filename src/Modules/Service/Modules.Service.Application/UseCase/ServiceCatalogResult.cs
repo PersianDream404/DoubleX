@@ -14,6 +14,8 @@ internal static class ServiceCatalogResult
         ServiceOperationStatus.InactiveMaterial => Result.Error("ماده انتخاب‌شده غیرفعال است."),
         ServiceOperationStatus.InvalidTariffValidity => Result.Invalid(
             new ValidationError("پایان اعتبار تعرفه باید بعد از شروع اعتبار باشد.")),
+        ServiceOperationStatus.InvalidPersonnel => Result.Invalid(
+            new ValidationError("پرسنل فعال و متعلق به سالن انتخاب‌شده نیست.")),
         _ => Result.Error("عملیات انجام نشد.")
     };
 }

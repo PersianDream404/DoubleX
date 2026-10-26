@@ -18,6 +18,7 @@ public sealed class ServiceWriteDbContext(DbContextOptions<BaseDbContext> option
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<Domain.Entities.Service> Services => Set<Domain.Entities.Service>();
     public DbSet<ServiceMaterial> ServiceMaterials => Set<ServiceMaterial>();
+    public DbSet<ServicePersonnel> ServicePersonnels => Set<ServicePersonnel>();
     public DbSet<ServiceTariff> ServiceTariffs => Set<ServiceTariff>();
     public DbSet<ServiceTariffItem> ServiceTariffItems => Set<ServiceTariffItem>();
 }
@@ -35,6 +36,7 @@ public sealed class ServiceReadDbContext(DbContextOptions<BaseDbContext> options
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<Domain.Entities.Service> Services => Set<Domain.Entities.Service>();
     public DbSet<ServiceMaterial> ServiceMaterials => Set<ServiceMaterial>();
+    public DbSet<ServicePersonnel> ServicePersonnels => Set<ServicePersonnel>();
     public DbSet<ServiceTariff> ServiceTariffs => Set<ServiceTariff>();
     public DbSet<ServiceTariffItem> ServiceTariffItems => Set<ServiceTariffItem>();
 }
@@ -59,6 +61,11 @@ internal static class ServiceModelConfiguration
             builder.ToTable("Units", table => table.ExcludeFromMigrations());
             builder.HasKey(unit => unit.Id);
         });
+        modelBuilder.Entity<ServicePersonnelReference>(builder =>
+        {
+            builder.ToTable("Personnels", table => table.ExcludeFromMigrations());
+            builder.HasKey(personnel => personnel.Id);
+        });
     }
 }
 
@@ -80,6 +87,11 @@ internal sealed class ServiceInventoryUnitReference
     public long Id { get; set; }
     public string Name { get; set; } = null!;
     public string Symbol { get; set; } = null!;
+}
+
+internal sealed class ServicePersonnelReference
+{
+    public long Id { get; set; }
 }
 
 public sealed class ServiceWriteDbContextFactory

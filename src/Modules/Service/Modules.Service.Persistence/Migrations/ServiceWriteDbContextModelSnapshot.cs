@@ -157,6 +157,42 @@ namespace Modules.Service.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServicePersonnel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("PersonnelId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ServiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("SalonId", "Id");
+
+                    b.HasIndex("PersonnelId");
+
+                    b.HasIndex("SalonId", "ServiceId", "PersonnelId")
+                        .IsUnique()
+                        .HasFilter("[Deleted] = 0");
+
+                    b.ToTable("ServicePersonnels", (string)null);
+                });
+
             modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
                 {
                     b.Property<long>("Id")
@@ -289,6 +325,22 @@ namespace Modules.Service.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Modules.Service.Persistence.Context.ServicePersonnelReference", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Personnels", null, t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("Modules.Service.Persistence.Context.ServiceSalonReference", b =>
                 {
                     b.Property<long>("Id")
@@ -344,6 +396,24 @@ namespace Modules.Service.Persistence.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServicePersonnel", b =>
+                {
+                    b.HasOne("Modules.Service.Persistence.Context.ServicePersonnelReference", null)
+                        .WithMany()
+                        .HasForeignKey("PersonnelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Modules.Service.Domain.Entities.Service", "Service")
+                        .WithMany("Personnels")
+                        .HasForeignKey("SalonId", "ServiceId")
+                        .HasPrincipalKey("SalonId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+                });
+
             modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
                 {
                     b.HasOne("Modules.Service.Persistence.Context.ServiceSalonReference", null)
@@ -377,6 +447,8 @@ namespace Modules.Service.Persistence.Migrations
             modelBuilder.Entity("Modules.Service.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Materials");
+
+                    b.Navigation("Personnels");
 
                     b.Navigation("TariffItems");
                 });

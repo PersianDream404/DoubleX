@@ -28,6 +28,8 @@ public sealed record ServiceMaterialReadModel(
     decimal QuantityPerService,
     string? Description);
 
+public sealed record ServicePersonnelReadModel(long Id, long SalonId, long ServiceId, long PersonnelId);
+
 public sealed record ServiceTariffItemReadModel(long ServiceId, string ServiceName, decimal Amount);
 
 public sealed record ServiceTariffReadModel(

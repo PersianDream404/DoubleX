@@ -14,6 +14,7 @@ public sealed class Service : BaseEntityIdentity
 
     public ServiceCategory Category { get; private set; } = null!;
     public ICollection<ServiceMaterial> Materials { get; private set; } = new List<ServiceMaterial>();
+    public ICollection<ServicePersonnel> Personnels { get; private set; } = new List<ServicePersonnel>();
     public ICollection<ServiceTariffItem> TariffItems { get; private set; } = new List<ServiceTariffItem>();
 
     private Service() { }
