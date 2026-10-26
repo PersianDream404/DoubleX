@@ -8,4 +8,5 @@ public interface IServiceCategoryQueryRepository
     Task<IReadOnlyList<ServiceCategoryReadModel>> GetCategoriesAsync(
         long salonId,
         CancellationToken cancellationToken);
+    Task<ServiceCategoryReadModel?> GetCategoryByIdAsync(long id, CancellationToken cancellationToken);
 }

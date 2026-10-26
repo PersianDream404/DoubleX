@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Modules.Service.Domain.Interfaces;
 using Modules.Service.Domain.ReadModels;
 using Modules.Service.Persistence.Context;
+using Modules.Service.Persistence.Mapper.ServiceTariffs;
 
 namespace Modules.Service.Persistence.Repositories.ServiceTariffs;
 
@@ -14,25 +15,21 @@ public sealed class ServiceTariffQueryRepository(ServiceReadDbContext readContex
     public async Task<IReadOnlyList<ServiceTariffReadModel>> GetTariffsAsync(
         long salonId,
         CancellationToken cancellationToken)
-    {
-        var tariffs = await readContext.ServiceTariffs
+        => await readContext.ServiceTariffs
             .AsNoTracking()
             .Where(tariff => tariff.SalonId == salonId)
-            .Include(tariff => tariff.Items)
-                .ThenInclude(item => item.Service)
             .OrderBy(tariff => tariff.Name)
+            .Select(ServiceTariffMapper.ToReadModel())
             .ToListAsync(cancellationToken);
 
-        return tariffs.Select(tariff => new ServiceTariffReadModel(
-                tariff.Id,
-                tariff.SalonId,
-                tariff.Name,
-                tariff.ValidFrom,
-                tariff.ValidTo,
-                tariff.Items
-                    .OrderBy(item => item.Service.Name)
-                    .Select(item => new ServiceTariffItemReadModel(item.ServiceId, item.Service.Name, item.Amount))
-                    .ToList()))
-            .ToList();
+    public async Task<ServiceTariffReadModel?> GetTariffByIdAsync(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        return await readContext.ServiceTariffs
+            .AsNoTracking()
+            .Where(item => item.Id == id)
+            .Select(ServiceTariffMapper.ToReadModel())
+            .SingleOrDefaultAsync(cancellationToken);
     }
 }

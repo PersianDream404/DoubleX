@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Modules.Service.Domain.Interfaces;
 using Modules.Service.Domain.ReadModels;
 using Modules.Service.Persistence.Context;
+using Modules.Service.Persistence.Mapper.ServiceCategories;
 
 namespace Modules.Service.Persistence.Repositories.ServiceCategories;
 
@@ -18,11 +19,15 @@ public sealed class ServiceCategoryQueryRepository(ServiceReadDbContext readCont
             .AsNoTracking()
             .Where(category => category.SalonId == salonId)
             .OrderBy(category => category.Name)
-            .Select(category => new ServiceCategoryReadModel(
-                category.Id,
-                category.SalonId,
-                category.Name,
-                category.Description,
-                category.Status))
+            .Select(ServiceCategoryMapper.ToReadModel())
             .ToListAsync(cancellationToken);
+
+    public Task<ServiceCategoryReadModel?> GetCategoryByIdAsync(
+        long id,
+        CancellationToken cancellationToken) =>
+        readContext.ServiceCategories
+            .AsNoTracking()
+            .Where(category => category.Id == id)
+            .Select(ServiceCategoryMapper.ToReadModel())
+            .SingleOrDefaultAsync(cancellationToken);
 }

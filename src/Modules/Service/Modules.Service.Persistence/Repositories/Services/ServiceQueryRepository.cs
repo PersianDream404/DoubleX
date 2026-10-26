@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Modules.Service.Domain.Interfaces;
 using Modules.Service.Domain.ReadModels;
 using Modules.Service.Persistence.Context;
+using Modules.Service.Persistence.Mapper.Services;
 
 namespace Modules.Service.Persistence.Repositories.Services;
 
@@ -23,15 +24,7 @@ public sealed class ServiceQueryRepository(ServiceReadDbContext readContext)
             .AsNoTracking()
             .Where(service => service.SalonId == salonId)
             .OrderBy(service => service.Name)
-            .Select(service => new ServiceReadModel(
-                service.Id,
-                service.SalonId,
-                service.CategoryId,
-                service.Code,
-                service.Name,
-                service.Description,
-                service.DurationMinutes,
-                service.Status))
+            .Select(ServiceMapper.ToReadModel())
             .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<ServiceReadModel>> GetActiveServicesAsync(
@@ -43,14 +36,15 @@ public sealed class ServiceQueryRepository(ServiceReadDbContext readContext)
                               service.Status &&
                               service.Category.Status)
             .OrderBy(service => service.Name)
-            .Select(service => new ServiceReadModel(
-                service.Id,
-                service.SalonId,
-                service.CategoryId,
-                service.Code,
-                service.Name,
-                service.Description,
-                service.DurationMinutes,
-                service.Status))
+            .Select(ServiceMapper.ToReadModel())
             .ToListAsync(cancellationToken);
+
+    public Task<ServiceReadModel?> GetServiceByIdAsync(
+        long id,
+        CancellationToken cancellationToken) =>
+        readContext.Services
+            .AsNoTracking()
+            .Where(service => service.Id == id)
+            .Select(ServiceMapper.ToReadModel())
+            .SingleOrDefaultAsync(cancellationToken);
 }

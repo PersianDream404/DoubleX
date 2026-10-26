@@ -8,4 +8,5 @@ public interface IServiceTariffQueryRepository
     Task<IReadOnlyList<ServiceTariffReadModel>> GetTariffsAsync(
         long salonId,
         CancellationToken cancellationToken);
+    Task<ServiceTariffReadModel?> GetTariffByIdAsync(long id, CancellationToken cancellationToken);
 }

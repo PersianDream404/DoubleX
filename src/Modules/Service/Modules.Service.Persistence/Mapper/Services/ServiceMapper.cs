@@ -1,13 +1,13 @@
 using System.Linq.Expressions;
-using Modules.Service.Application.Contract.DTOs.Services;
+using Modules.Service.Domain.ReadModels;
 using ServiceEntity = Modules.Service.Domain.Entities.Service;
 
 namespace Modules.Service.Persistence.Mapper.Services;
 
 public static class ServiceMapper
 {
-    public static Expression<Func<ServiceEntity, ServiceDto>> ToDto() =>
-        service => new ServiceDto(
+    public static Expression<Func<ServiceEntity, ServiceReadModel>> ToReadModel() =>
+        service => new ServiceReadModel(
             service.Id,
             service.SalonId,
             service.CategoryId,
