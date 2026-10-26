@@ -44,7 +44,8 @@ namespace Modules.Reception.Persistence.Migrations
                     b.Property<bool>("Deleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("FinancialStatus")
+                    b.Property<int>("ReceptionFinancialStatus")
+                        .HasColumnName("FinancialStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")

@@ -20,7 +20,7 @@ public sealed class Reception : BaseEntityIdentity
     public decimal SubTotal { get; private set; }
     public decimal TotalDiscountAmount { get; private set; }
     public decimal TotalAmount { get; private set; }
-    public ReceptionFinancialStatus FinancialStatus { get; private set; }
+    public ReceptionFinancialStatus ReceptionFinancialStatus { get; private set; }
     public string? Notes { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
     public int Revision { get; private set; }
@@ -48,7 +48,7 @@ public sealed class Reception : BaseEntityIdentity
         ReceptionDate = receptionDate;
         Notes = Normalize(notes);
         ReceptionStatus = ReceptionStatus.Open;
-        FinancialStatus = ReceptionFinancialStatus.Unpaid;
+        ReceptionFinancialStatus = ReceptionFinancialStatus.Unpaid;
     }
 
     public static Reception Create(
@@ -224,7 +224,7 @@ public sealed class Reception : BaseEntityIdentity
     }
 
     private void RecalculateFinancialStatus() =>
-        FinancialStatus = NetPaidAmount <= 0 ? ReceptionFinancialStatus.Unpaid :
+        ReceptionFinancialStatus = NetPaidAmount <= 0 ? ReceptionFinancialStatus.Unpaid :
             NetPaidAmount < TotalAmount
                 ? ReceptionFinancialStatus.PartiallyPaid
                 : ReceptionFinancialStatus.Paid;

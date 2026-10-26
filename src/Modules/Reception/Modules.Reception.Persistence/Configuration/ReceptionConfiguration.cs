@@ -18,7 +18,9 @@ public sealed class ReceptionConfiguration : IEntityTypeConfiguration<ReceptionE
         builder.Property(item => item.SubTotal).HasPrecision(18, 2);
         builder.Property(item => item.TotalDiscountAmount).HasPrecision(18, 2);
         builder.Property(item => item.TotalAmount).HasPrecision(18, 2);
-        builder.Property(item => item.FinancialStatus).IsRequired();
+        builder.Property(item => item.ReceptionFinancialStatus)
+            .HasColumnName("FinancialStatus")
+            .IsRequired();
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.Property(item => item.Revision).IsConcurrencyToken();
         builder.HasIndex(item => new { item.SalonId, item.ReceptionNumber }).IsUnique();

@@ -24,7 +24,7 @@ public static class ReceptionMapper
             reception.TotalAmount - (reception.Payments
                 .Where(payment => payment.PaymentStatus == ReceptionPaymentStatus.Succeeded)
                 .Sum(payment => (decimal?)payment.Amount) ?? 0m),
-            reception.FinancialStatus);
+            reception.ReceptionFinancialStatus);
 
     public static Expression<Func<ReceptionEntity, ReceptionDetailsReadModel>> ToDetailsReadModel() =>
         reception => new ReceptionDetailsReadModel(
@@ -45,7 +45,7 @@ public static class ReceptionMapper
             reception.TotalAmount - (reception.Payments
                 .Where(payment => payment.PaymentStatus == ReceptionPaymentStatus.Succeeded)
                 .Sum(payment => (decimal?)payment.Amount) ?? 0m),
-            reception.FinancialStatus,
+            reception.ReceptionFinancialStatus,
             reception.Notes,
             reception.Services.Select(service => new ReceptionServiceReadModel(
                 service.Id,
