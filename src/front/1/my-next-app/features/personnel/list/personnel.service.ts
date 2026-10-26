@@ -38,8 +38,8 @@ export class PersonnelService {
     );
   }
 
-  create(request: CreatePersonnelRequest): Promise<ApiResponse<string>> {
-    return this.api.post<string, CreatePersonnelRequest>(
+  create(request: CreatePersonnelRequest): Promise<ApiResponse<{ id: number; message: string }>> {
+    return this.api.post<{ id: number; message: string }, CreatePersonnelRequest>(
       "/api/Personnel",
       request,
     );

@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { handleApiError } from "@/lib/api/handle-api-error";
+import { ServiceCatalogService } from "@/features/services/list/service.service";
+import type { ServiceDto } from "@/features/services/list/service.types";
 
 import { PersonnelService } from "./personnel.service";
 import type { PersonnelDetailsDto } from "./personnel.types";
@@ -29,6 +31,13 @@ type DetailsTab = "personal" | "job" | "financial" | "health" | "guarantor";
 type DetailsState = {
   personnelId: number | null;
   data: PersonnelDetailsDto | null;
+  error: string | null;
+};
+
+type PersonnelServicesState = {
+  personnelId: number | null;
+  names: string[];
+  loading: boolean;
   error: string | null;
 };
 
@@ -223,9 +232,11 @@ function PictureCard({
 function PersonnelDetailsContent({
   personnel,
   activeTab,
+  services,
 }: {
   personnel: PersonnelDetailsDto;
   activeTab: DetailsTab;
+  services: PersonnelServicesState;
 }) {
   const { personalInfo, jobInfo, financialInfo, healthInfo, guarantorInfo } =
     personnel;
@@ -318,6 +329,35 @@ function PersonnelDetailsContent({
                 value={displayEnum(jobInfo.workingShiftType)}
               />
             </dl>
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <h3 className="mb-2 text-xs font-medium text-slate-600">
+                خدمت‌های قابل ارائه
+              </h3>
+              {services.personnelId !== personnel.id || services.loading ? (
+                <p className="text-xs text-slate-500" role="status">
+                  در حال دریافت خدمت‌های پرسنل...
+                </p>
+              ) : services.error ? (
+                <p className="text-xs text-destructive" role="alert">
+                  {services.error}
+                </p>
+              ) : services.names.length === 0 ? (
+                <p className="text-xs text-slate-500">
+                  خدمتی برای این پرسنل ثبت نشده است.
+                </p>
+              ) : (
+                <ul className="flex flex-wrap gap-2">
+                  {services.names.map((name) => (
+                    <li
+                      key={name}
+                      className="rounded-full bg-fuchsia-50 px-2.5 py-1 text-xs text-fuchsia-800"
+                    >
+                      {name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </InfoCard>
           <InfoCard title="سوابق کاری">
             <dl className="space-y-4">
@@ -464,39 +504,107 @@ export function PersonnelDetailsDialog({
     data: null,
     error: null,
   });
+  const [services, setServices] = useState<PersonnelServicesState>({
+    personnelId: null,
+    names: [],
+    loading: false,
+    error: null,
+  });
 
   useEffect(() => {
     if (!open || personnelId === null) {
       return;
     }
 
+    const id = personnelId;
     const controller = new AbortController();
-    const service = new PersonnelService();
+    const personnelService = new PersonnelService();
+    const catalogService = new ServiceCatalogService();
 
-    Promise.resolve()
-      .then(() => service.getById(personnelId, { signal: controller.signal }))
-      .then((response) => {
+    async function loadDetails() {
+      try {
+        const response = await personnelService.getById(id, {
+          signal: controller.signal,
+        });
         if (!response.data) {
           throw new Error(response.message ?? "جزئیات پرسنل دریافت نشد.");
         }
 
-        if (!controller.signal.aborted) {
-          setState({
-            personnelId,
-            data: response.data,
-            error: null,
-          });
+        const personnel = response.data;
+        if (controller.signal.aborted) {
+          return;
         }
-      })
-      .catch((error: unknown) => {
+
+        setState({
+          personnelId: id,
+          data: personnel,
+          error: null,
+        });
+
+        try {
+          const [assignmentsResponse, servicesResponse] = await Promise.all([
+            catalogService.getPersonnelServiceAssignments(
+              personnel.salonId,
+              personnel.id,
+              { signal: controller.signal },
+            ),
+            catalogService.getAll(personnel.salonId, {
+              signal: controller.signal,
+            }),
+          ]);
+
+          if (!assignmentsResponse.data) {
+            throw new Error(
+              assignmentsResponse.message ??
+                "خدمت‌های اختصاص‌یافته به پرسنل دریافت نشد.",
+            );
+          }
+          if (!servicesResponse.data) {
+            throw new Error(
+              servicesResponse.message ?? "فهرست خدمات سالن دریافت نشد.",
+            );
+          }
+
+          const servicesById = new Map<number, ServiceDto>(
+            servicesResponse.data.map((service) => [service.id, service]),
+          );
+          const serviceNames = assignmentsResponse.data
+            .map((assignment) => servicesById.get(assignment.serviceId)?.name)
+            .filter((name): name is string => Boolean(name));
+
+          if (!controller.signal.aborted) {
+            setServices({
+              personnelId: id,
+              names: serviceNames,
+              loading: false,
+              error:
+                serviceNames.length < assignmentsResponse.data.length
+                  ? "نام بعضی از خدمت‌های اختصاص‌یافته در فهرست سالن موجود نیست."
+                  : null,
+            });
+          }
+        } catch (error: unknown) {
+          if (!controller.signal.aborted) {
+            setServices({
+              personnelId: id,
+              names: [],
+              loading: false,
+              error: handleApiError(error),
+            });
+          }
+        }
+      } catch (error: unknown) {
         if (!controller.signal.aborted) {
           setState({
-            personnelId,
+            personnelId: id,
             data: null,
             error: handleApiError(error),
           });
         }
-      });
+      }
+    }
+
+    void loadDetails();
 
     return () => controller.abort();
   }, [open, personnelId]);
@@ -710,6 +818,7 @@ export function PersonnelDetailsDialog({
               <PersonnelDetailsContent
                 personnel={details}
                 activeTab={activeTab}
+                services={services}
               />
             </div>
             <footer className="flex h-14 shrink-0 items-center justify-start gap-2 border-t border-slate-100 px-5">

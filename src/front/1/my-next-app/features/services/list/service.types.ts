@@ -49,6 +49,19 @@ export interface ServiceMaterialRequest {
   description: string | null;
 }
 
+export interface ServicePersonnelDto {
+  id: number;
+  salonId: number;
+  serviceId: number;
+  personnelId: number;
+}
+
+export interface ServicePersonnelRequest {
+  salonId: number;
+  serviceId: number;
+  personnelId: number;
+}
+
 export interface ServiceRequest {
   salonId: number;
   categoryId: number;

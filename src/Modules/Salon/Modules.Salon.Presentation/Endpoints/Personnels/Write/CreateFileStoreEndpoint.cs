@@ -8,7 +8,6 @@ using Modules.Personnel.Application.Contract.DTOs.Personnel;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Commands;
 using Modules.Personnel.Presentation.Endpoints.Personnels;
 using SharedKernel.Constants;
-using SharedKernel.Helper;
 using SharedKernel.Interface;
 
 namespace Modules.Personnel.Presentation.Endpoints.Personnels.Write;
@@ -38,7 +37,11 @@ public static class CreatePersonnelEndpoint
                     return BadRequest(message);
                 }
 
-                return Ok(MessageHelper.Format(AppMessages.Create, AppEntity.Personnel));
+                return Ok(new
+                {
+                    id = result.Value,
+                    message = "پرسنل با موفقیت ثبت شد."
+                });
 
 
             })

@@ -16,6 +16,7 @@ import {
   ImagePlus,
   MapPin,
   Phone,
+  Search,
   Trash2,
   UserRound,
   X,
@@ -43,6 +44,11 @@ import type {
   PersonnelDocumentRequest,
   PersonnelDocumentType,
 } from "./personnel.types";
+import { ServiceCatalogService } from "@/features/services/list/service.service";
+import type {
+  ServiceDto,
+  ServicePersonnelDto,
+} from "@/features/services/list/service.types";
 
 type CreateTab = "personal" | "job" | "financial" | "health" | "guarantor";
 type ImageField =
@@ -609,6 +615,18 @@ export function PersonnelCreateDialog({
   const [submitting, setSubmitting] = useState(false);
   const [personnelLoading, setPersonnelLoading] = useState(false);
   const [personnelLoaded, setPersonnelLoaded] = useState(false);
+  const [savedPersonnelId, setSavedPersonnelId] = useState<number | null>(null);
+  const [serviceOptions, setServiceOptions] = useState<ServiceDto[]>([]);
+  const [servicePersonnelLinks, setServicePersonnelLinks] = useState<
+    ServicePersonnelDto[]
+  >([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [servicePersonnelLoading, setServicePersonnelLoading] = useState(false);
+  const [servicePersonnelReady, setServicePersonnelReady] = useState(false);
+  const [servicePersonnelError, setServicePersonnelError] = useState<
+    string | null
+  >(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -765,6 +783,89 @@ export function PersonnelCreateDialog({
     return () => controller.abort();
   }, [open, personnelId]);
 
+  useEffect(() => {
+    if (
+      !open ||
+      values.salonId <= 0 ||
+      (personnelId !== null && !personnelLoaded)
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const service = new ServiceCatalogService();
+
+    Promise.resolve()
+      .then(() => {
+        if (controller.signal.aborted) {
+          return null;
+        }
+        setServicePersonnelLoading(true);
+        setServicePersonnelReady(false);
+        setServicePersonnelError(null);
+        setServiceOptions([]);
+        setServicePersonnelLinks([]);
+        setSelectedServiceIds([]);
+        setServiceSearch("");
+        return service.getAll(values.salonId, {
+          signal: controller.signal,
+        });
+      })
+      .then(async (servicesResponse) => {
+        if (!servicesResponse) {
+          return null;
+        }
+        if (!servicesResponse.data) {
+          throw new Error(
+            servicesResponse.message ?? "فهرست خدمات سالن دریافت نشد.",
+          );
+        }
+
+        const services = servicesResponse.data;
+        const assignmentResponse =
+          personnelId === null
+            ? null
+            : await service.getPersonnelServiceAssignments(
+                values.salonId,
+                personnelId,
+                { signal: controller.signal },
+              );
+        if (assignmentResponse && !assignmentResponse.data) {
+          throw new Error(
+            assignmentResponse.message ??
+              "خدمت‌های اختصاص‌یافته به پرسنل دریافت نشد.",
+          );
+        }
+
+        if (controller.signal.aborted) {
+          return null;
+        }
+
+        const links = assignmentResponse?.data ?? [];
+        return { services, links };
+      })
+      .then((result) => {
+        if (result && !controller.signal.aborted) {
+          setServiceOptions(result.services);
+          setServicePersonnelLinks(result.links);
+          setSelectedServiceIds(result.links.map((item) => item.serviceId));
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setServicePersonnelError(handleApiError(error));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setServicePersonnelLoading(false);
+          setServicePersonnelReady(true);
+        }
+      });
+
+    return () => controller.abort();
+  }, [open, values.salonId, personnelId, personnelLoaded]);
+
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) => {
@@ -806,6 +907,13 @@ export function PersonnelCreateDialog({
     setUploadMessage(null);
     setPersonnelLoading(false);
     setPersonnelLoaded(false);
+    setSavedPersonnelId(null);
+    setServiceOptions([]);
+    setServicePersonnelLinks([]);
+    setSelectedServiceIds([]);
+    setServicePersonnelLoading(false);
+    setServicePersonnelReady(false);
+    setServicePersonnelError(null);
     setActiveTab("personal");
     onOpenChange(false);
   }
@@ -845,6 +953,60 @@ export function PersonnelCreateDialog({
     ];
   }
 
+  async function synchronizeServicePersonnel(personnelRecordId: number) {
+    const service = new ServiceCatalogService();
+    const links = [...servicePersonnelLinks];
+    const selectedIds = new Set(selectedServiceIds);
+
+    for (const serviceId of selectedIds) {
+      if (links.some((item) => item.serviceId === serviceId)) {
+        continue;
+      }
+
+      const response = await service.addPersonnelToService({
+        salonId: values.salonId,
+        serviceId,
+        personnelId: personnelRecordId,
+      });
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(response.message ?? "اختصاص پرسنل به خدمت انجام نشد.");
+      }
+
+      const assignments = await service.getServicePersonnels(
+        values.salonId,
+        serviceId,
+      );
+      const link = assignments.data?.find(
+        (item) => item.personnelId === personnelRecordId,
+      );
+      if (!link) {
+        throw new Error(
+          "خدمت ثبت شد اما ارتباط پرسنل برای تأیید دوباره دریافت نشد.",
+        );
+      }
+
+      links.push(link);
+      setServicePersonnelLinks([...links]);
+    }
+
+    for (const link of links.filter((item) => !selectedIds.has(item.serviceId))) {
+      const response = await service.removePersonnelFromService(
+        link.id,
+        values.salonId,
+        link.serviceId,
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw new Error(response.message ?? "حذف خدمت از پرسنل انجام نشد.");
+      }
+
+      const index = links.findIndex((item) => item.id === link.id);
+      if (index >= 0) {
+        links.splice(index, 1);
+      }
+      setServicePersonnelLinks([...links]);
+    }
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) {
@@ -868,12 +1030,21 @@ export function PersonnelCreateDialog({
       return;
     }
 
+    const currentPersonnelId = personnelId ?? savedPersonnelId;
     if (
-      (!personnelId && salonsLoading) ||
-      (!personnelId && salons.length === 0)
+      (currentPersonnelId === null && salonsLoading) ||
+      (currentPersonnelId === null && salons.length === 0)
     ) {
       setFormError(
         salonsError ?? "برای ثبت پرسنل ابتدا باید یک سالن فعال انتخاب شود.",
+      );
+      return;
+    }
+    if (!servicePersonnelReady || servicePersonnelLoading || servicePersonnelError) {
+      setActiveTab("job");
+      setFormError(
+        servicePersonnelError ??
+          "برای ذخیره، ابتدا فهرست خدمت‌های قابل‌اختصاص دریافت شود.",
       );
       return;
     }
@@ -913,6 +1084,7 @@ export function PersonnelCreateDialog({
     const fileService = new PersonnelFileService();
     const uploadedFileIds: number[] = [];
     let createRequestStarted = false;
+    let personnelSaveCompleted = false;
 
     try {
       for (const [index, item] of uploadFiles.entries()) {
@@ -943,37 +1115,74 @@ export function PersonnelCreateDialog({
       }
 
       setUploadMessage(
-        personnelId ? "در حال ذخیره تغییرات پرسنل..." : "در حال ثبت اطلاعات پرسنل...",
+        currentPersonnelId !== null
+          ? "در حال ذخیره تغییرات پرسنل..."
+          : "در حال ثبت اطلاعات پرسنل...",
       );
       const request = makeRequest(
         values,
         documents,
-        personnelId !== null &&
+        currentPersonnelId !== null &&
           !documents.some((document) => document.documentType === 0),
       );
       createRequestStarted = true;
       const service = new PersonnelService();
-      const saveResponse = personnelId
-        ? await service.update(personnelId, request)
+      const saveResponse = currentPersonnelId !== null
+        ? await service.update(currentPersonnelId, request)
         : await service.create(request);
       if (saveResponse.statusCode < 200 || saveResponse.statusCode >= 300) {
         throw new Error(
           saveResponse.message ??
-            (personnelId
+            (currentPersonnelId !== null
               ? "ذخیره تغییرات پرسنل انجام نشد."
               : "ثبت اطلاعات پرسنل انجام نشد."),
         );
       }
 
+      const persistedPersonnelId =
+        currentPersonnelId ??
+        (typeof saveResponse.data === "object" && saveResponse.data
+          ? saveResponse.data.id
+          : null);
+      if (persistedPersonnelId === null || persistedPersonnelId <= 0) {
+        throw new Error("شناسه پرسنل ذخیره‌شده از سرور دریافت نشد.");
+      }
+      personnelSaveCompleted = true;
+      setSavedPersonnelId(persistedPersonnelId);
+      clearFiles(files);
+      setFiles(EMPTY_FILES);
+      const toExistingImages = (documentType: PersonnelDocumentType) =>
+        documents
+          .filter((document) => document.documentType === documentType)
+          .map((document) => ({
+            url: document.url,
+            fileName: document.fileName,
+          }));
+      setExistingFiles({
+        profile: toExistingImages(0),
+        training: toExistingImages(1),
+        healthCourse: toExistingImages(4),
+        healthTest: toExistingImages(5),
+        guarantor: toExistingImages(3),
+      });
+      setUploadMessage("در حال ذخیره خدمت‌های پرسنل...");
+      await synchronizeServicePersonnel(persistedPersonnelId);
+
       onCreated();
       closeDialog();
     } catch (error: unknown) {
       const failureMessages = [handleApiError(error)];
+      if (personnelSaveCompleted) {
+        failureMessages.unshift(
+          "اطلاعات پرسنل ذخیره شده است؛ خدمت‌های انتخاب‌شده را بررسی و دوباره ذخیره کنید.",
+        );
+      }
       const safeToDeleteFiles =
-        !createRequestStarted ||
-        (error instanceof ApiError &&
-          error.statusCode >= 400 &&
-          error.statusCode < 500);
+        !personnelSaveCompleted &&
+        (!createRequestStarted ||
+          (error instanceof ApiError &&
+            error.statusCode >= 400 &&
+            error.statusCode < 500));
       if (safeToDeleteFiles) {
         for (const fileId of uploadedFileIds) {
           try {
@@ -1287,6 +1496,132 @@ export function PersonnelCreateDialog({
               onRemoveExisting={(index) => removeExistingFile("training", index)}
               onValidationError={setImageError}
             />
+            <div className="md:col-span-3">
+              <InfoCard
+                title="خدمت‌های قابل ارائه"
+                icon={BriefcaseBusiness}
+                action={
+                  <span className="text-xs text-slate-500">
+                    {selectedServiceIds.length} خدمت انتخاب شده
+                  </span>
+                }
+              >
+                {servicePersonnelLoading ? (
+                  <p className="text-sm text-slate-500" role="status">
+                    در حال دریافت خدمت‌های سالن...
+                  </p>
+                ) : servicePersonnelError ? (
+                  <p className="text-sm text-rose-700" role="alert">
+                    {servicePersonnelError}
+                  </p>
+                ) : serviceOptions.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    خدمتی برای این سالن ثبت نشده است.
+                  </p>
+                ) : (
+                  <details className="group relative">
+                    <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors hover:border-fuchsia-300 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20 [&::-webkit-details-marker]:hidden">
+                      <span>
+                        {selectedServiceIds.length > 0
+                          ? `${selectedServiceIds.length} خدمت انتخاب شده`
+                          : "انتخاب خدمت"}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="text-slate-400 transition-transform group-open:rotate-180"
+                      >
+                        ▾
+                      </span>
+                    </summary>
+                    <div className="absolute inset-x-0 top-full z-20 mt-1 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+                      <label className="relative block">
+                        <span className="sr-only">جست‌وجوی خدمت</span>
+                        <Search
+                          aria-hidden="true"
+                          className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                        />
+                        <Input
+                          type="search"
+                          value={serviceSearch}
+                          onChange={(event) => setServiceSearch(event.target.value)}
+                          placeholder="جست‌وجوی خدمت..."
+                          className="h-9 rounded-lg border-slate-200 bg-white ps-9 text-sm"
+                        />
+                      </label>
+                      <div
+                        role="group"
+                        aria-label="خدمت‌های قابل ارائه"
+                        className="mt-2 grid max-h-44 gap-1 overflow-y-auto"
+                      >
+                        {serviceOptions
+                          .filter((service) =>
+                            service.name
+                              .toLocaleLowerCase()
+                              .includes(serviceSearch.trim().toLocaleLowerCase()),
+                          )
+                          .map((service) => {
+                            const isSelected = selectedServiceIds.includes(service.id);
+                            return (
+                              <label
+                                key={service.id}
+                                className={`flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
+                                  isSelected
+                                    ? "bg-fuchsia-50 text-fuchsia-900"
+                                    : "text-slate-700 hover:bg-slate-50"
+                                } ${
+                                  !service.isActive && !isSelected
+                                    ? "cursor-not-allowed opacity-50"
+                                    : ""
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  disabled={
+                                    submitting ||
+                                    (!service.isActive && !isSelected) ||
+                                    (values.status !== "true" && !isSelected)
+                                  }
+                                  onChange={(event) =>
+                                    setSelectedServiceIds((current) =>
+                                      event.target.checked
+                                        ? [...current, service.id]
+                                        : current.filter((id) => id !== service.id),
+                                    )
+                                  }
+                                  className="size-4 accent-fuchsia-700"
+                                />
+                                <span className="min-w-0 flex-1 truncate">
+                                  {service.name}
+                                </span>
+                                {!service.isActive && (
+                                  <span className="text-[10px] text-slate-500">
+                                    غیرفعال
+                                  </span>
+                                )}
+                              </label>
+                            );
+                          })}
+                        {!serviceOptions.some((service) =>
+                          service.name
+                            .toLocaleLowerCase()
+                            .includes(serviceSearch.trim().toLocaleLowerCase()),
+                        ) && (
+                          <p className="px-2 py-3 text-center text-xs text-slate-500">
+                            خدمتی با این نام پیدا نشد.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </details>
+                )}
+                {values.status !== "true" && (
+                  <p className="mt-2 text-[11px] text-amber-700">
+                    برای افزودن خدمت، ابتدا وضعیت پرسنل را فعال کنید.
+                  </p>
+                )}
+              </InfoCard>
+            </div>
           </div>
         );
 
@@ -1540,6 +1875,7 @@ export function PersonnelCreateDialog({
   const avatar = files.profile[0];
   const existingAvatar = existingFiles.profile[0];
   const selectedSalon = salons.find((salon) => salon.id === values.salonId);
+  const isEditing = personnelId !== null || savedPersonnelId !== null;
 
   return (
     <Dialog
@@ -1560,7 +1896,7 @@ export function PersonnelCreateDialog({
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
           <header className="flex h-12 shrink-0 items-center justify-between border-b border-slate-100 px-5">
             <DialogTitle className="text-sm font-semibold text-fuchsia-950">
-              {personnelId ? "ویرایش پرسنل" : "ثبت پرسنل"}
+              {isEditing ? "ویرایش پرسنل" : "ثبت پرسنل"}
             </DialogTitle>
             <Button
               type="button"
@@ -1776,15 +2112,18 @@ export function PersonnelCreateDialog({
                 submitting ||
                 salonsLoading ||
                 personnelLoading ||
+                servicePersonnelLoading ||
+                !servicePersonnelReady ||
+                servicePersonnelError !== null ||
                 (personnelId !== null && !personnelLoaded)
               }
               className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800 disabled:opacity-70"
             >
               {submitting
-                ? personnelId
+                ? isEditing
                   ? "در حال ذخیره..."
                   : "در حال ثبت..."
-                : personnelId
+                : isEditing
                   ? "ذخیره تغییرات"
                   : "ثبت پرسنل"}
             </Button>

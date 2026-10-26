@@ -7,6 +7,8 @@ import type {
   ServiceDto,
   ServiceMaterialDto,
   ServiceMaterialRequest,
+  ServicePersonnelDto,
+  ServicePersonnelRequest,
   ServiceRequest,
   UpdateServiceRequest,
   UpdateServiceCategoryRequest,
@@ -130,5 +132,48 @@ export class ServiceCatalogService {
       `${this.path}/Materials/${id}`,
       { params: { salonId } },
     );
+  }
+
+  getServicePersonnels(
+    salonId: number,
+    serviceId: number,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ServicePersonnelDto[]>> {
+    return this.api.get<ServicePersonnelDto[]>(
+      `${this.path}/Personnels`,
+      { salonId, serviceId },
+      config,
+    );
+  }
+
+  getPersonnelServiceAssignments(
+    salonId: number,
+    personnelId: number,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ServicePersonnelDto[]>> {
+    return this.api.get<ServicePersonnelDto[]>(
+      `${this.path}/Personnels/ByPersonnel`,
+      { salonId, personnelId },
+      config,
+    );
+  }
+
+  addPersonnelToService(
+    request: ServicePersonnelRequest,
+  ): Promise<ApiResponse<unknown>> {
+    return this.api.post<unknown, ServicePersonnelRequest>(
+      `${this.path}/Personnels`,
+      request,
+    );
+  }
+
+  removePersonnelFromService(
+    id: number,
+    salonId: number,
+    serviceId: number,
+  ): Promise<ApiResponse<unknown>> {
+    return this.api.delete<unknown>(`${this.path}/Personnels/${id}`, {
+      params: { salonId, serviceId },
+    });
   }
 }
