@@ -6,7 +6,7 @@ using Modules.Service.Application.Contract.UseCase.ServiceMaterials.Commands.Ups
 
 namespace Modules.Service.Application.UseCase.ServiceMaterials.Commands.Upsert;
 
-public sealed class UpsertServiceMaterialCommandHandler(IServiceMaterialRepository repository)
+public sealed class UpsertServiceMaterialCommandHandler(IServiceMaterialCommandRepository repository)
     : ICommandHandler<UpsertServiceMaterialCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpsertServiceMaterialCommand command, CancellationToken cancellationToken) =>

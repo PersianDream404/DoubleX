@@ -6,7 +6,7 @@ using Modules.Service.Application.Contract.UseCase.Services.Commands.Update;
 
 namespace Modules.Service.Application.UseCase.Services.Commands.Update;
 
-public sealed class UpdateServiceCommandHandler(IServiceRepository repository)
+public sealed class UpdateServiceCommandHandler(IServiceCommandRepository repository)
     : ICommandHandler<UpdateServiceCommand, bool>
 {
     public async Task<Result<bool>> Handle(UpdateServiceCommand command, CancellationToken cancellationToken) =>

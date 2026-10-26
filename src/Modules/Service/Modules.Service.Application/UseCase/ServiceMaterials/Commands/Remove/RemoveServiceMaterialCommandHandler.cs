@@ -6,7 +6,7 @@ using Modules.Service.Application.Contract.UseCase.ServiceMaterials.Commands.Rem
 
 namespace Modules.Service.Application.UseCase.ServiceMaterials.Commands.Remove;
 
-public sealed class RemoveServiceMaterialCommandHandler(IServiceMaterialRepository repository)
+public sealed class RemoveServiceMaterialCommandHandler(IServiceMaterialCommandRepository repository)
     : ICommandHandler<RemoveServiceMaterialCommand, bool>
 {
     public async Task<Result<bool>> Handle(RemoveServiceMaterialCommand command, CancellationToken cancellationToken) =>

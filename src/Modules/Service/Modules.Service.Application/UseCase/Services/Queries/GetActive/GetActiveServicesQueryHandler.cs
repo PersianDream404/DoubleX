@@ -2,15 +2,14 @@ using Ardalis.Result;
 using FluentValidation;
 using Framwork.Bus.Query;
 using Modules.Service.Application.Contract.DTOs.Services;
-using Modules.Service.Application.Contract.Interfaces.ServiceCategories;
-using Modules.Service.Application.Contract.Interfaces.Services;
 using Modules.Service.Application.Contract.UseCase.Services.Queries.GetActive;
+using Modules.Service.Domain.Interfaces;
 
 namespace Modules.Service.Application.UseCase.Services.Queries.GetActive;
 
 public sealed class GetActiveServicesQueryHandler(
-    IServiceRepository repository,
-    IServiceCategoryRepository categoryRepository)
+    IServiceQueryRepository repository,
+    IServiceCategoryQueryRepository categoryRepository)
     : IQueryHandler<GetActiveServicesQuery, IReadOnlyList<ServiceDto>>
 {
     public async Task<Result<IReadOnlyList<ServiceDto>>> Handle(
@@ -19,7 +18,18 @@ public sealed class GetActiveServicesQueryHandler(
     {
         if (!await categoryRepository.SalonExistsAsync(query.SalonId, cancellationToken))
             return Result.NotFound("سالن موردنظر پیدا نشد.");
-        return Result.Success(await repository.GetActiveServicesAsync(query.SalonId, cancellationToken));
+        var services = await repository.GetActiveServicesAsync(query.SalonId, cancellationToken);
+        return Result.Success<IReadOnlyList<ServiceDto>>(services
+            .Select(service => new ServiceDto(
+                service.Id,
+                service.SalonId,
+                service.CategoryId,
+                service.Code,
+                service.Name,
+                service.Description,
+                service.DurationMinutes,
+                service.IsActive))
+            .ToList());
     }
 }
 

@@ -9,10 +9,11 @@ internal static class ServiceCatalogResult
     {
         ServiceOperationStatus.Succeeded => Result.Success(true),
         ServiceOperationStatus.NotFound => Result.NotFound("مورد موردنظر پیدا نشد."),
-        ServiceOperationStatus.Conflict => Result.Conflict("با این اطلاعات رکورد تکراری یا بازه تعرفه متداخل وجود دارد."),
+        ServiceOperationStatus.Conflict => Result.Conflict("با این اطلاعات رکورد تکراری وجود دارد."),
         ServiceOperationStatus.InvalidOwnership => Result.Error("خدمت یا دسته‌بندی به سالن انتخاب‌شده تعلق ندارد یا فعال نیست."),
         ServiceOperationStatus.InactiveMaterial => Result.Error("ماده انتخاب‌شده غیرفعال است."),
-        ServiceOperationStatus.InvalidPriceRange => Result.Invalid(new ValidationError("ValidTo باید بعد از ValidFrom باشد.")),
+        ServiceOperationStatus.InvalidTariffValidity => Result.Invalid(
+            new ValidationError("پایان اعتبار تعرفه باید بعد از شروع اعتبار باشد.")),
         _ => Result.Error("عملیات انجام نشد.")
     };
 }

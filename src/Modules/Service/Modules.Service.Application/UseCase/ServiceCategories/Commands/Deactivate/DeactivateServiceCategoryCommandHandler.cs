@@ -6,7 +6,7 @@ using Modules.Service.Application.Contract.UseCase.ServiceCategories.Commands.De
 
 namespace Modules.Service.Application.UseCase.ServiceCategories.Commands.Deactivate;
 
-public sealed class DeactivateServiceCategoryCommandHandler(IServiceCategoryRepository repository)
+public sealed class DeactivateServiceCategoryCommandHandler(IServiceCategoryCommandRepository repository)
     : ICommandHandler<DeactivateServiceCategoryCommand, bool>
 {
     public async Task<Result<bool>> Handle(DeactivateServiceCategoryCommand command, CancellationToken cancellationToken) =>

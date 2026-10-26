@@ -157,7 +157,46 @@ namespace Modules.Service.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Modules.Service.Domain.Entities.ServicePrice", b =>
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("ValidFrom")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalonId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ServiceTariffs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ServiceTariffs_Validity", "[ValidTo] IS NULL OR [ValidTo] > [ValidFrom]");
+                        });
+                });
+
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariffItem", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -181,23 +220,21 @@ namespace Modules.Service.Persistence.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset>("ValidFrom")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<long>("TariffId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SalonId", "ServiceId");
 
-                    b.HasIndex("ServiceId", "ValidFrom");
+                    b.HasIndex("SalonId", "TariffId");
 
-                    b.ToTable("ServicePrices", null, t =>
+                    b.HasIndex("TariffId", "ServiceId")
+                        .IsUnique();
+
+                    b.ToTable("ServiceTariffItems", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ServicePrices_Amount", "[Amount] >= 0");
-
-                            t.HasCheckConstraint("CK_ServicePrices_Validity", "[ValidTo] IS NULL OR [ValidTo] > [ValidFrom]");
+                            t.HasCheckConstraint("CK_ServiceTariffItems_Amount", "[Amount] >= 0");
                         });
                 });
 
@@ -307,28 +344,51 @@ namespace Modules.Service.Persistence.Migrations
                     b.Navigation("Service");
                 });
 
-            modelBuilder.Entity("Modules.Service.Domain.Entities.ServicePrice", b =>
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
+                {
+                    b.HasOne("Modules.Service.Persistence.Context.ServiceSalonReference", null)
+                        .WithMany()
+                        .HasForeignKey("SalonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariffItem", b =>
                 {
                     b.HasOne("Modules.Service.Domain.Entities.Service", "Service")
-                        .WithMany("Prices")
+                        .WithMany("TariffItems")
                         .HasForeignKey("SalonId", "ServiceId")
                         .HasPrincipalKey("SalonId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Modules.Service.Domain.Entities.ServiceTariff", "Tariff")
+                        .WithMany("Items")
+                        .HasForeignKey("SalonId", "TariffId")
+                        .HasPrincipalKey("SalonId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Service");
+
+                    b.Navigation("Tariff");
                 });
 
             modelBuilder.Entity("Modules.Service.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Materials");
 
-                    b.Navigation("Prices");
+                    b.Navigation("TariffItems");
                 });
 
             modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceCategory", b =>
                 {
                     b.Navigation("Services");
+                });
+
+            modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
-using Modules.Service.Application.Contract.DTOs.ServiceMaterials;
 using Modules.Service.Domain.Entities;
+using Modules.Service.Domain.ReadModels;
 using Modules.Service.Persistence.Context;
 
 namespace Modules.Service.Persistence.Mapper.ServiceMaterials;
@@ -14,8 +14,8 @@ internal sealed class ServiceMaterialProjection
 
 internal static class ServiceMaterialMapper
 {
-    public static Expression<Func<ServiceMaterialProjection, ServiceMaterialDto>> ToDto() =>
-        projection => new ServiceMaterialDto(
+    public static Expression<Func<ServiceMaterialProjection, ServiceMaterialReadModel>> ToReadModel() =>
+        projection => new ServiceMaterialReadModel(
             projection.Entry.Id,
             projection.Entry.SalonId,
             projection.Entry.ServiceId,

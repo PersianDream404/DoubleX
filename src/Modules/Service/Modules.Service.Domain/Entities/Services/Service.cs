@@ -13,8 +13,8 @@ public sealed class Service : BaseEntityIdentity
     public bool IsActive => Status;
 
     public ServiceCategory Category { get; private set; } = null!;
-    public ICollection<ServicePrice> Prices { get; private set; } = new List<ServicePrice>();
     public ICollection<ServiceMaterial> Materials { get; private set; } = new List<ServiceMaterial>();
+    public ICollection<ServiceTariffItem> TariffItems { get; private set; } = new List<ServiceTariffItem>();
 
     private Service() { }
 

@@ -7,5 +7,5 @@ public enum ServiceOperationStatus
     Conflict,
     InvalidOwnership,
     InactiveMaterial,
-    InvalidPriceRange
+    InvalidTariffValidity
 }

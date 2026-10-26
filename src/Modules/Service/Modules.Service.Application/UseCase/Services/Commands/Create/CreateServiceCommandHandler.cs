@@ -6,7 +6,7 @@ using Modules.Service.Application.Contract.UseCase.Services.Commands.Create;
 
 namespace Modules.Service.Application.UseCase.Services.Commands.Create;
 
-public sealed class CreateServiceCommandHandler(IServiceRepository repository)
+public sealed class CreateServiceCommandHandler(IServiceCommandRepository repository)
     : ICommandHandler<CreateServiceCommand, bool>
 {
     public async Task<Result<bool>> Handle(CreateServiceCommand command, CancellationToken cancellationToken) =>

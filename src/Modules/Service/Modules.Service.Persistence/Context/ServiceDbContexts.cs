@@ -17,8 +17,9 @@ public sealed class ServiceWriteDbContext(DbContextOptions<BaseDbContext> option
 
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<Domain.Entities.Service> Services => Set<Domain.Entities.Service>();
-    public DbSet<ServicePrice> ServicePrices => Set<ServicePrice>();
     public DbSet<ServiceMaterial> ServiceMaterials => Set<ServiceMaterial>();
+    public DbSet<ServiceTariff> ServiceTariffs => Set<ServiceTariff>();
+    public DbSet<ServiceTariffItem> ServiceTariffItems => Set<ServiceTariffItem>();
 }
 
 public sealed class ServiceReadDbContext(DbContextOptions<BaseDbContext> options)
@@ -33,8 +34,9 @@ public sealed class ServiceReadDbContext(DbContextOptions<BaseDbContext> options
 
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
     public DbSet<Domain.Entities.Service> Services => Set<Domain.Entities.Service>();
-    public DbSet<ServicePrice> ServicePrices => Set<ServicePrice>();
     public DbSet<ServiceMaterial> ServiceMaterials => Set<ServiceMaterial>();
+    public DbSet<ServiceTariff> ServiceTariffs => Set<ServiceTariff>();
+    public DbSet<ServiceTariffItem> ServiceTariffItems => Set<ServiceTariffItem>();
 }
 
 internal static class ServiceModelConfiguration
