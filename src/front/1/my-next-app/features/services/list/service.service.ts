@@ -3,11 +3,13 @@ import type { ApiResponse } from "@/lib/api/types/api-response";
 
 import type {
   ServiceCategoryDto,
+  ServiceCategoryRequest,
   ServiceDto,
   ServiceMaterialDto,
   ServiceMaterialRequest,
   ServiceRequest,
   UpdateServiceRequest,
+  UpdateServiceCategoryRequest,
 } from "./service.types";
 
 export class ServiceCatalogService {
@@ -36,6 +38,39 @@ export class ServiceCatalogService {
       `${this.path}/Categories`,
       { salonId },
       config,
+    );
+  }
+
+  getCategoryById(
+    id: number,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ServiceCategoryDto>> {
+    return this.api.get<ServiceCategoryDto>(`${this.path}/Categories/${id}`, undefined, config);
+  }
+
+  createCategory(request: ServiceCategoryRequest): Promise<ApiResponse<unknown>> {
+    return this.api.post<unknown, ServiceCategoryRequest>(`${this.path}/Categories`, request);
+  }
+
+  updateCategory(id: number, request: UpdateServiceCategoryRequest): Promise<ApiResponse<unknown>> {
+    return this.api.put<unknown, UpdateServiceCategoryRequest>(
+      `${this.path}/Categories/${id}`,
+      request,
+    );
+  }
+
+  deactivateCategory(id: number, salonId: number): Promise<ApiResponse<unknown>> {
+    return this.api.patch<unknown, Record<string, never>>(
+      `${this.path}/Categories/${id}/Deactivate`,
+      {},
+      { params: { salonId } },
+    );
+  }
+
+  deleteCategory(id: number, salonId: number): Promise<ApiResponse<unknown>> {
+    return this.api.delete<unknown>(
+      `${this.path}/Categories/${id}`,
+      { params: { salonId } },
     );
   }
 

@@ -17,11 +17,22 @@ public sealed class ServiceCategoryCommandRepository(ServiceWriteDbContext write
         if (!await writeContext.Set<ServiceSalonReference>()
                 .AnyAsync(salon => salon.Id == request.SalonId, cancellationToken))
             return ServiceOperationStatus.NotFound;
-        if (await writeContext.ServiceCategories.AnyAsync(
+        var existingCategory = await writeContext.ServiceCategories
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(
                 category => category.SalonId == request.SalonId &&
                             category.Name == request.Name.Trim(),
-                cancellationToken))
-            return ServiceOperationStatus.Conflict;
+                cancellationToken);
+        if (existingCategory is not null)
+        {
+            if (!existingCategory.Deleted)
+                return ServiceOperationStatus.Conflict;
+
+            existingCategory.Deleted = false;
+            existingCategory.Update(request.Name, request.Description, true);
+            await writeContext.SaveChangesAsync(cancellationToken);
+            return ServiceOperationStatus.Succeeded;
+        }
 
         await writeContext.ServiceCategories.AddAsync(
             ServiceCategory.Create(request.SalonId, request.Name, request.Description),
@@ -63,6 +74,27 @@ public sealed class ServiceCategoryCommandRepository(ServiceWriteDbContext write
         if (category is null)
             return ServiceOperationStatus.NotFound;
         category.Deactivate();
+        await writeContext.SaveChangesAsync(cancellationToken);
+        return ServiceOperationStatus.Succeeded;
+    }
+
+    public async Task<ServiceOperationStatus> DeleteCategoryAsync(
+        long salonId,
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var category = await writeContext.ServiceCategories.SingleOrDefaultAsync(
+            item => item.Id == id && item.SalonId == salonId,
+            cancellationToken);
+        if (category is null)
+            return ServiceOperationStatus.NotFound;
+
+        if (await writeContext.Services.IgnoreQueryFilters().AnyAsync(
+                service => service.SalonId == salonId && service.CategoryId == id,
+                cancellationToken))
+            return ServiceOperationStatus.Conflict;
+
+        category.Deleted = true;
         await writeContext.SaveChangesAsync(cancellationToken);
         return ServiceOperationStatus.Succeeded;
     }

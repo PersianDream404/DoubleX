@@ -8,4 +8,5 @@ public interface IServiceCategoryCommandRepository
     Task<ServiceOperationStatus> CreateCategoryAsync(ServiceCategoryRequestDto request, CancellationToken cancellationToken);
     Task<ServiceOperationStatus> UpdateCategoryAsync(long id, UpdateServiceCategoryRequestDto request, CancellationToken cancellationToken);
     Task<ServiceOperationStatus> DeactivateCategoryAsync(long salonId, long id, CancellationToken cancellationToken);
+    Task<ServiceOperationStatus> DeleteCategoryAsync(long salonId, long id, CancellationToken cancellationToken);
 }

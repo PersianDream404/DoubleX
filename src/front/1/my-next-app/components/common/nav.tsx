@@ -43,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/services",
     children: [
       { label: "فهرست خدمات", href: "/services" },
+      { label: "دسته‌بندی خدمات", href: "/services/categories" },
       { label: "تعرفه خدمات", href: "/services/tariffs" },
     ],
   },

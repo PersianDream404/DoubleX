@@ -19,6 +19,16 @@ export interface ServiceCategoryDto {
   isActive: boolean;
 }
 
+export interface ServiceCategoryRequest {
+  salonId: number;
+  name: string;
+  description: string | null;
+}
+
+export interface UpdateServiceCategoryRequest extends ServiceCategoryRequest {
+  isActive: boolean;
+}
+
 export interface ServiceMaterialDto {
   id: number;
   salonId: number;
