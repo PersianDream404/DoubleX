@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Service.Application.Contract\Modules.Service.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Service.Domain\Modules.Service.Domain.csproj" />
+    <ProjectReference Include="..\..\Inventory\Modules.Inventory.Persistence\Modules.Inventory.Persistence.csproj" />
+    <ProjectReference Include="..\..\Salon\Modules.Salon.Persistence\Modules.Salon.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

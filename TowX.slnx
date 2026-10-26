@@ -17,6 +17,13 @@
     <Project Path="src/Modules/Inventory/Modules.Inventory.Persistence/Modules.Inventory.Persistence.csproj" />
     <Project Path="src/Modules/Inventory/Modules.Inventory.Presentation/Modules.Inventory.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Service/">
+    <Project Path="src/Modules/Service/Modules.Service.Application.Contract/Modules.Service.Application.Contract.csproj" />
+    <Project Path="src/Modules/Service/Modules.Service.Application/Modules.Service.Application.csproj" />
+    <Project Path="src/Modules/Service/Modules.Service.Domain/Modules.Service.Domain.csproj" />
+    <Project Path="src/Modules/Service/Modules.Service.Persistence/Modules.Service.Persistence.csproj" />
+    <Project Path="src/Modules/Service/Modules.Service.Presentation/Modules.Service.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Customer/">
     <Project Path="src/Modules/Customer/Modules.Customer.Application.Contract/Modules.Customer.Application.Contract.csproj" />
     <Project Path="src/Modules/Customer/Modules.Customer.Application/Modules.Customer.Application.csproj" />
