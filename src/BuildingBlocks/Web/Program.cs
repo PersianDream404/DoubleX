@@ -44,6 +44,8 @@ var app = builder.Build();
 app.AddModuleDependencies();
 
 app.UseSerilogRequestLogging();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapMyEndpoints();
 // Configure the HTTP request pipeline.
 app.UseStaticFiles();

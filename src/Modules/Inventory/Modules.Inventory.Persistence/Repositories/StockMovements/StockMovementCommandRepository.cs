@@ -19,12 +19,23 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
             return InventoryOperationStatus.InvalidInput;
         }
 
-        if (movement.IdempotencyKey is not null &&
-            await context.StockMovements.AnyAsync(
-                existing => existing.IdempotencyKey == movement.IdempotencyKey,
-                cancellationToken))
+        if (movement.IdempotencyKey is not null)
         {
-            return InventoryOperationStatus.Conflict;
+            var existingMovement = await context.StockMovements
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    existing => existing.IdempotencyKey == movement.IdempotencyKey,
+                    cancellationToken);
+            if (existingMovement is not null)
+            {
+                return existingMovement.MaterialId == movement.MaterialId &&
+                       existingMovement.Type == movement.Type &&
+                       existingMovement.Quantity == movement.Quantity &&
+                       existingMovement.ReferenceType == movement.ReferenceType &&
+                       existingMovement.ReferenceId == movement.ReferenceId
+                    ? InventoryOperationStatus.Succeeded
+                    : InventoryOperationStatus.Conflict;
+            }
         }
 
         var material = await context.Materials
@@ -69,14 +80,21 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
         {
             await transaction.RollbackAsync(cancellationToken);
             context.ChangeTracker.Clear();
-            var keyAlreadyUsed = await context.StockMovements
+            var existingMovement = await context.StockMovements
                 .IgnoreQueryFilters()
-                .AnyAsync(
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
                     existing => existing.IdempotencyKey == movement.IdempotencyKey,
                     cancellationToken);
-            if (keyAlreadyUsed)
+            if (existingMovement is not null)
             {
-                return InventoryOperationStatus.Conflict;
+                return existingMovement.MaterialId == movement.MaterialId &&
+                       existingMovement.Type == movement.Type &&
+                       existingMovement.Quantity == movement.Quantity &&
+                       existingMovement.ReferenceType == movement.ReferenceType &&
+                       existingMovement.ReferenceId == movement.ReferenceId
+                    ? InventoryOperationStatus.Succeeded
+                    : InventoryOperationStatus.Conflict;
             }
 
             throw;
