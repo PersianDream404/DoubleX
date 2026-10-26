@@ -21,3 +21,5 @@ public sealed record ServiceTariffServiceRequestDto(long ServiceId, decimal Amou
 public sealed record AddServiceTariffItemsRequestDto(
     long SalonId,
     IReadOnlyList<ServiceTariffServiceRequestDto> Services);
+
+public sealed record UpdateServiceTariffItemRequestDto(long SalonId, decimal Amount);

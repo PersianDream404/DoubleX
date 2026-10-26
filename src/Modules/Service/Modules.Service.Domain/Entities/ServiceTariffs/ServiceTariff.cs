@@ -33,4 +33,14 @@ public sealed class ServiceTariff : BaseEntityIdentity
         DateTimeOffset validFrom,
         DateTimeOffset? validTo) =>
         new(salonId, name, validFrom, validTo);
+
+    public void Update(string name, DateTimeOffset validFrom, DateTimeOffset? validTo)
+    {
+        if (validTo.HasValue && validTo.Value <= validFrom)
+            throw new ArgumentException("Tariff validity end must be after its start.", nameof(validTo));
+
+        Name = name.Trim();
+        ValidFrom = validFrom;
+        ValidTo = validTo;
+    }
 }

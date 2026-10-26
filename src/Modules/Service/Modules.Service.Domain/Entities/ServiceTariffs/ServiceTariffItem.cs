@@ -24,4 +24,6 @@ public sealed class ServiceTariffItem : BaseEntityIdentity
 
     public static ServiceTariffItem Create(long salonId, long tariffId, long serviceId, decimal amount) =>
         new(salonId, tariffId, serviceId, amount);
+
+    public void UpdateAmount(decimal amount) => Amount = amount;
 }
