@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Update;
+using Modules.Reception.Application.Contract.DTOs.Payments.Register;
 using Modules.Reception.Application.Contract.Interfaces;
 using Modules.Reception.Domain.Entities;
 using Modules.Reception.Persistence.Context;
@@ -8,8 +9,11 @@ using ReceptionEntity = Modules.Reception.Domain.Entities.Reception;
 namespace Modules.Reception.Persistence.Repositories;
 
 public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
-    : IReceptionCommandRepository
+    : IReceptionCommandRepository, ICashRegisterPaymentOutboxRepository
 {
+    public void AddCashRegisterPaymentOutbox(CashRegisterPaymentOutbox outbox) =>
+        context.CashRegisterPaymentOutbox.Add(outbox);
+
     public Task<ReceptionEntity?> GetTrackedAsync(
         long id,
         long salonId,
@@ -71,5 +75,57 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
 
             throw;
         }
+    }
+
+    public async Task<IReadOnlyList<CashRegisterPaymentOutboxMessage>> GetPendingAsync(
+        int batchSize,
+        DateTimeOffset now,
+        CancellationToken cancellationToken) =>
+        await context.CashRegisterPaymentOutbox
+            .AsNoTracking()
+            .Where(item => item.OutboxStatus == CashRegisterPaymentOutboxStatus.Pending &&
+                           item.NextAttemptAt <= now)
+            .OrderBy(item => item.Id)
+            .Take(batchSize)
+            .Select(item => new CashRegisterPaymentOutboxMessage(
+                item.Id,
+                item.SalonId,
+                item.CashRegisterId,
+                item.CashRegisterSessionId,
+                item.ReceptionId,
+                item.UserId,
+                item.Amount,
+                item.OccurredAt,
+                item.IdempotencyKey,
+                item.Description))
+            .ToListAsync(cancellationToken);
+
+    public async Task MarkProcessedAsync(
+        long id,
+        DateTimeOffset processedAt,
+        CancellationToken cancellationToken)
+    {
+        var item = await context.CashRegisterPaymentOutbox
+            .SingleOrDefaultAsync(outbox => outbox.Id == id, cancellationToken);
+        if (item is null || item.OutboxStatus == CashRegisterPaymentOutboxStatus.Processed)
+            return;
+
+        item.MarkProcessed(processedAt);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task MarkFailedAsync(
+        long id,
+        string error,
+        DateTimeOffset attemptedAt,
+        CancellationToken cancellationToken)
+    {
+        var item = await context.CashRegisterPaymentOutbox
+            .SingleOrDefaultAsync(outbox => outbox.Id == id, cancellationToken);
+        if (item is null || item.OutboxStatus == CashRegisterPaymentOutboxStatus.Processed)
+            return;
+
+        item.MarkFailed(error, attemptedAt);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

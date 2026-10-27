@@ -7,4 +7,5 @@ public sealed record RegisterReceptionPaymentRequestDto(
     DateTimeOffset PaidAt,
     string? TransactionReference,
     string IdempotencyKey,
-    string? Description);
+    string? Description,
+    long? CashRegisterId);

@@ -22,6 +22,77 @@ namespace Modules.Reception.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Modules.Reception.Domain.Entities.CashRegisterPaymentOutbox", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<long>("CashRegisterId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CashRegisterSessionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("OutboxStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("ReceptionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceptionId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("OutboxStatus", "NextAttemptAt", "Id");
+
+                    b.ToTable("CashRegisterPaymentOutbox", (string)null);
+                });
+
             modelBuilder.Entity("Modules.Reception.Domain.Entities.Reception", b =>
                 {
                     b.Property<long>("Id")
@@ -119,6 +190,9 @@ namespace Modules.Reception.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<long?>("CashRegisterId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("Deleted")
                         .HasColumnType("bit");
 
@@ -153,6 +227,8 @@ namespace Modules.Reception.Persistence.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CashRegisterId");
 
                     b.HasIndex("ReceptionId", "IdempotencyKey")
                         .IsUnique();

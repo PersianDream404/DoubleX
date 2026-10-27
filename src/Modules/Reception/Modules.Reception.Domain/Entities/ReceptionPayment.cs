@@ -12,6 +12,7 @@ public sealed class ReceptionPayment : BaseEntityIdentity
     public string? TransactionReference { get; private set; }
     public string IdempotencyKey { get; private set; } = null!;
     public string? Description { get; private set; }
+    public long? CashRegisterId { get; private set; }
     public Reception Reception { get; private set; } = null!;
 
     private ReceptionPayment() { }
@@ -23,7 +24,8 @@ public sealed class ReceptionPayment : BaseEntityIdentity
         DateTimeOffset paidAt,
         string? transactionReference,
         string idempotencyKey,
-        string? description)
+        string? description,
+        long? cashRegisterId)
     {
         ReceptionId = receptionId;
         Amount = amount;
@@ -33,6 +35,7 @@ public sealed class ReceptionPayment : BaseEntityIdentity
         TransactionReference = Normalize(transactionReference);
         IdempotencyKey = idempotencyKey.Trim();
         Description = Normalize(description);
+        CashRegisterId = cashRegisterId;
     }
 
     internal static ReceptionPayment Create(
@@ -42,8 +45,9 @@ public sealed class ReceptionPayment : BaseEntityIdentity
         DateTimeOffset paidAt,
         string? transactionReference,
         string idempotencyKey,
-        string? description) =>
-        new(receptionId, amount, paymentMethod, paidAt, transactionReference, idempotencyKey, description);
+        string? description,
+        long? cashRegisterId) =>
+        new(receptionId, amount, paymentMethod, paidAt, transactionReference, idempotencyKey, description, cashRegisterId);
 
     private static string? Normalize(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -63,7 +63,8 @@ public sealed class GetReceptionByIdQueryHandler(IReceptionQueryRepository repos
                 payment.PaidAt,
                 payment.Status,
                 payment.TransactionReference,
-                payment.Description)).ToList()));
+                payment.Description,
+                payment.CashRegisterId)).ToList()));
     }
 }
 

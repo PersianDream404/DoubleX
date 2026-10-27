@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Modules.Reception.Application.Contract\Modules.Reception.Application.Contract.csproj" />
     <ProjectReference Include="..\Modules.Reception.Application\Modules.Reception.Application.csproj" />
     <ProjectReference Include="..\Modules.Reception.Persistence\Modules.Reception.Persistence.csproj" />
+    <ProjectReference Include="..\..\CashRegister\Modules.CashRegister.Application.Contract\Modules.CashRegister.Application.Contract.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
   </ItemGroup>

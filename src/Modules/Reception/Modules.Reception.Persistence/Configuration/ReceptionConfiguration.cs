@@ -83,9 +83,27 @@ public sealed class ReceptionPaymentConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(item => item.TransactionReference).HasMaxLength(150);
         builder.Property(item => item.IdempotencyKey).HasMaxLength(100).IsRequired();
         builder.Property(item => item.Description).HasMaxLength(1000);
+        builder.HasIndex(item => item.CashRegisterId);
         builder.HasIndex(item => new { item.ReceptionId, item.IdempotencyKey }).IsUnique();
         builder.HasIndex(item => new { item.ReceptionId, item.TransactionReference })
             .IsUnique()
             .HasFilter("[TransactionReference] IS NOT NULL");
+    }
+}
+
+public sealed class CashRegisterPaymentOutboxConfiguration
+    : IEntityTypeConfiguration<CashRegisterPaymentOutbox>
+{
+    public void Configure(EntityTypeBuilder<CashRegisterPaymentOutbox> builder)
+    {
+        builder.ToTable("CashRegisterPaymentOutbox");
+        builder.HasKey(item => item.Id);
+        builder.Property(item => item.Amount).HasPrecision(18, 2).IsRequired();
+        builder.Property(item => item.IdempotencyKey).HasMaxLength(100).IsRequired();
+        builder.Property(item => item.Description).HasMaxLength(1000);
+        builder.Property(item => item.LastError).HasMaxLength(2000);
+        builder.Property(item => item.OutboxStatus).IsRequired();
+        builder.HasIndex(item => new { item.OutboxStatus, item.NextAttemptAt, item.Id });
+        builder.HasIndex(item => new { item.ReceptionId, item.IdempotencyKey }).IsUnique();
     }
 }

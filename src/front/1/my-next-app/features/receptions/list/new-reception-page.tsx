@@ -21,6 +21,8 @@ import { ServiceCatalogService } from "@/features/services/list/service.service"
 import type { ServiceDto } from "@/features/services/list/service.types";
 import { ServiceTariffService } from "@/features/services/tariffs/service-tariff.service";
 import type { ServiceTariffDto } from "@/features/services/tariffs/service-tariff.types";
+import { CashRegisterService } from "@/features/cash-register/cash-register.service";
+import type { CashRegisterOption } from "@/features/cash-register/cash-register.types";
 
 import {
   CreateReceptionFormSchema,
@@ -62,6 +64,8 @@ type ReceptionOptions = {
   services: ServiceDto[];
   tariffs: ServiceTariffDto[];
   materials: MaterialDto[];
+  cashRegisters: CashRegisterOption[];
+  cashRegisterError: string | null;
 };
 
 const EMPTY_SERVICE: ServiceDraft = {
@@ -205,11 +209,18 @@ export function NewReceptionPage() {
     const materialService = new MaterialService();
     const catalogService = new ServiceCatalogService();
     const tariffService = new ServiceTariffService();
+    const cashRegisterService = new CashRegisterService();
 
     async function loadOptions() {
       setOptionsError(null);
       try {
-        const [personnels, materials, serviceResponse, tariffResponse] = await Promise.all([
+        const [
+          personnels,
+          materials,
+          serviceResponse,
+          tariffResponse,
+          cashRegisterResult,
+        ] = await Promise.all([
           loadAllPages((pageNumber, pageSize) =>
             personnelService.getAll(
               { PageNumber: pageNumber, PageSize: pageSize },
@@ -224,6 +235,18 @@ export function NewReceptionPage() {
           ),
           catalogService.getAll({ signal: controller.signal }),
           tariffService.getAll({ signal: controller.signal }),
+          loadAllPages((pageNumber, pageSize) =>
+            cashRegisterService.getAll(
+              { pageNumber, pageSize, isActive: true },
+              { signal: controller.signal },
+            ),
+          ).then(
+            (cashRegisters) => ({ cashRegisters, error: null }),
+            (error: unknown) => ({
+              cashRegisters: [],
+              error: handleApiError(error),
+            }),
+          ),
         ]);
         if (!serviceResponse.data || !tariffResponse.data) {
           throw new Error(
@@ -247,6 +270,10 @@ export function NewReceptionPage() {
                 (!tariff.validTo || new Date(tariff.validTo).getTime() >= now)
               );
             }),
+            cashRegisters: cashRegisterResult.cashRegisters.filter(
+              (cashRegister) => cashRegister.isActive && cashRegister.activeSessionId !== null,
+            ),
+            cashRegisterError: cashRegisterResult.error,
           });
           setOptionsLoading(false);
         }
@@ -350,6 +377,7 @@ export function NewReceptionPage() {
         key: `payment-${nextKey.current++}`,
         amount: remainingAmount,
         paymentMethod: "کارت‌خوان",
+        cashRegisterId: null,
         transactionReference: "",
         description: "",
       },
@@ -386,6 +414,7 @@ export function NewReceptionPage() {
       payments: payments.map((payment) => ({
         amount: payment.amount,
         paymentMethod: payment.paymentMethod,
+        cashRegisterId: payment.cashRegisterId,
         transactionReference: payment.transactionReference,
         description: payment.description,
       })),
@@ -495,6 +524,7 @@ export function NewReceptionPage() {
         await receptionService.registerPayment(activeReceptionId, {
           amount: payment.amount,
           paymentMethod: payment.paymentMethod,
+          cashRegisterId: payment.cashRegisterId,
           paidAt: new Date().toISOString(),
           transactionReference: payment.transactionReference.trim() || null,
           idempotencyKey: crypto.randomUUID(),
@@ -888,7 +918,15 @@ export function NewReceptionPage() {
                         ariaLabel={`روش پرداخت ${index + 1}`}
                         value={payment.paymentMethod}
                         onChange={(value) => setPayments((current) => current.map((item) =>
-                          item.key === payment.key ? { ...item, paymentMethod: value } : item,
+                          item.key === payment.key
+                            ? {
+                                ...item,
+                                paymentMethod: value,
+                                cashRegisterId: value === "نقدی"
+                                  ? item.cashRegisterId ?? options?.cashRegisters[0]?.id ?? null
+                                  : null,
+                              }
+                            : item,
                         ))}
                         disabled={Boolean(createdReceptionId)}
                       >
@@ -897,6 +935,35 @@ export function NewReceptionPage() {
                         <option value="انتقال بانکی">انتقال بانکی</option>
                       </FormSelect>
                     </Field>
+                    {payment.paymentMethod === "نقدی" && (
+                      <Field
+                        label="صندوق باز"
+                        hint={
+                          options?.cashRegisterError ??
+                          (options?.cashRegisters.length
+                            ? undefined
+                            : "صندوق فعالی با جلسهٔ باز موجود نیست.")
+                        }
+                      >
+                        <FormSelect
+                          ariaLabel={`صندوق پرداخت ${index + 1}`}
+                          value={payment.cashRegisterId?.toString() ?? ""}
+                          onChange={(value) => setPayments((current) => current.map((item) =>
+                            item.key === payment.key
+                              ? { ...item, cashRegisterId: value ? Number(value) : null }
+                              : item,
+                          ))}
+                          disabled={Boolean(createdReceptionId) || !options?.cashRegisters.length}
+                        >
+                          <option value="">انتخاب صندوق</option>
+                          {(options?.cashRegisters ?? []).map((cashRegister) => (
+                            <option key={cashRegister.id} value={cashRegister.id}>
+                              {cashRegister.name} ({cashRegister.code})
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </Field>
+                    )}
                     <Field label="شماره پیگیری">
                       <Input
                         value={payment.transactionReference}

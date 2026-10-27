@@ -46,7 +46,8 @@ public sealed record ReceptionPaymentReadModel(
     DateTimeOffset PaidAt,
     ReceptionPaymentStatus Status,
     string? TransactionReference,
-    string? Description);
+    string? Description,
+    long? CashRegisterId);
 
 public sealed record ReceptionDetailsReadModel(
     long Id,

@@ -24,6 +24,7 @@ export const ReceptionServiceFormSchema = z.object({
 export const ReceptionPaymentFormSchema = z.object({
   amount: z.number().positive(),
   paymentMethod: z.string().trim().min(1).max(50),
+  cashRegisterId: z.number().int().positive().nullable(),
   transactionReference: z.string().max(150),
   description: z.string().max(1000),
 });
@@ -54,6 +55,23 @@ export const CreateReceptionFormSchema = z
           code: "custom",
           message: "تعرفه همه خدمات باید با تعرفه انتخاب‌شده برای پذیرش یکسان باشد.",
           path: ["services", index, "serviceTariffId"],
+        });
+      }
+    });
+
+    form.payments.forEach((payment, index) => {
+      if (payment.paymentMethod === "نقدی" && payment.cashRegisterId === null) {
+        context.addIssue({
+          code: "custom",
+          message: "برای پرداخت نقدی، انتخاب صندوق با جلسهٔ باز الزامی است.",
+          path: ["payments", index, "cashRegisterId"],
+        });
+      }
+      if (payment.paymentMethod !== "نقدی" && payment.cashRegisterId !== null) {
+        context.addIssue({
+          code: "custom",
+          message: "برای روش پرداخت غیرنقدی نباید صندوق انتخاب شود.",
+          path: ["payments", index, "cashRegisterId"],
         });
       }
     });

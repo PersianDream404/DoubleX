@@ -100,6 +100,7 @@ export interface RegisterReceptionPaymentRequest {
   transactionReference: string | null;
   idempotencyKey: string;
   description: string | null;
+  cashRegisterId: number | null;
 }
 
 export type ReceptionListResult = PagedResult<ReceptionListItem>;

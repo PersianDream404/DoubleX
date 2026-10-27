@@ -66,6 +66,13 @@
     <Project Path="src/Modules/Salon/Modules.Salon.Persistence/Modules.Salon.Persistence.csproj" />
     <Project Path="src/Modules/Salon/Modules.Salon.Presentation/Modules.Salon.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/CashRegister/">
+    <Project Path="src/Modules/CashRegister/Modules.CashRegister.Application.Contract/Modules.CashRegister.Application.Contract.csproj" />
+    <Project Path="src/Modules/CashRegister/Modules.CashRegister.Application/Modules.CashRegister.Application.csproj" />
+    <Project Path="src/Modules/CashRegister/Modules.CashRegister.Domain/Modules.CashRegister.Domain.csproj" />
+    <Project Path="src/Modules/CashRegister/Modules.CashRegister.Persistence/Modules.CashRegister.Persistence.csproj" />
+    <Project Path="src/Modules/CashRegister/Modules.CashRegister.Presentation/Modules.CashRegister.Presentation.csproj" />
+  </Folder>
 
   <Folder Name="/src/Presentation/">
     <Project Path="src/BuildingBlocks/Web/Web.csproj" Id="e0450831-009b-46e2-b98a-f044cbab3848" />

@@ -5,4 +5,5 @@ namespace Modules.Reception.Application.Contract.UseCase.Payments.Commands.Regis
 
 public sealed record RegisterReceptionPaymentCommand(
     long ReceptionId,
+    long UserId,
     RegisterReceptionPaymentRequestDto Request) : ICommand<bool>;

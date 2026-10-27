@@ -31,7 +31,8 @@ public sealed record ReceptionPaymentDto(
     DateTimeOffset PaidAt,
     ReceptionPaymentStatus Status,
     string? TransactionReference,
-    string? Description);
+    string? Description,
+    long? CashRegisterId);
 
 public sealed record ReceptionDetailsDto(
     long Id,

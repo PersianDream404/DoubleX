@@ -9,4 +9,12 @@ public static class ReceptionApiInfo
 
     public static bool TryGetSalonId(HttpContext context, out long salonId) =>
         long.TryParse(context.User.FindFirst("SalonId")?.Value, out salonId) && salonId > 0;
+
+    public static bool TryGetIdentity(HttpContext context, out long salonId, out long userId)
+    {
+        userId = 0;
+        return TryGetSalonId(context, out salonId) &&
+               long.TryParse(context.User.FindFirst("UserId")?.Value, out userId) &&
+               userId > 0;
+    }
 }

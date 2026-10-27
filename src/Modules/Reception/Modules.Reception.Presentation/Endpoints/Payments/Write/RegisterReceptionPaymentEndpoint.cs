@@ -22,7 +22,7 @@ public sealed class RegisterReceptionPaymentEndpoint
                     HttpContext httpContext,
                     CancellationToken cancellationToken) =>
                 {
-                    if (!ReceptionApiInfo.TryGetSalonId(httpContext, out var salonId))
+                    if (!ReceptionApiInfo.TryGetIdentity(httpContext, out var salonId, out var userId))
                     {
                         return BadRequest("شناسهٔ سالن از هویت کاربر دریافت نشد.");
                     }
@@ -30,6 +30,7 @@ public sealed class RegisterReceptionPaymentEndpoint
                     var result = await commandBus.Send<RegisterReceptionPaymentCommand, bool>(
                         new RegisterReceptionPaymentCommand(
                             receptionId,
+                            userId,
                             request with { SalonId = salonId }),
                         cancellationToken);
                     return result.IsSuccess

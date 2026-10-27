@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Modules.CashRegister.Application.Contract\Modules.CashRegister.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.CashRegister.Application\Modules.CashRegister.Application.csproj" />
+    <ProjectReference Include="..\Modules.CashRegister.Persistence\Modules.CashRegister.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

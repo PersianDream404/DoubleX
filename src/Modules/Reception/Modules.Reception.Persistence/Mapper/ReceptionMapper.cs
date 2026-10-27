@@ -75,5 +75,6 @@ public static class ReceptionMapper
                 payment.PaidAt,
                 payment.PaymentStatus,
                 payment.TransactionReference,
-                payment.Description)).ToList());
+                payment.Description,
+                payment.CashRegisterId)).ToList());
 }

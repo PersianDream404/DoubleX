@@ -119,7 +119,8 @@ public sealed class Reception : BaseEntityIdentity
         DateTimeOffset paidAt,
         string? transactionReference,
         string idempotencyKey,
-        string? description)
+        string? description,
+        long? cashRegisterId)
     {
         if (ReceptionStatus == ReceptionStatus.Cancelled ||
             amount <= 0 ||
@@ -137,7 +138,8 @@ public sealed class Reception : BaseEntityIdentity
             paidAt,
             transactionReference,
             idempotencyKey,
-            description));
+            description,
+            cashRegisterId));
         RecalculateFinancialStatus();
         Revision++;
         return true;

@@ -6,6 +6,7 @@
     <ProjectReference Include="..\..\Service\Modules.Service.Application.Contract\Modules.Service.Application.Contract.csproj" />
     <ProjectReference Include="..\..\Customer\Modules.Customer.Application.Contract\Modules.Customer.Application.Contract.csproj" />
     <ProjectReference Include="..\..\Salon\Modules.Salon.Application.Contract\Modules.Salon.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\CashRegister\Modules.CashRegister.Application.Contract\Modules.CashRegister.Application.Contract.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
   </ItemGroup>
   <ItemGroup>
