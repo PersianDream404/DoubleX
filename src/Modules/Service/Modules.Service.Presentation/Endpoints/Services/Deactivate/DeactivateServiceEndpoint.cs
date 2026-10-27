@@ -16,16 +16,20 @@ public sealed class DeactivateServiceEndpoint
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapPatch($"{ServiceApiInfo.Prefix}/{{id:long}}/Deactivate", async (
                     long id,
-                    [FromQuery] long salonId,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<DeactivateServiceCommand, bool>(
                         new DeactivateServiceCommand(salonId, id), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "خدمت غیرفعال شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

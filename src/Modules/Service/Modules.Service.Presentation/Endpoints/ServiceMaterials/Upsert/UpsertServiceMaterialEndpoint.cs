@@ -18,14 +18,19 @@ public sealed class UpsertServiceMaterialEndpoint
             app.MapPost($"{ServiceApiInfo.Prefix}/Materials", async (
                     [FromBody] ServiceMaterialRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpsertServiceMaterialCommand, bool>(
-                        new UpsertServiceMaterialCommand(null, request), cancellationToken);
+                        new UpsertServiceMaterialCommand(null, request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "ماده استاندارد خدمت ذخیره شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

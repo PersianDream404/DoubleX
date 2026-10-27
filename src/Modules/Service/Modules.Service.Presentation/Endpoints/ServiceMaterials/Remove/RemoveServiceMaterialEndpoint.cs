@@ -16,16 +16,20 @@ public sealed class RemoveServiceMaterialEndpoint
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapDelete($"{ServiceApiInfo.Prefix}/Materials/{{id:long}}", async (
                     long id,
-                    [FromQuery] long salonId,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<RemoveServiceMaterialCommand, bool>(
                         new RemoveServiceMaterialCommand(salonId, id), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "ماده استاندارد از خدمت حذف شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

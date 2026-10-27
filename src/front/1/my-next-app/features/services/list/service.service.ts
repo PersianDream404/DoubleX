@@ -18,11 +18,8 @@ export class ServiceCatalogService {
   private readonly api = new ApiClient();
   private readonly path = "/api/Services";
 
-  getAll(
-    salonId: number,
-    config?: { signal?: AbortSignal },
-  ): Promise<ApiResponse<ServiceDto[]>> {
-    return this.api.get<ServiceDto[]>(this.path, { salonId }, config);
+  getAll(config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceDto[]>> {
+    return this.api.get<ServiceDto[]>(this.path, undefined, config);
   }
 
   getById(
@@ -32,13 +29,10 @@ export class ServiceCatalogService {
     return this.api.get<ServiceDto>(`${this.path}/${id}`, undefined, config);
   }
 
-  getCategories(
-    salonId: number,
-    config?: { signal?: AbortSignal },
-  ): Promise<ApiResponse<ServiceCategoryDto[]>> {
+  getCategories(config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceCategoryDto[]>> {
     return this.api.get<ServiceCategoryDto[]>(
       `${this.path}/Categories`,
-      { salonId },
+      undefined,
       config,
     );
   }
@@ -61,19 +55,15 @@ export class ServiceCatalogService {
     );
   }
 
-  deactivateCategory(id: number, salonId: number): Promise<ApiResponse<unknown>> {
+  deactivateCategory(id: number): Promise<ApiResponse<unknown>> {
     return this.api.patch<unknown, Record<string, never>>(
       `${this.path}/Categories/${id}/Deactivate`,
       {},
-      { params: { salonId } },
     );
   }
 
-  deleteCategory(id: number, salonId: number): Promise<ApiResponse<unknown>> {
-    return this.api.delete<unknown>(
-      `${this.path}/Categories/${id}`,
-      { params: { salonId } },
-    );
+  deleteCategory(id: number): Promise<ApiResponse<unknown>> {
+    return this.api.delete<unknown>(`${this.path}/Categories/${id}`);
   }
 
   create(request: ServiceRequest): Promise<ApiResponse<unknown>> {
@@ -87,22 +77,20 @@ export class ServiceCatalogService {
     );
   }
 
-  deactivate(id: number, salonId: number): Promise<ApiResponse<unknown>> {
+  deactivate(id: number): Promise<ApiResponse<unknown>> {
     return this.api.patch<unknown, Record<string, never>>(
       `${this.path}/${id}/Deactivate`,
       {},
-      { params: { salonId } },
     );
   }
 
   getMaterials(
-    salonId: number,
     serviceId: number,
     config?: { signal?: AbortSignal },
   ): Promise<ApiResponse<ServiceMaterialDto[]>> {
     return this.api.get<ServiceMaterialDto[]>(
       `${this.path}/Materials`,
-      { salonId, serviceId },
+      { serviceId },
       config,
     );
   }
@@ -124,36 +112,28 @@ export class ServiceCatalogService {
     );
   }
 
-  removeMaterial(
-    id: number,
-    salonId: number,
-  ): Promise<ApiResponse<unknown>> {
-    return this.api.delete<unknown>(
-      `${this.path}/Materials/${id}`,
-      { params: { salonId } },
-    );
+  removeMaterial(id: number): Promise<ApiResponse<unknown>> {
+    return this.api.delete<unknown>(`${this.path}/Materials/${id}`);
   }
 
   getServicePersonnels(
-    salonId: number,
     serviceId: number,
     config?: { signal?: AbortSignal },
   ): Promise<ApiResponse<ServicePersonnelDto[]>> {
     return this.api.get<ServicePersonnelDto[]>(
       `${this.path}/Personnels`,
-      { salonId, serviceId },
+      { serviceId },
       config,
     );
   }
 
   getPersonnelServiceAssignments(
-    salonId: number,
     personnelId: number,
     config?: { signal?: AbortSignal },
   ): Promise<ApiResponse<ServicePersonnelDto[]>> {
     return this.api.get<ServicePersonnelDto[]>(
       `${this.path}/Personnels/ByPersonnel`,
-      { salonId, personnelId },
+      { personnelId },
       config,
     );
   }
@@ -169,11 +149,10 @@ export class ServiceCatalogService {
 
   removePersonnelFromService(
     id: number,
-    salonId: number,
     serviceId: number,
   ): Promise<ApiResponse<unknown>> {
     return this.api.delete<unknown>(`${this.path}/Personnels/${id}`, {
-      params: { salonId, serviceId },
+      params: { serviceId },
     });
   }
 }

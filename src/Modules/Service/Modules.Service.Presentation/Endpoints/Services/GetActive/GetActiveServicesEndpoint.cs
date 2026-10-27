@@ -16,14 +16,18 @@ public sealed class GetActiveServicesEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapGet($"{ServiceApiInfo.Prefix}/SelectList", async (
-                    [FromQuery] long salonId,
                     [FromServices] IQueryBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<GetActiveServicesQuery, IReadOnlyList<ServiceDto>>(
                         new GetActiveServicesQuery(salonId), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

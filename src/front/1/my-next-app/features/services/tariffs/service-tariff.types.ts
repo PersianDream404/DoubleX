@@ -16,19 +16,16 @@ export interface ServiceTariffDto {
 }
 
 export interface ServiceTariffRequest {
-  salonId: number;
   name: string;
   validFrom: string;
   validTo: string | null;
 }
 
 export interface AddTariffServicesRequest {
-  salonId: number;
   services: { serviceId: number; amount: number }[];
 }
 
 export interface UpdateTariffServiceRequest {
-  salonId: number;
   amount: number;
 }
 

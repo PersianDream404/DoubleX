@@ -30,7 +30,6 @@ export const ReceptionPaymentFormSchema = z.object({
 
 export const CreateReceptionFormSchema = z
   .object({
-    salonId: z.number().int().positive(),
     customerId: z.number().int().positive(),
     receptionistId: z.number().int().positive(),
     serviceTariffId: z.number().int().positive(),

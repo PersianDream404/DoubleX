@@ -24,12 +24,16 @@ public static class CreatePersonnelEndpoint
 
 
                     [FromBody] CreatePersonnelRequestDto request,
-                  [FromServices] ICommandBus _commandBus, CancellationToken ct
+                  [FromServices] ICommandBus _commandBus,
+                  HttpContext context,
+                  CancellationToken ct
                 ) =>
             {
+                if (!TryGetSalonId(context, out var salonId))
+                    return Unauthorized();
 
                 var result = await _commandBus.Send<CreatePersonnelCommand, long>
-                                 (new CreatePersonnelCommand(request), ct);
+                                 (new CreatePersonnelCommand(request with { SalonId = salonId }), ct);
 
                 if (!result.IsSuccess)
                 {
@@ -45,6 +49,7 @@ public static class CreatePersonnelEndpoint
 
 
             })
+                .RequireAuthorization()
                 .WithTags(ApiInfo.Tag);
         }
     }

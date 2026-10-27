@@ -19,14 +19,20 @@ public sealed class CreateCustomerEndpoint
             app.MapPost(CustomerApiInfo.Prefix, async (
                     [FromBody] CreateCustomerRequestDto request,
                     [FromServices] ICommandBus commandBus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+                    request.SalonId = salonId;
+
                     var result = await commandBus.Send<CreateCustomerCommand, bool>(
                         new CreateCustomerCommand(request), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "مشتری با موفقیت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

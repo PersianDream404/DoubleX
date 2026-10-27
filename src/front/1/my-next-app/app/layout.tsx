@@ -3,6 +3,7 @@ import { Vazirmatn } from "next/font/google";
 
 import "./globals.css";
 import { Navbar } from "@/components/common/nav";
+import { UserProvider } from "@/contexts/user-context";
 
 const vazir = Vazirmatn({ subsets: ["arabic", "latin"] });
 
@@ -18,8 +19,10 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body className={`${vazir.className} antialiased`}>
-        <Navbar />
-        {children}
+        <UserProvider>
+          <Navbar />
+          {children}
+        </UserProvider>
       </body>
     </html>
   );

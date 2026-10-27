@@ -13,7 +13,7 @@ export class LoginService {
   async login(credentials: {
     username: string;
     password: string;
-  }): Promise<{ token: string; expireDate: string; salonId: number }> {
+  }): Promise<{ token: string; expireDate: string }> {
     const response: ApiResponse<LoginResponse> = await this.api.post<
       LoginResponse,
       LoginRequest
@@ -23,16 +23,10 @@ export class LoginService {
     });
 
     const tokenResult = response.data?.tokenResult;
-    const salonId = response.data?.info?.salonId;
-    if (
-      !tokenResult?.token ||
-      !tokenResult.expireDate ||
-      !salonId ||
-      salonId <= 0
-    ) {
+    if (!tokenResult?.token || !tokenResult.expireDate) {
       throw new Error("پاسخ ورود از سرور معتبر نیست.");
     }
 
-    return { ...tokenResult, salonId };
+    return tokenResult;
   }
 }

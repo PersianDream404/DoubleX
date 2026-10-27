@@ -19,14 +19,19 @@ public sealed class GetCustomerByIdEndpoint
             app.MapGet($"{CustomerApiInfo.Prefix}/{{id:long}}", async (
                     long id,
                     [FromServices] IQueryBus queryBus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await queryBus.Send<GetCustomerByIdQuery, CustomerDetailsDto>(
                         new GetCustomerByIdQuery(id), cancellationToken);
-                    return result.IsSuccess
+                    return result.IsSuccess && result.Value!.SalonId == salonId
                         ? Ok(result.Value)
-                        : NotFound(result.GetErrorMessage());
+                        : NotFound(result.IsSuccess ? "مشتری موردنظر پیدا نشد." : result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

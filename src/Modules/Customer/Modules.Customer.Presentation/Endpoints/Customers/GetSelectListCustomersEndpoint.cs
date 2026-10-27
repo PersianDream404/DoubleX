@@ -20,8 +20,13 @@ public sealed class GetSelectListCustomersEndpoint
             app.MapGet($"{CustomerApiInfo.Prefix}/SelectList", async (
                     [AsParameters] GetSelectListCustomerRequestDto request,
                     [FromServices] IQueryBus queryBus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+                    request.SalonId = salonId;
+
                     var result = await queryBus.Send<
                         GetSelectListCustomerQuery,
                         PagedList<GetSelectListCustomerResponseDto>>(
@@ -32,6 +37,7 @@ public sealed class GetSelectListCustomersEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

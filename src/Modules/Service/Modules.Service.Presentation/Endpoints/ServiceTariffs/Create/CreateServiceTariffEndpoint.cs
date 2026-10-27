@@ -18,14 +18,19 @@ public sealed class CreateServiceTariffEndpoint
             app.MapPost($"{ServiceApiInfo.Prefix}/Tariffs", async (
                     [FromBody] ServiceTariffRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<CreateServiceTariffCommand, bool>(
-                        new CreateServiceTariffCommand(request), cancellationToken);
+                        new CreateServiceTariffCommand(request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "تعرفه خدمات ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

@@ -18,11 +18,14 @@ public sealed class GetServicePersonnelAssignmentsEndpoint
             app.MapGet(
                     $"{ServiceApiInfo.Prefix}/Personnels/ByPersonnel",
                     async (
-                        [FromQuery] long salonId,
                         [FromQuery] long personnelId,
                         [FromServices] IQueryBus bus,
+                        HttpContext context,
                         CancellationToken cancellationToken) =>
                     {
+                        if (!TryGetSalonId(context, out var salonId))
+                            return Unauthorized();
+
                         var result = await bus.Send<
                             GetServicePersonnelAssignmentsQuery,
                             IReadOnlyList<ServicePersonnelDto>>(
@@ -32,6 +35,7 @@ public sealed class GetServicePersonnelAssignmentsEndpoint
                             ? Ok(result.Value!)
                             : BadRequest(result.GetErrorMessage());
                     })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

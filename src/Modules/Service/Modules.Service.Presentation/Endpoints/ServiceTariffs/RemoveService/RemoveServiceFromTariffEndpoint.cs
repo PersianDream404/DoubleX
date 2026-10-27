@@ -19,10 +19,13 @@ public sealed class RemoveServiceFromTariffEndpoint
                     async (
                         long tariffId,
                         long serviceId,
-                        [FromQuery] long salonId,
                         [FromServices] ICommandBus bus,
+                        HttpContext context,
                         CancellationToken cancellationToken) =>
                     {
+                        if (!TryGetSalonId(context, out var salonId))
+                            return Unauthorized();
+
                         var result = await bus.Send<RemoveServiceFromTariffCommand, bool>(
                             new RemoveServiceFromTariffCommand(tariffId, serviceId, salonId),
                             cancellationToken);
@@ -30,6 +33,7 @@ public sealed class RemoveServiceFromTariffEndpoint
                             ? Ok(new { message = "خدمت از تعرفه حذف شد." })
                             : BadRequest(result.GetErrorMessage());
                     })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

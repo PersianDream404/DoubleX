@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const ServiceTariffFormSchema = z.object({
-  salonId: z.number().int().positive("انتخاب سالن الزامی است."),
   name: z.string().trim().min(1, "نام تعرفه الزامی است.").max(200, "نام تعرفه حداکثر ۲۰۰ نویسه است."),
   validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}T00:00:00\+03:30$/, "تاریخ شروع اعتبار را وارد کنید."),
   validTo: z.string().nullable(),

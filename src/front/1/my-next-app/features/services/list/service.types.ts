@@ -20,7 +20,6 @@ export interface ServiceCategoryDto {
 }
 
 export interface ServiceCategoryRequest {
-  salonId: number;
   name: string;
   description: string | null;
 }
@@ -42,7 +41,6 @@ export interface ServiceMaterialDto {
 }
 
 export interface ServiceMaterialRequest {
-  salonId: number;
   serviceId: number;
   materialId: number;
   quantityPerService: number;
@@ -57,13 +55,11 @@ export interface ServicePersonnelDto {
 }
 
 export interface ServicePersonnelRequest {
-  salonId: number;
   serviceId: number;
   personnelId: number;
 }
 
 export interface ServiceRequest {
-  salonId: number;
   categoryId: number;
   code: string;
   name: string;
@@ -76,7 +72,6 @@ export interface UpdateServiceRequest extends ServiceRequest {
 }
 
 export interface ServiceListQuery {
-  salonId: number;
   q?: string;
 }
 

@@ -16,11 +16,14 @@ public sealed class RemoveServicePersonnelEndpoint
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapDelete($"{ServiceApiInfo.Prefix}/Personnels/{{id:long}}", async (
                     long id,
-                    [FromQuery] long salonId,
                     [FromQuery] long serviceId,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<RemoveServicePersonnelCommand, bool>(
                         new RemoveServicePersonnelCommand(salonId, serviceId, id),
                         cancellationToken);
@@ -28,6 +31,7 @@ public sealed class RemoveServicePersonnelEndpoint
                         ? Ok(new { message = "پرسنل از خدمت حذف شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

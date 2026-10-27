@@ -19,14 +19,19 @@ public sealed class AddServicesToTariffEndpoint
                     long tariffId,
                     [FromBody] AddServiceTariffItemsRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<AddServicesToTariffCommand, bool>(
-                        new AddServicesToTariffCommand(tariffId, request), cancellationToken);
+                        new AddServicesToTariffCommand(tariffId, request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "خدمات به تعرفه اضافه شدند." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

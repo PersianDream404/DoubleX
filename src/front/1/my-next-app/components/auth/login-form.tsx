@@ -50,7 +50,8 @@ export function LoginForm() {
     }
 
     window.localStorage.setItem("access_token", loginResult.token);
-    window.localStorage.setItem("salon_id", String(loginResult.salonId));
+    window.localStorage.removeItem("salon_id");
+    window.dispatchEvent(new Event("auth-token-changed"));
     router.replace("/personnel");
   }
 

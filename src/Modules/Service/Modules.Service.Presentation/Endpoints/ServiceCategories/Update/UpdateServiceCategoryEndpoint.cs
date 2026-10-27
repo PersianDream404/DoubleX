@@ -19,14 +19,19 @@ public sealed class UpdateServiceCategoryEndpoint
                     long id,
                     [FromBody] UpdateServiceCategoryRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpdateServiceCategoryCommand, bool>(
-                        new UpdateServiceCategoryCommand(id, request), cancellationToken);
+                        new UpdateServiceCategoryCommand(id, request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "دسته‌بندی خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

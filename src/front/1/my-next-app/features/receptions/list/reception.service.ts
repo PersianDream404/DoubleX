@@ -72,14 +72,12 @@ export class ReceptionService {
   }
 
   getCustomers(
-    salonId: number,
     query: { q?: string; pageNumber: number; pageSize: number },
     config?: { signal?: AbortSignal },
   ): Promise<ApiResponse<PagedResult<CustomerSelectItem>>> {
     return this.api.get<PagedResult<CustomerSelectItem>>(
       "/api/Customer/SelectList",
       {
-        SalonId: salonId,
         Q: query.q || undefined,
         PageNumber: query.pageNumber,
         PageSize: query.pageSize,

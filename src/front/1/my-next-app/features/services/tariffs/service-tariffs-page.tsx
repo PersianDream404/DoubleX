@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +44,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SalonService } from "@/features/salons/list/salon.service";
-import type { GetSelectListSalonResponse } from "@/features/salons/list/salon.types";
 import { handleApiError } from "@/lib/api/handle-api-error";
+import { useUserContext } from "@/contexts/user-context";
 
 import { ServiceTariffDetailsDialog } from "./service-tariff-details-dialog";
 import { ServiceTariffFormDialog } from "./service-tariff-form-dialog";
@@ -57,10 +56,7 @@ import { useServiceTariffs } from "./use-service-tariffs";
 const PAGE_SIZE = 10;
 
 export function ServiceTariffsPage() {
-  const [salons, setSalons] = useState<GetSelectListSalonResponse[]>([]);
-  const [salonId, setSalonId] = useState(0);
-  const [salonsLoading, setSalonsLoading] = useState(true);
-  const [salonsError, setSalonsError] = useState<string | null>(null);
+  const { salonId, loading: userLoading, error: userError } = useUserContext();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -71,41 +67,7 @@ export function ServiceTariffsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    Promise.resolve()
-      .then(async () => {
-        const api = new SalonService();
-        const first = await api.getSelectList(
-          { PageNumber: 1, PageSize: 100 },
-          { signal: controller.signal },
-        );
-        if (!first.data) throw new Error(first.message ?? "فهرست سالن‌ها دریافت نشد.");
-        const items = [...first.data.list];
-        for (let currentPage = 2; currentPage <= first.data.pagination.totalPages; currentPage += 1) {
-          const response = await api.getSelectList(
-            { PageNumber: currentPage, PageSize: 100 },
-            { signal: controller.signal },
-          );
-          if (!response.data) throw new Error(response.message ?? "فهرست سالن‌ها کامل دریافت نشد.");
-          items.push(...response.data.list);
-        }
-        if (controller.signal.aborted) return;
-        const activeSalons = items.filter((item) => item.status);
-        setSalons(activeSalons);
-        if (activeSalons.length === 1) setSalonId(activeSalons[0].id);
-        if (activeSalons.length === 0) setSalonsError("سالن فعالی برای مدیریت تعرفه‌ها وجود ندارد.");
-      })
-      .catch((reason: unknown) => {
-        if (!controller.signal.aborted) setSalonsError(handleApiError(reason));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setSalonsLoading(false);
-      });
-    return () => controller.abort();
-  }, []);
-
-  const { data, error, loading } = useServiceTariffs(salonId, refreshKey);
+  const { data, error, loading } = useServiceTariffs(salonId ?? 0, refreshKey);
   const tariffs = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
     return (data ?? []).filter((tariff) => !normalized || tariff.name.toLocaleLowerCase().includes(normalized));
@@ -125,11 +87,11 @@ export function ServiceTariffsPage() {
   }
 
   async function confirmDelete() {
-    if (!deleteTarget || deleting) return;
+    if (!deleteTarget || !salonId || deleting) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      const response = await new ServiceTariffService().delete(deleteTarget.id, salonId);
+      const response = await new ServiceTariffService().delete(deleteTarget.id);
       if (response.statusCode >= 400) throw new Error(response.message ?? "حذف تعرفه انجام نشد.");
       setDeleteTarget(null);
       setDetailsId(null);
@@ -183,21 +145,11 @@ export function ServiceTariffsPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-2 py-2">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               سالن
-              <select
-                aria-label="انتخاب سالن برای تعرفه‌ها"
-                value={salonId || ""}
-                disabled={salonsLoading || salons.length === 0}
-                onChange={(event) => {
-                  setSalonId(Number(event.target.value));
-                  setPage(1);
-                }}
-                className="h-8 min-w-40 rounded-md border border-slate-200 bg-white px-2 text-sm"
-              >
-                <option value="" disabled>{salonsLoading ? "در حال دریافت..." : "انتخاب سالن"}</option>
-                {salons.map((salon) => <option key={salon.id} value={salon.id}>{salon.name}</option>)}
-              </select>
+              <span className="text-sm text-slate-700">
+                {userLoading ? "در حال دریافت..." : salonId ? salonId.toLocaleString("fa-IR") : "در دسترس نیست"}
+              </span>
             </label>
-            {salonId > 0 && <span className="text-xs text-slate-500">{tariffs.length.toLocaleString("fa-IR")} تعرفه</span>}
+            {salonId !== null && salonId > 0 && <span className="text-xs text-slate-500">{tariffs.length.toLocaleString("fa-IR")} تعرفه</span>}
           </div>
           <div className="overflow-x-auto rounded-lg">
             <Table>
@@ -212,12 +164,12 @@ export function ServiceTariffsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salonsError ? (
-                  <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{salonsError}</TableCell></TableRow>
-                ) : salonsLoading ? (
+                {userError ? (
+                  <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{userError}</TableCell></TableRow>
+                ) : userLoading ? (
                   <TableRow><TableCell colSpan={6} role="status" className="py-8 text-center text-sm">در حال دریافت سالن‌ها...</TableCell></TableRow>
                 ) : !salonId ? (
-                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm">برای مشاهده تعرفه‌ها، سالن را انتخاب کنید.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm">شناسه سالن در توکن ورود شما موجود نیست.</TableCell></TableRow>
                 ) : error ? (
                   <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{error}</TableCell></TableRow>
                 ) : loading ? (
@@ -327,13 +279,13 @@ export function ServiceTariffsPage() {
         onOpenChange={setFormOpen}
         onSaved={() => setRefreshKey((current) => current + 1)}
         tariffId={editingId}
-        salonId={salonId}
+        salonId={salonId ?? 0}
       />
       <ServiceTariffDetailsDialog
         open={detailsId !== null}
         onOpenChange={(open) => !open && setDetailsId(null)}
         tariffId={detailsId}
-        salonId={salonId}
+        salonId={salonId ?? 0}
         onChanged={() => setRefreshKey((current) => current + 1)}
         onEdit={openEdit}
       />

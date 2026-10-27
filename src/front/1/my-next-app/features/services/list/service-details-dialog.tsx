@@ -71,7 +71,7 @@ export function ServiceDetailsDialog({
 
     Promise.all([
       new ServiceCatalogService().getById(serviceId, { signal: controller.signal }),
-      new ServiceCatalogService().getMaterials(salonId, serviceId, {
+      new ServiceCatalogService().getMaterials(serviceId, {
         signal: controller.signal,
       }),
     ])
@@ -143,7 +143,7 @@ export function ServiceDetailsDialog({
 
   async function refreshMaterials() {
     if (serviceId === null) return;
-    const response = await new ServiceCatalogService().getMaterials(salonId, serviceId);
+    const response = await new ServiceCatalogService().getMaterials(serviceId);
     if (!response.data) {
       throw new Error(response.message ?? "فهرست مواد مصرفی به‌روزرسانی نشد.");
     }
@@ -170,7 +170,6 @@ export function ServiceDetailsDialog({
     setSaving(true);
     try {
       await new ServiceCatalogService().addMaterial({
-        salonId,
         serviceId,
         materialId: parsed.data.materialId,
         quantityPerService: parsed.data.quantityPerService,
@@ -203,7 +202,6 @@ export function ServiceDetailsDialog({
     setSaving(true);
     try {
       await new ServiceCatalogService().updateMaterial(material.id, {
-        salonId,
         serviceId,
         materialId: material.materialId,
         quantityPerService: parsed.data.quantityPerService,
@@ -224,7 +222,7 @@ export function ServiceDetailsDialog({
     setRemoving(true);
     setRemoveError(null);
     try {
-      await new ServiceCatalogService().removeMaterial(removeTarget.id, salonId);
+      await new ServiceCatalogService().removeMaterial(removeTarget.id);
       await refreshMaterials();
       setRemoveTarget(null);
       onChanged();

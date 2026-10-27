@@ -20,5 +20,6 @@ public sealed record GetByIdPersonnelResponseDto(
 
 public class GetAllPersonnelRequestDto : PagedParamData
 {
+    public long SalonId { get; set; }
     public string? Q { get; set; }
 }

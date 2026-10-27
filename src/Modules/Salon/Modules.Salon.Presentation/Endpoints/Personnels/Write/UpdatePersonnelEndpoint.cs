@@ -22,10 +22,14 @@ public static class UpdatePersonnelEndpoint
                 long id,
                 [FromBody] UpdatePersonnelRequestDto request,
                 [FromServices] ICommandBus commandBus,
+                HttpContext context,
                 CancellationToken cancellationToken) =>
             {
+                if (!TryGetSalonId(context, out var salonId))
+                    return Unauthorized();
+
                 var result = await commandBus.Send<UpdatePersonnelCommand, bool>(
-                    new UpdatePersonnelCommand(id, request),
+                    new UpdatePersonnelCommand(id, request with { SalonId = salonId }),
                     cancellationToken);
 
                 if (!result.IsSuccess)
@@ -33,6 +37,7 @@ public static class UpdatePersonnelEndpoint
 
                 return Ok(MessageHelper.Format(AppMessages.Edit, AppEntity.Personnel));
             })
+            .RequireAuthorization()
             .WithTags(ApiInfo.Tag);
         }
     }

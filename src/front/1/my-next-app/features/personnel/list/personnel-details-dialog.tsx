@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { handleApiError } from "@/lib/api/handle-api-error";
+import { useUserContext } from "@/contexts/user-context";
 import { ServiceCatalogService } from "@/features/services/list/service.service";
 import type { ServiceDto } from "@/features/services/list/service.types";
 
@@ -497,6 +498,7 @@ export function PersonnelDetailsDialog({
   onToggleRequest: (id: number, fullName: string, status: boolean) => void;
   onEditRequest: (id: number) => void;
 }) {
+  const { salonId, loading: userLoading, error: userError } = useUserContext();
   const open = personnelId !== null;
   const [activeTab, setActiveTab] = useState<DetailsTab>("personal");
   const [state, setState] = useState<DetailsState>({
@@ -512,7 +514,7 @@ export function PersonnelDetailsDialog({
   });
 
   useEffect(() => {
-    if (!open || personnelId === null) {
+    if (!open || personnelId === null || userLoading) {
       return;
     }
 
@@ -541,14 +543,23 @@ export function PersonnelDetailsDialog({
           error: null,
         });
 
+        if (!salonId) {
+          setServices({
+            personnelId: id,
+            names: [],
+            loading: false,
+            error: userError ?? "شناسه سالن در توکن ورود شما موجود نیست.",
+          });
+          return;
+        }
+
         try {
           const [assignmentsResponse, servicesResponse] = await Promise.all([
             catalogService.getPersonnelServiceAssignments(
-              personnel.salonId,
               personnel.id,
               { signal: controller.signal },
             ),
-            catalogService.getAll(personnel.salonId, {
+            catalogService.getAll({
               signal: controller.signal,
             }),
           ]);
@@ -607,7 +618,7 @@ export function PersonnelDetailsDialog({
     void loadDetails();
 
     return () => controller.abort();
-  }, [open, personnelId]);
+  }, [open, personnelId, salonId, userLoading, userError]);
 
   const loading =
     open && personnelId !== null && state.personnelId !== personnelId;

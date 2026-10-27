@@ -24,6 +24,11 @@ public sealed class UpdateCustomerCommandHandler(
             return Result.NotFound("مشتری موردنظر پیدا نشد.");
         }
 
+        if (customer.SalonId != request.SalonId)
+        {
+            return Result.NotFound("مشتری موردنظر پیدا نشد.");
+        }
+
         if (!await queryRepository.SalonExistsAsync(request.SalonId, cancellationToken))
         {
             return Result.NotFound("سالن موردنظر پیدا نشد.");

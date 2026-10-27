@@ -10,6 +10,9 @@ export function LogoutButton() {
   const [isPending, startTransition] = useTransition();
 
   function handleLogout() {
+    window.localStorage.removeItem("access_token");
+    window.localStorage.removeItem("salon_id");
+    window.dispatchEvent(new Event("auth-token-changed"));
     startTransition(async () => {
       await logoutAction();
     });

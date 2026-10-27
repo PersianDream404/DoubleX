@@ -16,16 +16,20 @@ public sealed class DeleteServiceCategoryEndpoint
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapDelete($"{ServiceApiInfo.Prefix}/Categories/{{id:long}}", async (
                     long id,
-                    [FromQuery] long salonId,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<DeleteServiceCategoryCommand, bool>(
                         new DeleteServiceCategoryCommand(salonId, id), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "دسته‌بندی حذف شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

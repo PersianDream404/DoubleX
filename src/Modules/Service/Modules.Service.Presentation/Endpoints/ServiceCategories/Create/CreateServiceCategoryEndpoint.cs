@@ -18,14 +18,19 @@ public sealed class CreateServiceCategoryEndpoint
             app.MapPost($"{ServiceApiInfo.Prefix}/Categories", async (
                     [FromBody] ServiceCategoryRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<CreateServiceCategoryCommand, bool>(
-                        new CreateServiceCategoryCommand(request), cancellationToken);
+                        new CreateServiceCategoryCommand(request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "دسته‌بندی خدمت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

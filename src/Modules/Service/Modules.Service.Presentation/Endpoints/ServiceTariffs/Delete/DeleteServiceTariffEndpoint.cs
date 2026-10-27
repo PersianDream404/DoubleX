@@ -16,16 +16,20 @@ public sealed class DeleteServiceTariffEndpoint
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapDelete($"{ServiceApiInfo.Prefix}/Tariffs/{{id:long}}", async (
                     long id,
-                    [FromQuery] long salonId,
-                    [FromServices] ICommandBus bus,
+                [FromServices] ICommandBus bus,
+                HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
-                    var result = await bus.Send<DeleteServiceTariffCommand, bool>(
-                        new DeleteServiceTariffCommand(id, salonId), cancellationToken);
+                if (!TryGetSalonId(context, out var salonId))
+                    return Unauthorized();
+
+                var result = await bus.Send<DeleteServiceTariffCommand, bool>(
+                    new DeleteServiceTariffCommand(id, salonId), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "تعرفه و خدمات ثبت‌شده در آن حذف شدند." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

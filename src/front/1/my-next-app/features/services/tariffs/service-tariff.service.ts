@@ -12,8 +12,8 @@ export class ServiceTariffService {
   private readonly api = new ApiClient();
   private readonly path = "/api/Services/Tariffs";
 
-  getAll(salonId: number, config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceTariffDto[]>> {
-    return this.api.get<ServiceTariffDto[]>(this.path, { salonId }, config);
+  getAll(config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceTariffDto[]>> {
+    return this.api.get<ServiceTariffDto[]>(this.path, undefined, config);
   }
 
   getById(id: number, config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceTariffDto>> {
@@ -28,8 +28,8 @@ export class ServiceTariffService {
     return this.api.put<unknown, ServiceTariffRequest>(`${this.path}/${id}`, request);
   }
 
-  delete(id: number, salonId: number): Promise<ApiResponse<unknown>> {
-    return this.api.delete<unknown>(`${this.path}/${id}`, { params: { salonId } });
+  delete(id: number): Promise<ApiResponse<unknown>> {
+    return this.api.delete<unknown>(`${this.path}/${id}`);
   }
 
   addServices(tariffId: number, request: AddTariffServicesRequest): Promise<ApiResponse<unknown>> {
@@ -50,10 +50,9 @@ export class ServiceTariffService {
     );
   }
 
-  removeService(tariffId: number, serviceId: number, salonId: number): Promise<ApiResponse<unknown>> {
+  removeService(tariffId: number, serviceId: number): Promise<ApiResponse<unknown>> {
     return this.api.delete<unknown>(
       `${this.path}/${tariffId}/Services/${serviceId}`,
-      { params: { salonId } },
     );
   }
 }

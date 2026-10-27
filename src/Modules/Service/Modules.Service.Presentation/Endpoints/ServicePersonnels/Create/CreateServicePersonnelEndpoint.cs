@@ -18,15 +18,20 @@ public sealed class CreateServicePersonnelEndpoint
             app.MapPost($"{ServiceApiInfo.Prefix}/Personnels", async (
                     [FromBody] ServicePersonnelRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpsertServicePersonnelCommand, bool>(
-                        new UpsertServicePersonnelCommand(null, request),
+                        new UpsertServicePersonnelCommand(null, request with { SalonId = salonId }),
                         cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "پرسنل به خدمت اختصاص داده شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

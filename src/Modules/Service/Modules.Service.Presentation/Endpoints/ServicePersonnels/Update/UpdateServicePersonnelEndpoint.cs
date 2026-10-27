@@ -19,15 +19,20 @@ public sealed class UpdateServicePersonnelEndpoint
                     long id,
                     [FromBody] ServicePersonnelRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpsertServicePersonnelCommand, bool>(
-                        new UpsertServicePersonnelCommand(id, request),
+                        new UpsertServicePersonnelCommand(id, request with { SalonId = salonId }),
                         cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "پرسنل اختصاص‌یافته به خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

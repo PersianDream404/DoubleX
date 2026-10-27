@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 export const ServiceListQuerySchema = z.object({
-  salonId: z.number().int().positive(),
   q: z.string().trim().max(250),
 });
 
 export const ServiceFormSchema = z.object({
-  salonId: z.number().int().positive("انتخاب سالن الزامی است."),
   categoryId: z.number().int().positive("انتخاب دسته‌بندی الزامی است."),
   code: z.string().trim().min(1, "کد خدمت الزامی است.").max(50),
   name: z.string().trim().min(1, "نام خدمت الزامی است.").max(200),

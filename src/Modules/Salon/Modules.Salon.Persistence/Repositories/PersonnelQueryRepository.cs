@@ -78,6 +78,7 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
     {
         var query = _dbContext.Personnels
             .AsNoTracking()
+            .Where(x => x.SalonId == request.SalonId)
             .WhereIf(!string.IsNullOrWhiteSpace(request.Q), x => x.PersonalInfo.FullName.Contains(request.Q!));
 
         var result = await query.ToPagedListAsync(

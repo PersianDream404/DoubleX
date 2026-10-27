@@ -18,14 +18,19 @@ public sealed class CreateServiceEndpoint
             app.MapPost(ServiceApiInfo.Prefix, async (
                     [FromBody] ServiceRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<CreateServiceCommand, bool>(
-                        new CreateServiceCommand(request), cancellationToken);
+                        new CreateServiceCommand(request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "خدمت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

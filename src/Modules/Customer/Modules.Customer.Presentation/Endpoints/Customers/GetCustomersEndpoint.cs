@@ -19,8 +19,13 @@ public sealed class GetCustomersEndpoint
             app.MapGet(CustomerApiInfo.Prefix, async (
                     [AsParameters] GetCustomersRequestDto request,
                     [FromServices] IQueryBus queryBus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+                    request.SalonId = salonId;
+
                     var result = await queryBus.Send<GetCustomersQuery,
                         Framwork.PagedList.PagedList<CustomerListItemDto>>(
                         new GetCustomersQuery(request), cancellationToken);
@@ -28,6 +33,7 @@ public sealed class GetCustomersEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

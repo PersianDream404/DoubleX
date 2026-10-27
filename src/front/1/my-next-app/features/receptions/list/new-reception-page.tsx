@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { handleApiError } from "@/lib/api/handle-api-error";
 import type { ApiResponse } from "@/lib/api/types/api-response";
 import type { PagedResult } from "@/lib/api/types/paged-result";
+import { useUserContext } from "@/contexts/user-context";
 import { MaterialService } from "@/features/inventory/materials/material.service";
 import type { MaterialDto } from "@/features/inventory/materials/material.types";
 import { PersonnelService } from "@/features/personnel/list/personnel.service";
@@ -176,10 +177,9 @@ function InfoCard({
 
 export function NewReceptionPage() {
   const router = useRouter();
+  const { salonId, loading: userLoading, error: userError } = useUserContext();
   const receptionService = useMemo(() => new ReceptionService(), []);
   const nextKey = useRef(2);
-  const [salonId, setSalonId] = useState<number | null>(null);
-  const [salonIdReady, setSalonIdReady] = useState(false);
   const [options, setOptions] = useState<ReceptionOptions | null>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -198,24 +198,8 @@ export function NewReceptionPage() {
   const [createdReceptionId, setCreatedReceptionId] = useState<number | null>(null);
 
   useEffect(() => {
-    let active = true;
-    queueMicrotask(() => {
-      if (!active) return;
-      const storedSalonId = Number(window.localStorage.getItem("salon_id"));
-      if (Number.isSafeInteger(storedSalonId) && storedSalonId > 0) {
-        setSalonId(storedSalonId);
-      }
-      setSalonIdReady(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!salonId) return;
 
-    const activeSalonId = salonId;
     const controller = new AbortController();
     const personnelService = new PersonnelService();
     const materialService = new MaterialService();
@@ -238,8 +222,8 @@ export function NewReceptionPage() {
               { signal: controller.signal },
             ),
           ),
-          catalogService.getAll(activeSalonId, { signal: controller.signal }),
-          tariffService.getAll(activeSalonId, { signal: controller.signal }),
+          catalogService.getAll({ signal: controller.signal }),
+          tariffService.getAll({ signal: controller.signal }),
         ]);
         if (!serviceResponse.data || !tariffResponse.data) {
           throw new Error(
@@ -276,7 +260,7 @@ export function NewReceptionPage() {
 
     void loadOptions();
     return () => controller.abort();
-  }, [salonId, salonIdReady]);
+  }, [salonId]);
 
   useEffect(() => {
     if (!salonId) return;
@@ -287,7 +271,6 @@ export function NewReceptionPage() {
       setCustomerError(null);
       receptionService
         .getCustomers(
-          salonId,
           { q: customerQuery.trim(), pageNumber: 1, pageSize: 100 },
           { signal: controller.signal },
         )
@@ -339,12 +322,13 @@ export function NewReceptionPage() {
   );
   const totalPayment = payments.reduce((total, payment) => total + payment.amount, 0);
   const remainingAmount = Math.max(0, totalAmount - totalPayment);
-  const salonError =
-    salonIdReady && salonId === null
-      ? "شناسه سالن در نشست شما در دسترس نیست؛ لطفاً خارج شوید و دوباره وارد شوید."
+  const salonError = userError
+    ? `${userError} لطفاً خارج شوید و دوباره وارد شوید.`
+    : !userLoading && !salonId
+      ? "شناسه سالن در توکن ورود شما موجود نیست؛ لطفاً دوباره وارد شوید."
       : null;
   const currentOptionsError = optionsError ?? salonError;
-  const currentOptionsLoading = Boolean(salonId) && optionsLoading;
+  const currentOptionsLoading = userLoading || (Boolean(salonId) && optionsLoading);
 
   const updateService = useCallback(
     (key: string, update: (service: ServiceDraft) => ServiceDraft) => {
@@ -375,10 +359,13 @@ export function NewReceptionPage() {
   async function submitReception(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting || createdReceptionId !== null) return;
+    if (!salonId) {
+      setFormError("شناسه سالن در توکن ورود شما موجود نیست.");
+      return;
+    }
     setFormError(null);
 
     const parsedForm = CreateReceptionFormSchema.safeParse({
-      salonId: salonId ?? 0,
       customerId: customerId ?? 0,
       receptionistId: receptionistId ?? 0,
       serviceTariffId: serviceTariffId ?? 0,
@@ -445,7 +432,7 @@ export function NewReceptionPage() {
         personnelDetails.some(
           (response) =>
             !response.data ||
-            response.data.salonId !== parsedForm.data.salonId ||
+            response.data.salonId !== salonId ||
             !response.data.status,
         )
       ) {
@@ -453,7 +440,6 @@ export function NewReceptionPage() {
       }
 
       const createResponse = await receptionService.create({
-        salonId: parsedForm.data.salonId,
         customerId: parsedForm.data.customerId,
         receptionistId: parsedForm.data.receptionistId,
         serviceTariffId: parsedForm.data.serviceTariffId,
@@ -470,7 +456,6 @@ export function NewReceptionPage() {
       const addedReceptionServiceIds = new Set<number>();
       for (const service of parsedForm.data.services) {
         await receptionService.addService(activeReceptionId, {
-          salonId: parsedForm.data.salonId,
           serviceTariffId: service.serviceTariffId,
           serviceId: service.serviceId,
           personnelId: service.personnelId,
@@ -498,7 +483,6 @@ export function NewReceptionPage() {
 
         for (const material of service.materials) {
           await receptionService.registerMaterial(activeReceptionId, addedService.id, {
-            salonId: parsedForm.data.salonId,
             materialId: material.materialId,
             quantity: material.quantity,
             idempotencyKey: crypto.randomUUID(),
@@ -509,7 +493,6 @@ export function NewReceptionPage() {
 
       for (const payment of parsedForm.data.payments) {
         await receptionService.registerPayment(activeReceptionId, {
-          salonId: parsedForm.data.salonId,
           amount: payment.amount,
           paymentMethod: payment.paymentMethod,
           paidAt: new Date().toISOString(),

@@ -71,7 +71,6 @@ export interface PersonnelDocumentRequest {
 }
 
 export interface CreatePersonnelRequest {
-  salonId: number;
   status: boolean;
   personalInfo: {
     fullName: string;

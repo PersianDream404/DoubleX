@@ -27,7 +27,7 @@ export function useServiceCategories(salonId: number, refreshKey: number) {
     if (!salonId) return;
     const controller = new AbortController();
     new ServiceCatalogService()
-      .getCategories(salonId, { signal: controller.signal })
+      .getCategories({ signal: controller.signal })
       .then((response) => {
         if (!response.data) {
           throw new Error(response.message ?? "فهرست دسته‌بندی‌ها دریافت نشد.");

@@ -57,6 +57,9 @@ public class UpdatePersonnelCommandHandler(
                 });
             }
 
+            if (existing.SalonId != request.SalonId)
+                return Result.Error(Messages.PersonnelNotFound);
+
             var salonResult = existing.AssignToSalon(request.SalonId);
             if (!salonResult.IsSuccess)
                 return Result.Invalid(salonResult.ValidationErrors);

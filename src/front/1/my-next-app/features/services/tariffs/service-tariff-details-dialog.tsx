@@ -66,7 +66,7 @@ export function ServiceTariffDetailsDialog({
     const controller = new AbortController();
     Promise.all([
       new ServiceTariffService().getById(tariffId, { signal: controller.signal }),
-      new ServiceCatalogService().getAll(salonId, { signal: controller.signal }),
+      new ServiceCatalogService().getAll({ signal: controller.signal }),
     ])
       .then(([tariffResponse, servicesResponse]) => {
         if (!tariffResponse.data) {
@@ -127,7 +127,6 @@ export function ServiceTariffDetailsDialog({
     setSaving(true);
     try {
       await new ServiceTariffService().addServices(tariffId, {
-        salonId,
         services: [{ serviceId: parsed.data.serviceId, amount: parsed.data.amount }],
       });
       await refreshTariff();
@@ -155,7 +154,6 @@ export function ServiceTariffDetailsDialog({
     setSaving(true);
     try {
       await new ServiceTariffService().updateService(tariffId, service.serviceId, {
-        salonId,
         amount: parsed.data.amount,
       });
       await refreshTariff();
@@ -173,7 +171,7 @@ export function ServiceTariffDetailsDialog({
     setRemoving(true);
     setRemoveError(null);
     try {
-      await new ServiceTariffService().removeService(tariffId, removeTarget.serviceId, salonId);
+      await new ServiceTariffService().removeService(tariffId, removeTarget.serviceId);
       await refreshTariff();
       setRemoveTarget(null);
       onChanged();

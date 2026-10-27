@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { handleApiError } from "@/lib/api/handle-api-error";
-import { ServiceListQuerySchema } from "./service.schema";
 import { ServiceCatalogService } from "./service.service";
 import type { ServiceDto } from "./service.types";
 
@@ -29,14 +28,7 @@ export function useServices(salonId: number, refreshKey: number) {
     const controller = new AbortController();
     Promise.resolve()
       .then(() => {
-        const parsed = ServiceListQuerySchema.safeParse({ salonId, q: "" });
-        if (!parsed.success) {
-          throw new Error("شناسه سالن معتبر نیست.");
-        }
-        return new ServiceCatalogService().getAll(
-          parsed.data.salonId,
-          { signal: controller.signal },
-        );
+        return new ServiceCatalogService().getAll({ signal: controller.signal });
       })
       .then((response) => {
         if (!response.data) {

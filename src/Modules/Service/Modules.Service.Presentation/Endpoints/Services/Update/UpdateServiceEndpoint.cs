@@ -19,14 +19,19 @@ public sealed class UpdateServiceEndpoint
                     long id,
                     [FromBody] UpdateServiceRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpdateServiceCommand, bool>(
-                        new UpdateServiceCommand(id, request), cancellationToken);
+                        new UpdateServiceCommand(id, request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

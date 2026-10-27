@@ -27,9 +27,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/api-client";
 import { handleApiError } from "@/lib/api/handle-api-error";
-
-import { SalonService } from "@/features/salons/list/salon.service";
-import type { GetSelectListSalonResponse } from "@/features/salons/list/salon.types";
+import { useUserContext } from "@/contexts/user-context";
 
 import {
   PersonnelFileService,
@@ -541,7 +539,6 @@ function makeRequest(
   clearPicture = false,
 ): CreatePersonnelRequest {
   return {
-    salonId: values.salonId,
     status: values.status === "true",
     personalInfo: {
       fullName: values.fullName.trim(),
@@ -601,6 +598,12 @@ export function PersonnelCreateDialog({
   onCreated: () => void;
   personnelId?: number | null;
 }) {
+  const { salonId, loading: userLoading, error: userError } = useUserContext();
+  const salonError =
+    userError ??
+    (!userLoading && !salonId
+      ? "شناسه سالن در توکن ورود شما موجود نیست."
+      : null);
   const [activeTab, setActiveTab] = useState<CreateTab>("personal");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [files, setFiles] = useState<ImageFiles>(EMPTY_FILES);
@@ -609,9 +612,6 @@ export function PersonnelCreateDialog({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [salons, setSalons] = useState<GetSelectListSalonResponse[]>([]);
-  const [salonsLoading, setSalonsLoading] = useState(false);
-  const [salonsError, setSalonsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [personnelLoading, setPersonnelLoading] = useState(false);
   const [personnelLoaded, setPersonnelLoaded] = useState(false);
@@ -630,69 +630,21 @@ export function PersonnelCreateDialog({
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const service = new SalonService();
-    Promise.resolve()
-      .then(() => {
-        setSalonsLoading(true);
-        setSalonsError(null);
-        return service.getSelectList(
-          { PageNumber: 1, PageSize: 100 },
-          { signal: controller.signal },
-        );
-      })
-      .then(async (response) => {
-        if (!response.data) {
-          throw new Error(response.message ?? "فهرست سالن‌ها دریافت نشد.");
-        }
-
-        const allSalons = [...response.data.list];
-        const totalPages = response.data.pagination.totalPages;
-        for (let pageNumber = 2; pageNumber <= totalPages; pageNumber += 1) {
-          const pageResponse = await service.getSelectList(
-            { PageNumber: pageNumber, PageSize: 100 },
-            { signal: controller.signal },
-          );
-          if (!pageResponse.data) {
-            throw new Error(pageResponse.message ?? "فهرست سالن‌ها کامل نشد.");
-          }
-          allSalons.push(...pageResponse.data.list);
-        }
-
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        const activeSalons = allSalons.filter(
-          (salon) => salon.status || personnelId !== null,
-        );
-        setSalons(activeSalons);
-        if (!personnelId && activeSalons.length === 1) {
-          setValues((current) => ({ ...current, salonId: activeSalons[0].id }));
-        } else if (activeSalons.length === 0) {
-          setSalonsError("سالن فعالی برای ثبت پرسنل یافت نشد.");
-        }
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          setSalonsError(handleApiError(error));
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setSalonsLoading(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [open, personnelId]);
+    if (!open || personnelId !== null || !salonId) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setValues((current) =>
+        current.salonId === salonId ? current : { ...current, salonId },
+      );
+    });
+    return () => {
+      active = false;
+    };
+  }, [open, personnelId, salonId]);
 
   useEffect(() => {
-    if (!open || personnelId === null) {
+    if (!open || personnelId === null || userLoading) {
       return;
     }
 
@@ -718,7 +670,7 @@ export function PersonnelCreateDialog({
 
         const personnel = response.data;
         setValues({
-          salonId: personnel.salonId,
+          salonId: salonId ?? 0,
           fullName: personnel.personalInfo.fullName,
           nationalCode: personnel.personalInfo.nationalCode,
           birthDate: dateToJalali(personnel.personalInfo.birthDate),
@@ -781,7 +733,7 @@ export function PersonnelCreateDialog({
       });
 
     return () => controller.abort();
-  }, [open, personnelId]);
+  }, [open, personnelId, salonId, userLoading]);
 
   useEffect(() => {
     if (
@@ -807,7 +759,7 @@ export function PersonnelCreateDialog({
         setServicePersonnelLinks([]);
         setSelectedServiceIds([]);
         setServiceSearch("");
-        return service.getAll(values.salonId, {
+        return service.getAll({
           signal: controller.signal,
         });
       })
@@ -826,7 +778,6 @@ export function PersonnelCreateDialog({
           personnelId === null
             ? null
             : await service.getPersonnelServiceAssignments(
-                values.salonId,
                 personnelId,
                 { signal: controller.signal },
               );
@@ -964,7 +915,6 @@ export function PersonnelCreateDialog({
       }
 
       const response = await service.addPersonnelToService({
-        salonId: values.salonId,
         serviceId,
         personnelId: personnelRecordId,
       });
@@ -973,7 +923,6 @@ export function PersonnelCreateDialog({
       }
 
       const assignments = await service.getServicePersonnels(
-        values.salonId,
         serviceId,
       );
       const link = assignments.data?.find(
@@ -992,7 +941,6 @@ export function PersonnelCreateDialog({
     for (const link of links.filter((item) => !selectedIds.has(item.serviceId))) {
       const response = await service.removePersonnelFromService(
         link.id,
-        values.salonId,
         link.serviceId,
       );
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -1032,11 +980,11 @@ export function PersonnelCreateDialog({
 
     const currentPersonnelId = personnelId ?? savedPersonnelId;
     if (
-      (currentPersonnelId === null && salonsLoading) ||
-      (currentPersonnelId === null && salons.length === 0)
+      (currentPersonnelId === null && userLoading) ||
+      (currentPersonnelId === null && !salonId)
     ) {
       setFormError(
-        salonsError ?? "برای ثبت پرسنل ابتدا باید یک سالن فعال انتخاب شود.",
+        salonError ?? "شناسه سالن در توکن ورود شما موجود نیست.",
       );
       return;
     }
@@ -1874,7 +1822,6 @@ export function PersonnelCreateDialog({
 
   const avatar = files.profile[0];
   const existingAvatar = existingFiles.profile[0];
-  const selectedSalon = salons.find((salon) => salon.id === values.salonId);
   const isEditing = personnelId !== null || savedPersonnelId !== null;
 
   return (
@@ -1968,9 +1915,9 @@ export function PersonnelCreateDialog({
                     ? "ثابت و پورسانت"
                     : "نوع همکاری"}
               </span>
-              {salonsError && (
+              {salonError && (
                 <span className="text-destructive" role="alert">
-                  {salonsError}
+                  {salonError}
                 </span>
               )}
             </div>
@@ -1980,32 +1927,13 @@ export function PersonnelCreateDialog({
                 aria-hidden="true"
                 className="size-4 shrink-0 text-fuchsia-700"
               />
-              {salons.length > 1 ? (
-                <select
-                  aria-label="سالن محل همکاری"
-                  value={values.salonId || ""}
-                  disabled={salonsLoading || submitting}
-                  onChange={(event) =>
-                    update("salonId", Number(event.target.value))
-                  }
-                  className="h-8 max-w-52 rounded-lg border border-slate-200 bg-white px-2 text-xs outline-none focus-visible:border-fuchsia-500"
-                >
-                  <option value="" disabled>
-                    انتخاب سالن
-                  </option>
-                  {salons.map((salon) => (
-                    <option key={salon.id} value={salon.id}>
-                      {salon.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="max-w-48 truncate text-xs text-slate-600">
-                  {salonsLoading
-                    ? "در حال دریافت سالن..."
-                    : selectedSalon?.name ?? "سالن انتخاب نشده"}
-                </span>
-              )}
+              <span className="max-w-48 truncate text-xs text-slate-600">
+                {userLoading
+                  ? "در حال دریافت سالن..."
+                  : salonId
+                    ? salonId.toLocaleString("fa-IR")
+                    : "سالن انتخاب نشده"}
+              </span>
             </div>
           </section>
 
@@ -2110,7 +2038,8 @@ export function PersonnelCreateDialog({
               type="submit"
               disabled={
                 submitting ||
-                salonsLoading ||
+                userLoading ||
+                !salonId ||
                 personnelLoading ||
                 servicePersonnelLoading ||
                 !servicePersonnelReady ||

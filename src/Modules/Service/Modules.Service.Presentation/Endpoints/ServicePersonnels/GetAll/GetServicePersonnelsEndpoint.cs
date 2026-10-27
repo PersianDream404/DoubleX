@@ -16,11 +16,14 @@ public sealed class GetServicePersonnelsEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapGet($"{ServiceApiInfo.Prefix}/Personnels", async (
-                    [FromQuery] long salonId,
                     [FromQuery] long serviceId,
                     [FromServices] IQueryBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<
                         GetServicePersonnelsQuery,
                         IReadOnlyList<ServicePersonnelDto>>(
@@ -30,6 +33,7 @@ public sealed class GetServicePersonnelsEndpoint
                         ? Ok(result.Value!)
                         : NotFound(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

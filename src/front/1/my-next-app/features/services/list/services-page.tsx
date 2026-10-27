@@ -45,8 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { handleApiError } from "@/lib/api/handle-api-error";
-import { SalonService } from "@/features/salons/list/salon.service";
-import type { GetSelectListSalonResponse } from "@/features/salons/list/salon.types";
+import { useUserContext } from "@/contexts/user-context";
 
 import { ServiceCatalogService } from "./service.service";
 import { ServiceDetailsDialog } from "./service-details-dialog";
@@ -62,10 +61,7 @@ type CategoryState = {
 };
 
 export function ServicesPage() {
-  const [salons, setSalons] = useState<GetSelectListSalonResponse[]>([]);
-  const [salonId, setSalonId] = useState(0);
-  const [salonsLoading, setSalonsLoading] = useState(true);
-  const [salonsError, setSalonsError] = useState<string | null>(null);
+  const { salonId, loading: userLoading, error: userError } = useUserContext();
   const [categoryState, setCategoryState] = useState<CategoryState>({
     salonId: 0,
     names: new Map(),
@@ -85,48 +81,10 @@ export function ServicesPage() {
   const [deactivating, setDeactivating] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    Promise.resolve()
-      .then(async () => {
-        const api = new SalonService();
-        const first = await api.getSelectList(
-          { PageNumber: 1, PageSize: 100 },
-          { signal: controller.signal },
-        );
-        if (!first.data) {
-          throw new Error(first.message ?? "فهرست سالن‌ها دریافت نشد.");
-        }
-        const items = [...first.data.list];
-        for (let currentPage = 2; currentPage <= first.data.pagination.totalPages; currentPage += 1) {
-          const response = await api.getSelectList(
-            { PageNumber: currentPage, PageSize: 100 },
-            { signal: controller.signal },
-          );
-          if (!response.data) {
-            throw new Error(response.message ?? "فهرست سالن‌ها کامل دریافت نشد.");
-          }
-          items.push(...response.data.list);
-        }
-        if (controller.signal.aborted) return;
-        const activeSalons = items.filter((item) => item.status);
-        setSalons(activeSalons);
-        if (activeSalons.length === 1) setSalonId(activeSalons[0].id);
-        if (activeSalons.length === 0) setSalonsError("سالن فعالی برای مدیریت خدمات وجود ندارد.");
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) setSalonsError(handleApiError(error));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setSalonsLoading(false);
-      });
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
     if (!salonId) return;
     const controller = new AbortController();
     new ServiceCatalogService()
-      .getCategories(salonId, { signal: controller.signal })
+      .getCategories({ signal: controller.signal })
       .then((response) => {
         if (!response.data) {
           throw new Error(response.message ?? "فهرست دسته‌بندی‌ها دریافت نشد.");
@@ -147,7 +105,7 @@ export function ServicesPage() {
     return () => controller.abort();
   }, [salonId]);
 
-  const { data: services, error, loading } = useServices(salonId, refreshKey);
+  const { data: services, error, loading } = useServices(salonId ?? 0, refreshKey);
   const filteredServices = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
     return (services ?? []).filter((service) =>
@@ -161,11 +119,11 @@ export function ServicesPage() {
   const categoryNames = categoryState.salonId === salonId ? categoryState.names : new Map<number, string>();
   const categoriesError = categoryState.salonId === salonId ? categoryState.error : null;
   async function confirmDeactivate() {
-    if (!deactivateTarget || deactivating) return;
+    if (!deactivateTarget || salonId === null || deactivating) return;
     setDeactivating(true);
     setDeactivateError(null);
     try {
-      await new ServiceCatalogService().deactivate(deactivateTarget.id, salonId);
+      await new ServiceCatalogService().deactivate(deactivateTarget.id);
       setDeactivateTarget(null);
       setRefreshKey((current) => current + 1);
     } catch (reason: unknown) {
@@ -228,21 +186,11 @@ export function ServicesPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-2 pb-2">
             <label className="flex items-center gap-2 text-xs text-slate-600">
               سالن
-              <select
-                aria-label="انتخاب سالن برای فهرست خدمات"
-                value={salonId || ""}
-                disabled={salonsLoading || salons.length === 0}
-                onChange={(event) => {
-                  setSalonId(Number(event.target.value));
-                  setPage(1);
-                }}
-                className="h-8 min-w-40 rounded-md border border-slate-200 bg-white px-2 text-sm"
-              >
-                <option value="" disabled>{salonsLoading ? "در حال دریافت..." : "انتخاب سالن"}</option>
-                {salons.map((salon) => <option key={salon.id} value={salon.id}>{salon.name}</option>)}
-              </select>
+              <span className="text-sm text-slate-700">
+                {userLoading ? "در حال دریافت..." : salonId ? salonId.toLocaleString("fa-IR") : "در دسترس نیست"}
+              </span>
             </label>
-            {salonId > 0 && <span className="text-xs text-slate-500">{filteredServices.length.toLocaleString("fa-IR")} خدمت</span>}
+            {salonId !== null && salonId > 0 && <span className="text-xs text-slate-500">{filteredServices.length.toLocaleString("fa-IR")} خدمت</span>}
           </div>
           {categoriesError && <p role="alert" className="px-2 pt-2 text-xs text-destructive">{categoriesError}</p>}
           <div className="overflow-x-auto rounded-lg">
@@ -258,12 +206,12 @@ export function ServicesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salonsError ? (
-                  <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{salonsError}</TableCell></TableRow>
-                ) : salonsLoading ? (
+                {userError ? (
+                  <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{userError}</TableCell></TableRow>
+                ) : userLoading ? (
                   <TableRow><TableCell colSpan={6} role="status" className="py-8 text-center text-sm">در حال دریافت سالن‌ها...</TableCell></TableRow>
                 ) : !salonId ? (
-                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm">برای مشاهده خدمات، سالن را انتخاب کنید.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm">شناسه سالن در توکن ورود شما موجود نیست.</TableCell></TableRow>
                 ) : error ? (
                   <TableRow><TableCell colSpan={6} role="alert" className="py-8 text-center text-sm text-destructive">{error}</TableCell></TableRow>
                 ) : loading ? (
@@ -377,13 +325,13 @@ export function ServicesPage() {
         onOpenChange={setFormOpen}
         onSaved={() => setRefreshKey((current) => current + 1)}
         serviceId={editingId}
-        salonId={salonId}
+        salonId={salonId ?? 0}
       />
       <ServiceDetailsDialog
         open={detailsId !== null}
         onOpenChange={(open) => !open && setDetailsId(null)}
         serviceId={detailsId}
-        salonId={salonId}
+        salonId={salonId ?? 0}
         onChanged={() => setRefreshKey((current) => current + 1)}
         onEdit={openEdit}
       />

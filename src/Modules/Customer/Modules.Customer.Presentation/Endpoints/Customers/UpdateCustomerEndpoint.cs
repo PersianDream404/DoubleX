@@ -20,8 +20,13 @@ public sealed class UpdateCustomerEndpoint
                     long id,
                     [FromBody] UpdateCustomerRequestDto request,
                     [FromServices] ICommandBus commandBus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+                    request.SalonId = salonId;
+
                     if (id != request.Id)
                     {
                         return BadRequest("شناسهٔ مسیر و درخواست یکسان نیستند.");
@@ -33,6 +38,7 @@ public sealed class UpdateCustomerEndpoint
                         ? Ok(new { message = "اطلاعات مشتری به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

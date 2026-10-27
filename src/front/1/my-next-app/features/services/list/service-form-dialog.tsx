@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { handleApiError } from "@/lib/api/handle-api-error";
-import { SalonService } from "@/features/salons/list/salon.service";
-import type { GetSelectListSalonResponse } from "@/features/salons/list/salon.types";
 
 import { ServiceFormSchema } from "./service.schema";
 import { ServiceCatalogService } from "./service.service";
@@ -91,7 +89,6 @@ function ServiceFormDialogContent({
     ...EMPTY_FORM,
     salonId,
   });
-  const [salons, setSalons] = useState<GetSelectListSalonResponse[]>([]);
   const [categoriesState, setCategoriesState] = useState<CategoriesState>({
     salonId: 0,
     items: [],
@@ -113,28 +110,6 @@ function ServiceFormDialogContent({
 
     Promise.resolve()
       .then(async () => {
-        const api = new SalonService();
-        const first = await api.getSelectList(
-          { PageNumber: 1, PageSize: 100 },
-          { signal: controller.signal },
-        );
-        if (!first.data) {
-          throw new Error(first.message ?? "فهرست سالن‌ها دریافت نشد.");
-        }
-        const available = [...first.data.list];
-        for (let page = 2; page <= first.data.pagination.totalPages; page += 1) {
-          const response = await api.getSelectList(
-            { PageNumber: page, PageSize: 100 },
-            { signal: controller.signal },
-          );
-          if (!response.data) {
-            throw new Error(response.message ?? "فهرست سالن‌ها کامل دریافت نشد.");
-          }
-          available.push(...response.data.list);
-        }
-        if (!controller.signal.aborted) {
-          setSalons(available.filter((item) => item.status || item.id === salonId));
-        }
         if (serviceId === null || controller.signal.aborted) return;
 
         const response = await new ServiceCatalogService().getById(serviceId, {
@@ -146,7 +121,7 @@ function ServiceFormDialogContent({
         const service: ServiceDto = response.data;
         if (!controller.signal.aborted) {
           setValues({
-            salonId: service.salonId,
+            salonId,
             categoryId: service.categoryId,
             code: service.code,
             name: service.name,
@@ -170,7 +145,7 @@ function ServiceFormDialogContent({
     if (!open || values.salonId <= 0) return;
     const controller = new AbortController();
     new ServiceCatalogService()
-      .getCategories(values.salonId, { signal: controller.signal })
+      .getCategories({ signal: controller.signal })
       .then((response) => {
         if (!response.data) {
           throw new Error(response.message ?? "دسته‌بندی خدمات دریافت نشد.");
@@ -252,20 +227,10 @@ function ServiceFormDialogContent({
         ) : (
           <form className="space-y-4" onSubmit={(event) => void submit(event)}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="سالن">
-                <FormSelect
-                  value={values.salonId || ""}
-                  onChange={(event) => {
-                    update("salonId", Number(event.target.value));
-                    update("categoryId", 0);
-                  }}
-                  disabled={serviceId !== null}
-                >
-                  <option value="" disabled>انتخاب سالن</option>
-                  {salons.map((salon) => (
-                    <option key={salon.id} value={salon.id}>{salon.name}</option>
-                  ))}
-                </FormSelect>
+              <FormField label="سالن جاری">
+                <div className="flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
+                  {salonId.toLocaleString("fa-IR")}
+                </div>
               </FormField>
               <FormField label="دسته‌بندی">
                 <FormSelect

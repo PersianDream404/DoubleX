@@ -7,7 +7,7 @@ import { LoginService } from "@/features/auth/login/login.service";
 import { handleApiError } from "@/lib/api/handle-api-error";
 
 export type ApiLoginResult =
-  | { success: true; token: string; salonId: number }
+  | { success: true; token: string }
   | { success: false; error: string };
 
 export async function loginWithApi(input: {
@@ -41,11 +41,7 @@ export async function loginWithApi(input: {
       path: "/",
     });
 
-    return {
-      success: true,
-      token: tokenResult.token,
-      salonId: tokenResult.salonId,
-    };
+    return { success: true, token: tokenResult.token };
   } catch (error: unknown) {
     return { success: false, error: handleApiError(error) };
   }

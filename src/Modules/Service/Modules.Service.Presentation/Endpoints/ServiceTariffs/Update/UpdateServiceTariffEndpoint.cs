@@ -19,14 +19,19 @@ public sealed class UpdateServiceTariffEndpoint
                     long id,
                     [FromBody] ServiceTariffRequestDto request,
                     [FromServices] ICommandBus bus,
+                    HttpContext context,
                     CancellationToken cancellationToken) =>
                 {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
+
                     var result = await bus.Send<UpdateServiceTariffCommand, bool>(
-                        new UpdateServiceTariffCommand(id, request), cancellationToken);
+                        new UpdateServiceTariffCommand(id, request with { SalonId = salonId }), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "تعرفه خدمات ویرایش شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

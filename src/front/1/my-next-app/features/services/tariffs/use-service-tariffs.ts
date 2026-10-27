@@ -27,7 +27,7 @@ export function useServiceTariffs(salonId: number, refreshKey: number) {
     if (!salonId) return;
     const controller = new AbortController();
     new ServiceTariffService()
-      .getAll(salonId, { signal: controller.signal })
+      .getAll({ signal: controller.signal })
       .then((response) => {
         if (!response.data) {
           throw new Error(response.message ?? "فهرست تعرفه‌ها دریافت نشد.");

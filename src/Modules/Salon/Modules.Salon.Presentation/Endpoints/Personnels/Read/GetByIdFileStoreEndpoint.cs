@@ -21,12 +21,16 @@ public static class GetByIdPersonnelEndpoint
 
 
                     long id,
-                  [FromServices] IQueryBus _queryBus, CancellationToken ct
-                ) =>
+                      [FromServices] IQueryBus _queryBus,
+                      HttpContext context,
+                      CancellationToken ct
+                    ) =>
             {
+                    if (!TryGetSalonId(context, out var salonId))
+                        return Unauthorized();
 
-                var result = await _queryBus.Send<GetPersonnelByIdQuery, GetByIdPersonnelResponseDto>
-                                 (new GetPersonnelByIdQuery(id), ct);
+                    var result = await _queryBus.Send<GetPersonnelByIdQuery, GetByIdPersonnelResponseDto>
+                                     (new GetPersonnelByIdQuery(id), ct);
 
                 if (!result.IsSuccess)
                 {
@@ -34,10 +38,12 @@ public static class GetByIdPersonnelEndpoint
                     return BadRequest(message);
                 }
 
-                return Ok(result.Value);
-
+                return result.Value.SalonId == salonId
+                    ? Ok(result.Value)
+                    : NotFound("پرسنل یافت نشد.");
 
             })
+                .RequireAuthorization()
                 .WithTags(ApiInfo.Tag);
         }
     }

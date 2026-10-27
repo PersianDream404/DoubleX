@@ -22,15 +22,20 @@ public sealed class UpdateServiceTariffItemEndpoint
                         long serviceId,
                         [FromBody] UpdateServiceTariffItemRequestDto request,
                         [FromServices] ICommandBus bus,
+                        HttpContext context,
                         CancellationToken cancellationToken) =>
                     {
+                        if (!TryGetSalonId(context, out var salonId))
+                            return Unauthorized();
+
                         var result = await bus.Send<UpdateServiceTariffItemCommand, bool>(
-                            new UpdateServiceTariffItemCommand(tariffId, serviceId, request),
+                            new UpdateServiceTariffItemCommand(tariffId, serviceId, request with { SalonId = salonId }),
                             cancellationToken);
                         return result.IsSuccess
                             ? Ok(new { message = "قیمت خدمت در تعرفه ویرایش شد." })
                             : BadRequest(result.GetErrorMessage());
                     })
+                .RequireAuthorization()
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

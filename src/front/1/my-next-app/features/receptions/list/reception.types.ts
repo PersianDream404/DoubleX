@@ -70,7 +70,6 @@ export interface CustomerSelectItem {
 }
 
 export interface CreateReceptionRequest {
-  salonId: number;
   customerId: number;
   receptionistId: number;
   serviceTariffId: number;
@@ -80,7 +79,6 @@ export interface CreateReceptionRequest {
 }
 
 export interface AddReceptionServiceRequest {
-  salonId: number;
   serviceTariffId: number;
   serviceId: number;
   personnelId: number | null;
@@ -89,7 +87,6 @@ export interface AddReceptionServiceRequest {
 }
 
 export interface RegisterReceptionMaterialRequest {
-  salonId: number;
   materialId: number;
   quantity: number;
   idempotencyKey: string;
@@ -97,7 +94,6 @@ export interface RegisterReceptionMaterialRequest {
 }
 
 export interface RegisterReceptionPaymentRequest {
-  salonId: number;
   amount: number;
   paymentMethod: string;
   paidAt: string;

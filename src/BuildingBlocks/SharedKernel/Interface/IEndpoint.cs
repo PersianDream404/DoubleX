@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Routing;
 using SharedKernel.Enums;
 using SharedKernel.Models;
 using System.Net;
+using System.Security.Claims;
 
 
 
@@ -19,6 +20,9 @@ public interface IEndpoint
 
 public abstract class BaseEndpoint
 {
+    protected bool TryGetSalonId(HttpContext context, out long salonId) =>
+        long.TryParse(context.User.FindFirstValue("SalonId"), out salonId) && salonId > 0;
+
     //protected ApiVersionSet BuildVersion_1_Set(IEndpointRouteBuilder app, string tag)
     //{
     //    return app.NewApiVersionSet(tag)
@@ -118,4 +122,3 @@ public abstract class BaseEndpoint
 
 
 }
-

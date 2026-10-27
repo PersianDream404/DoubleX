@@ -23,9 +23,15 @@ public static class GetAllPersonnelEndpoint
 
 
                     [AsParameters] GetAllPersonnelRequestDto request,
-                  [FromServices] IQueryBus _queryBus, CancellationToken ct
+                  [FromServices] IQueryBus _queryBus,
+                  HttpContext context,
+                  CancellationToken ct
                 ) =>
             {
+                if (!TryGetSalonId(context, out var salonId))
+                    return Unauthorized();
+
+                request.SalonId = salonId;
 
                 var result = await _queryBus.Send<GetAllPersonnelQuery, PagedList<GetAllPersonalResponseDto>>
                                  (new GetAllPersonnelQuery(request), ct);
@@ -40,6 +46,7 @@ public static class GetAllPersonnelEndpoint
 
 
             })
+                .RequireAuthorization()
                 .WithTags(ApiInfo.Tag);
         }
     }
