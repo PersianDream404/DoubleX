@@ -5,6 +5,8 @@ import axios, {
 
 import type { ApiResponse } from "./types/api-response";
 
+export const API_PROXY_BASE_URL = "/api/backend";
+
 export class ApiError extends Error {
   readonly statusCode: number;
   readonly errors: string[];
@@ -21,10 +23,14 @@ export class ApiClient {
   private readonly client: AxiosInstance;
 
   constructor(getToken?: () => string | null) {
-    const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const baseURL =
+      typeof window === "undefined"
+        ? process.env.API_SERVER_BASE_URL ??
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        : API_PROXY_BASE_URL;
 
     if (!baseURL) {
-      throw new Error("NEXT_PUBLIC_API_BASE_URL is not set");
+      throw new Error("API_SERVER_BASE_URL is not set");
     }
 
     this.client = axios.create({

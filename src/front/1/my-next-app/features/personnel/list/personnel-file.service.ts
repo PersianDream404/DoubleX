@@ -1,4 +1,4 @@
-import { ApiClient } from "@/lib/api/api-client";
+import { API_PROXY_BASE_URL, ApiClient } from "@/lib/api/api-client";
 import type { ApiResponse } from "@/lib/api/types/api-response";
 
 import type { UploadedPersonnelFile } from "./personnel.types";
@@ -34,12 +34,5 @@ export class PersonnelFileService {
 }
 
 export function getPersonnelFileUrl(path: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error("آدرس API برای نمایش فایل‌های پرسنل تنظیم نشده است.");
-  }
-
-  const apiOrigin = new URL(baseUrl).origin;
-  return new URL(path.replace(/^\/+/, ""), `${apiOrigin}/`).toString();
+  return `${API_PROXY_BASE_URL}/${path.replace(/^\/+/, "")}`;
 }
