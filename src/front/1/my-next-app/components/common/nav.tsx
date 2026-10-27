@@ -63,6 +63,11 @@ const NAV_ITEMS: NavItem[] = [
       { label: "ثبت پذیرش", href: "/receptions/new" },
     ],
   },
+  {
+    label: "مدیریت صندوق",
+    href: "/cash-registers",
+    children: [{ label: "فهرست و گردش صندوق‌ها", href: "/cash-registers" }],
+  },
   { label: "رزرو و نوبت", href: "/bookings" },
 ];
 
