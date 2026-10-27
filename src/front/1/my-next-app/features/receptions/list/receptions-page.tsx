@@ -92,6 +92,7 @@ export function ReceptionsPage() {
                 <TableRow className="bg-muted/60 hover:bg-muted/60">
                   <TableHead className="h-9 px-2 text-start">شماره پذیرش</TableHead>
                   <TableHead className="h-9 px-2 text-start">نام مشتری</TableHead>
+                  <TableHead className="h-9 px-2 text-start">شناسه تعرفه</TableHead>
                   <TableHead className="h-9 px-2 text-start">تاریخ پذیرش</TableHead>
                   <TableHead className="h-9 px-2 text-start">کد پذیرشگر</TableHead>
                   <TableHead className="h-9 px-2 text-start">مبلغ کل</TableHead>
@@ -103,19 +104,19 @@ export function ReceptionsPage() {
               <TableBody>
                 {error ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center text-sm text-destructive" role="alert">
+                    <TableCell colSpan={9} className="py-8 text-center text-sm text-destructive" role="alert">
                       {error}
                     </TableCell>
                   </TableRow>
                 ) : loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-8 text-center text-sm text-slate-500">
+                    <TableCell colSpan={9} className="py-8 text-center text-sm text-slate-500">
                       در حال دریافت پذیرش‌های باز...
                     </TableCell>
                   </TableRow>
                 ) : visibleItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-500">
+                    <TableCell colSpan={9} className="py-12 text-center text-sm text-slate-500">
                       {query ? "پذیرشی با این مشخصات پیدا نشد." : "پذیرش بازی برای نمایش وجود ندارد."}
                     </TableCell>
                   </TableRow>
@@ -126,6 +127,9 @@ export function ReceptionsPage() {
                         {reception.receptionNumber}
                       </TableCell>
                       <TableCell className="px-2 py-3">{reception.customerName}</TableCell>
+                      <TableCell className="px-2 py-3" dir="ltr">
+                        {reception.serviceTariffId ?? "—"}
+                      </TableCell>
                       <TableCell className="px-2 py-3">{formatDate(reception.receptionDate)}</TableCell>
                       <TableCell className="px-2 py-3" dir="ltr">{reception.receptionistId}</TableCell>
                       <TableCell className="px-2 py-3">{formatAmount(reception.totalAmount)}</TableCell>

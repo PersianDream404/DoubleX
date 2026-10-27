@@ -7,6 +7,7 @@ export interface ReceptionListItem {
   customerId: number;
   customerName: string;
   receptionistId: number;
+  serviceTariffId: number | null;
   receptionDate: string;
   status: number;
   totalAmount: number;
@@ -72,6 +73,7 @@ export interface CreateReceptionRequest {
   salonId: number;
   customerId: number;
   receptionistId: number;
+  serviceTariffId: number;
   receptionDate: string;
   notes: string | null;
   appointmentId: number | null;

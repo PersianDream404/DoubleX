@@ -44,16 +44,16 @@ namespace Modules.Reception.Persistence.Migrations
                     b.Property<bool>("Deleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ReceptionFinancialStatus")
-                        .HasColumnName("FinancialStatus")
-                        .HasColumnType("int");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
                     b.Property<DateTimeOffset>("ReceptionDate")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("ReceptionFinancialStatus")
+                        .HasColumnType("int")
+                        .HasColumnName("FinancialStatus");
 
                     b.Property<string>("ReceptionNumber")
                         .IsRequired()
@@ -77,6 +77,9 @@ namespace Modules.Reception.Persistence.Migrations
                         .HasColumnType("rowversion");
 
                     b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ServiceTariffId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("Status")

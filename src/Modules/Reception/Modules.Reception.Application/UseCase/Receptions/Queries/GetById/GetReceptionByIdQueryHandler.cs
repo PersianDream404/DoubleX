@@ -27,6 +27,7 @@ public sealed class GetReceptionByIdQueryHandler(IReceptionQueryRepository repos
             item.CustomerId,
             item.CustomerName,
             item.ReceptionistId,
+            item.ServiceTariffId,
             item.ReceptionDate,
             item.Status,
             item.SubTotal,

@@ -33,7 +33,6 @@ type ServiceOption = {
   serviceId: number;
   serviceTariffId: number;
   name: string;
-  tariffName: string;
   amount: number;
 };
 
@@ -190,6 +189,7 @@ export function NewReceptionPage() {
   const [customerError, setCustomerError] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [receptionistId, setReceptionistId] = useState<number | null>(null);
+  const [serviceTariffId, setServiceTariffId] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [services, setServices] = useState<ServiceDraft[]>([EMPTY_SERVICE]);
   const [payments, setPayments] = useState<PaymentDraft[]>([]);
@@ -315,23 +315,22 @@ export function NewReceptionPage() {
   }, [salonId, customerQuery, receptionService]);
 
   const serviceOptions = useMemo<ServiceOption[]>(() => {
-    if (!options) return [];
+    if (!options || !serviceTariffId) return [];
     const servicesById = new Map(options.services.map((service) => [service.id, service]));
-    return options.tariffs.flatMap((tariff) =>
-      tariff.services.flatMap((tariffService) => {
-        const service = servicesById.get(tariffService.serviceId);
-        if (!service) return [];
-        return [{
-          id: `${tariff.id}:${service.id}`,
-          serviceId: service.id,
-          serviceTariffId: tariff.id,
-          name: service.name,
-          tariffName: tariff.name,
-          amount: tariffService.amount,
-        }];
-      }),
-    );
-  }, [options]);
+    const tariff = options.tariffs.find((item) => item.id === serviceTariffId);
+    if (!tariff) return [];
+    return tariff.services.flatMap((tariffService) => {
+      const service = servicesById.get(tariffService.serviceId);
+      if (!service) return [];
+      return [{
+        id: `${tariff.id}:${service.id}`,
+        serviceId: service.id,
+        serviceTariffId: tariff.id,
+        name: service.name,
+        amount: tariffService.amount,
+      }];
+    });
+  }, [options, serviceTariffId]);
 
   const totalAmount = services.reduce(
     (total, service) =>
@@ -382,6 +381,7 @@ export function NewReceptionPage() {
       salonId: salonId ?? 0,
       customerId: customerId ?? 0,
       receptionistId: receptionistId ?? 0,
+      serviceTariffId: serviceTariffId ?? 0,
       notes,
       services: services.map((service) => ({
         serviceId: service.serviceId ?? 0,
@@ -456,6 +456,7 @@ export function NewReceptionPage() {
         salonId: parsedForm.data.salonId,
         customerId: parsedForm.data.customerId,
         receptionistId: parsedForm.data.receptionistId,
+        serviceTariffId: parsedForm.data.serviceTariffId,
         receptionDate: new Date().toISOString(),
         notes: parsedForm.data.notes.trim() || null,
         appointmentId: null,
@@ -590,6 +591,31 @@ export function NewReceptionPage() {
 
           <InfoCard title="اطلاعات پذیرش">
             <div className="grid gap-4 md:grid-cols-2">
+              <Field label="تعرفه پذیرش">
+                <FormSelect
+                  ariaLabel="انتخاب تعرفه پذیرش"
+                  value={serviceTariffId ? String(serviceTariffId) : ""}
+                  onChange={(value) => {
+                    const selectedId = value ? Number(value) : null;
+                    setServiceTariffId(selectedId);
+                    setServices((current) =>
+                      current.map((service) => ({
+                        ...service,
+                        serviceId: null,
+                        serviceTariffId: selectedId,
+                        unitPrice: 0,
+                        materials: [],
+                      })),
+                    );
+                  }}
+                  disabled={currentOptionsLoading || Boolean(createdReceptionId)}
+                >
+                  <option value="">انتخاب تعرفه</option>
+                  {options?.tariffs.map((tariff) => (
+                    <option key={tariff.id} value={tariff.id}>{tariff.name}</option>
+                  ))}
+                </FormSelect>
+              </Field>
               <Field label="جستجوی مشتری">
                 <Input
                   value={customerQuery}
@@ -648,7 +674,7 @@ export function NewReceptionPage() {
           <InfoCard
             title="خدمات"
             action={
-              <Button type="button" variant="outline" size="sm" onClick={addService} disabled={Boolean(createdReceptionId)}>
+              <Button type="button" variant="outline" size="sm" onClick={addService} disabled={Boolean(createdReceptionId) || !serviceTariffId}>
                 <Plus className="size-4" />
                 افزودن خدمت
               </Button>
@@ -656,6 +682,8 @@ export function NewReceptionPage() {
           >
             {currentOptionsLoading ? (
               <p className="text-sm text-slate-500">در حال دریافت خدمات و تعرفه‌ها...</p>
+            ) : !serviceTariffId ? (
+              <p className="text-sm text-slate-500">برای نمایش خدمات، ابتدا تعرفهٔ پذیرش را انتخاب کنید.</p>
             ) : serviceOptions.length === 0 ? (
               <p className="text-sm text-amber-700">خدمت فعال با تعرفه معتبر برای این سالن پیدا نشد.</p>
             ) : (
@@ -689,7 +717,7 @@ export function NewReceptionPage() {
                           <option value="">انتخاب خدمت</option>
                           {serviceOptions.map((option) => (
                             <option key={option.id} value={option.id}>
-                              {option.name} - {option.tariffName} ({amountLabel(option.amount)})
+                              {option.name} ({amountLabel(option.amount)})
                             </option>
                           ))}
                         </FormSelect>

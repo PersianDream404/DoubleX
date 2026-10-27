@@ -14,6 +14,7 @@ public sealed class Reception : BaseEntityIdentity
     public long CustomerId { get; private set; }
     public string CustomerName { get; private set; } = null!;
     public long ReceptionistId { get; private set; }
+    public long? ServiceTariffId { get; private set; }
     public long? AppointmentId { get; private set; }
     public DateTimeOffset ReceptionDate { get; private set; }
     public ReceptionStatus ReceptionStatus { get; private set; }
@@ -35,6 +36,7 @@ public sealed class Reception : BaseEntityIdentity
         long customerId,
         string customerName,
         long receptionistId,
+        long serviceTariffId,
         long? appointmentId,
         DateTimeOffset receptionDate,
         string? notes)
@@ -44,6 +46,7 @@ public sealed class Reception : BaseEntityIdentity
         CustomerId = customerId;
         CustomerName = customerName;
         ReceptionistId = receptionistId;
+        ServiceTariffId = serviceTariffId;
         AppointmentId = appointmentId;
         ReceptionDate = receptionDate;
         Notes = Normalize(notes);
@@ -56,6 +59,7 @@ public sealed class Reception : BaseEntityIdentity
         long customerId,
         string customerName,
         long receptionistId,
+        long serviceTariffId,
         DateTimeOffset receptionDate,
         string? notes,
         long? appointmentId = null) =>
@@ -65,6 +69,7 @@ public sealed class Reception : BaseEntityIdentity
             customerId,
             customerName,
             receptionistId,
+            serviceTariffId,
             appointmentId,
             receptionDate,
             notes);

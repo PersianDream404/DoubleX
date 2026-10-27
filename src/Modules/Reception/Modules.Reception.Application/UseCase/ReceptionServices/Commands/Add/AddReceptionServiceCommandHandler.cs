@@ -31,6 +31,12 @@ public sealed class AddReceptionServiceCommandHandler(
             return Result.NotFound("پذیرش موردنظر پیدا نشد.");
         }
 
+        if (reception.ServiceTariffId.HasValue &&
+            reception.ServiceTariffId.Value != command.Request.ServiceTariffId)
+        {
+            return Result.Invalid(new ValidationError("تعرفهٔ خدمت باید با تعرفهٔ انتخاب‌شده برای پذیرش یکسان باشد."));
+        }
+
         var tariffResult = await queryBus.Send<GetServiceTariffByIdQuery, ServiceTariffDto>(
             new GetServiceTariffByIdQuery(command.Request.ServiceTariffId),
             cancellationToken);

@@ -40,6 +40,7 @@ public sealed record ReceptionDetailsDto(
     long CustomerId,
     string CustomerName,
     long ReceptionistId,
+    long? ServiceTariffId,
     DateTimeOffset ReceptionDate,
     ReceptionStatus Status,
     decimal SubTotal,

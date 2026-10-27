@@ -33,6 +33,7 @@ export const CreateReceptionFormSchema = z
     salonId: z.number().int().positive(),
     customerId: z.number().int().positive(),
     receptionistId: z.number().int().positive(),
+    serviceTariffId: z.number().int().positive(),
     notes: z.string().max(2000),
     services: z.array(ReceptionServiceFormSchema).min(1),
     payments: z.array(ReceptionPaymentFormSchema),
@@ -49,6 +50,13 @@ export const CreateReceptionFormSchema = z
         });
       }
       totalAmount += serviceAmount - service.discountAmount;
+      if (service.serviceTariffId !== form.serviceTariffId) {
+        context.addIssue({
+          code: "custom",
+          message: "تعرفه همه خدمات باید با تعرفه انتخاب‌شده برای پذیرش یکسان باشد.",
+          path: ["services", index, "serviceTariffId"],
+        });
+      }
     });
 
     const paymentAmount = form.payments.reduce(
