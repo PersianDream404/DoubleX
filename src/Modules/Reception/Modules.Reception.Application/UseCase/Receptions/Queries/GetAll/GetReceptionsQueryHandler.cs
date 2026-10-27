@@ -17,9 +17,9 @@ public sealed class GetReceptionsQueryHandler(IReceptionQueryRepository reposito
     {
         var request = query.Request;
         var page = await repository.GetAllAsync(
-            request.SalonId,
+            request.SalonId!.Value,
             request.CustomerId,
-            request.UnpaidOnly,
+            request.UnpaidOnly == true,
             request.PageNumber ?? 1,
             request.PageSize ?? 50,
             cancellationToken);
@@ -51,7 +51,9 @@ public sealed class GetReceptionsQueryValidator : AbstractValidator<GetReception
         RuleFor(query => query.Request).NotNull();
         When(query => query.Request is not null, () =>
         {
-            RuleFor(query => query.Request.SalonId).GreaterThan(0);
+            RuleFor(query => query.Request.SalonId)
+                .NotNull()
+                .GreaterThan(0);
             RuleFor(query => query.Request.CustomerId).GreaterThan(0).When(query =>
                 query.Request.CustomerId.HasValue);
             RuleFor(query => query.Request.PageNumber).GreaterThan(0);
