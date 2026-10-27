@@ -55,6 +55,14 @@ const NAV_ITEMS: NavItem[] = [
       { label: "مواد و کالاها", href: "/inventory/materials" },
     ],
   },
+  {
+    label: "مدیریت پذیرش",
+    href: "/receptions",
+    children: [
+      { label: "فهرست پذیرش‌ها", href: "/receptions" },
+      { label: "ثبت پذیرش", href: "/receptions/new" },
+    ],
+  },
   { label: "رزرو و نوبت", href: "/bookings" },
 ];
 
