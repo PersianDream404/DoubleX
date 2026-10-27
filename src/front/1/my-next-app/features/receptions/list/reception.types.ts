@@ -60,6 +60,7 @@ export interface ReceptionDetails extends ReceptionListItem {
 
 export interface ReceptionListQuery extends PageParams {
   [key: string]: string | number | boolean | null | undefined;
+  CustomerId?: number;
   UnpaidOnly?: boolean;
 }
 
