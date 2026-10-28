@@ -11,6 +11,16 @@ export interface PersonnelDto {
   mobilePhone: string;
 }
 
+export interface PersonnelContractDto {
+  id: number;
+  cooperationType: string;
+  fixedSalaryAmount: number | null;
+  defaultCommissionRate: number | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  isActive: boolean;
+}
+
 export interface PersonnelDetailsDto {
   id: number;
   status: boolean;
@@ -39,6 +49,10 @@ export interface PersonnelDetailsDto {
     salaryType: string;
     cardNumber: string;
     accountNumber: string;
+    fixedSalaryAmount?: number | null;
+    commissionRate?: number | null;
+    effectiveFrom?: string | null;
+    effectiveTo?: string | null;
   };
   healthInfo: {
     healthStatus: boolean;
@@ -60,6 +74,7 @@ export interface PersonnelDetailsDto {
     fileName: string;
     url: string | null;
   }[];
+  contracts?: PersonnelContractDto[];
 }
 
 export type PersonnelDocumentType = 0 | 1 | 2 | 3 | 4 | 5;
@@ -97,6 +112,10 @@ export interface CreatePersonnelRequest {
     salaryType: number;
     cardNumber: string;
     accountNumber: string;
+    fixedSalaryAmount?: number | null;
+    commissionRate?: number | null;
+    effectiveFrom?: string | null;
+    effectiveTo?: string | null;
   };
   healthInfo: {
     healthStatus: string;

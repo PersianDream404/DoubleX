@@ -76,6 +76,10 @@ type FormValues = {
   salaryType: string;
   cardNumber: string;
   accountNumber: string;
+  fixedSalaryAmount: string;
+  commissionRate: string;
+  effectiveFrom: string;
+  effectiveTo: string;
   healthStatus: string;
   diseases: string;
   allergyStatus: string;
@@ -116,6 +120,10 @@ const EMPTY_FORM: FormValues = {
   salaryType: "0",
   cardNumber: "",
   accountNumber: "",
+  fixedSalaryAmount: "",
+  commissionRate: "",
+  effectiveFrom: "",
+  effectiveTo: "",
   healthStatus: "false",
   diseases: "",
   allergyStatus: "false",
@@ -164,6 +172,10 @@ const ERROR_TAB: Record<string, CreateTab> = {
   salaryType: "financial",
   cardNumber: "financial",
   accountNumber: "financial",
+  fixedSalaryAmount: "financial",
+  commissionRate: "financial",
+  effectiveFrom: "financial",
+  effectiveTo: "financial",
   healthStatus: "health",
   diseases: "health",
   allergyStatus: "health",
@@ -568,6 +580,16 @@ function makeRequest(
       salaryType: Number(values.salaryType),
       cardNumber: normalizeDigits(values.cardNumber),
       accountNumber: normalizeDigits(values.accountNumber),
+      fixedSalaryAmount: values.fixedSalaryAmount
+        ? Number(values.fixedSalaryAmount)
+        : null,
+      commissionRate: values.commissionRate
+        ? Number(values.commissionRate)
+        : null,
+      effectiveFrom: values.effectiveFrom
+        ? dateToApi(values.effectiveFrom)
+        : null,
+      effectiveTo: values.effectiveTo ? dateToApi(values.effectiveTo) : null,
     },
     healthInfo: {
       healthStatus: values.healthStatus,
@@ -707,6 +729,18 @@ export function PersonnelCreateDialog({
           }),
           cardNumber: personnel.financialInfo.cardNumber,
           accountNumber: personnel.financialInfo.accountNumber,
+          fixedSalaryAmount: personnel.financialInfo.fixedSalaryAmount
+            ? String(personnel.financialInfo.fixedSalaryAmount)
+            : "",
+          commissionRate: personnel.financialInfo.commissionRate
+            ? String(personnel.financialInfo.commissionRate)
+            : "",
+          effectiveFrom: personnel.financialInfo.effectiveFrom
+            ? dateToJalali(personnel.financialInfo.effectiveFrom)
+            : "",
+          effectiveTo: personnel.financialInfo.effectiveTo
+            ? dateToJalali(personnel.financialInfo.effectiveTo)
+            : "",
           healthStatus: String(personnel.healthInfo.healthStatus),
           diseases: personnel.healthInfo.diseases ?? "",
           allergyStatus: String(personnel.healthInfo.allergyStatus),
@@ -1575,27 +1609,75 @@ export function PersonnelCreateDialog({
 
       case "financial":
         return (
-          <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+          <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.5fr)]">
             <InfoCard title="حقوق و دستمزد" icon={BadgeDollarSign}>
-              <FormField
-                label="نوع پرداخت"
-                name="salaryType"
-                required
-                error={fieldErrors.salaryType}
-              >
-                <FormSelect
+              <div className="grid gap-3">
+                <FormField
+                  label="نوع قرارداد"
                   name="salaryType"
-                  value={values.salaryType}
+                  required
                   error={fieldErrors.salaryType}
-                  onChange={(event) => update("salaryType", event.target.value)}
                 >
-                  <option value="0">ثابت</option>
-                  <option value="1">پورسانتی</option>
-                  <option value="2">اجاره صندلی</option>
-                  <option value="3">اجاره اتاق</option>
-                </FormSelect>
-              </FormField>
+                  <FormSelect
+                    name="salaryType"
+                    value={values.salaryType}
+                    error={fieldErrors.salaryType}
+                    onChange={(event) => update("salaryType", event.target.value)}
+                  >
+                    <option value="0">ثابت</option>
+                    <option value="1">پورسانتی</option>
+                    <option value="2">ترکیبی</option>
+                    <option value="3">اجاره اتاق</option>
+                  </FormSelect>
+                </FormField>
+
+                {(values.salaryType === "0" || values.salaryType === "2") && (
+                  <FormField label="حقوق ثابت" name="fixedSalaryAmount">
+                    <FormInput
+                      name="fixedSalaryAmount"
+                      dir="ltr"
+                      inputMode="decimal"
+                      value={values.fixedSalaryAmount}
+                      onChange={(event) =>
+                        update("fixedSalaryAmount", event.target.value)
+                      }
+                    />
+                  </FormField>
+                )}
+
+                {(values.salaryType === "1" || values.salaryType === "2") && (
+                  <FormField label="درصد پورسانت" name="commissionRate">
+                    <FormInput
+                      name="commissionRate"
+                      dir="ltr"
+                      inputMode="decimal"
+                      value={values.commissionRate}
+                      onChange={(event) =>
+                        update("commissionRate", event.target.value)
+                      }
+                    />
+                  </FormField>
+                )}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="تاریخ شروع قرارداد" name="effectiveFrom">
+                    <JalaliDatePicker
+                      name="effectiveFrom"
+                      value={values.effectiveFrom}
+                      onChange={(value) => update("effectiveFrom", value)}
+                    />
+                  </FormField>
+                  <FormField label="تاریخ پایان قرارداد" name="effectiveTo">
+                    <JalaliDatePicker
+                      name="effectiveTo"
+                      value={values.effectiveTo}
+                      onChange={(value) => update("effectiveTo", value)}
+                    />
+                  </FormField>
+                </div>
+              </div>
             </InfoCard>
+
             <InfoCard title="اطلاعات حساب بانکی">
               <div className="grid gap-3 sm:grid-cols-2">
                 <FormField

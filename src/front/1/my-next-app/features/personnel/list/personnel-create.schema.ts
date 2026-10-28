@@ -72,6 +72,34 @@ export const PersonnelCreateSchema = z.object({
     .trim()
     .min(1, "شماره حساب الزامی است.")
     .max(50, "شماره حساب بیش از حد طولانی است."),
+  fixedSalaryAmount: z
+    .string()
+    .refine(
+      (value) => value === "" || /^\d+(\.\d+)?$/.test(value),
+      "مبلغ حقوق ثابت نامعتبر است.",
+    )
+    .default(""),
+  commissionRate: z
+    .string()
+    .refine(
+      (value) => value === "" || /^\d+(\.\d+)?$/.test(value),
+      "درصد پورسانت نامعتبر است.",
+    )
+    .default(""),
+  effectiveFrom: z
+    .string()
+    .refine(
+      (value) => value === "" || isDateValid(value),
+      "تاریخ شروع قرارداد را به شکل معتبر وارد کنید.",
+    )
+    .default(""),
+  effectiveTo: z
+    .string()
+    .refine(
+      (value) => value === "" || isDateValid(value),
+      "تاریخ پایان قرارداد نامعتبر است.",
+    )
+    .default(""),
   healthStatus: z.enum(["true", "false"]),
   diseases: z.string(),
   allergyStatus: z.enum(["true", "false"]),

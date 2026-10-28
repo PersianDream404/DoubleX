@@ -57,16 +57,18 @@ const TABS: {
 const ENUM_LABELS: Record<string, string> = {
   Single: "مجرد",
   Married: "متأهل",
+  FixedSalary: "حقوق ثابت",
   Commission: "پورسانتی",
-  FixedAndCommission: "ثابت و پورسانت",
+  FixedAndCommission: "حقوق ثابت و پورسانت",
+  Fixed: "ثابت",
   Negotiable: "توافقی",
   Rental: "اجاره‌ای",
   FullTime: "تمام‌وقت",
   PartTimeMorning: "نیمه‌وقت (صبح)",
   PartTimeEvening: "نیمه‌وقت (عصر)",
-  Fixed: "ثابت",
   ChairRental: "اجاره صندلی",
   RoomRental: "اجاره اتاق",
+  Other: "سایر",
 };
 
 function displayEnum(value: string) {
@@ -375,27 +377,87 @@ function PersonnelDetailsContent({
 
     case "financial":
       return (
-        <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
-          <InfoCard title="حقوق و دستمزد">
-            <dl>
-              <InfoField
-                label="نوع پرداخت"
-                value={displayEnum(financialInfo.salaryType)}
-              />
-            </dl>
-          </InfoCard>
-          <InfoCard title="اطلاعات حساب بانکی">
-            <dl className="grid gap-5 sm:grid-cols-2">
-              <InfoField
-                label="شماره کارت"  dir="rtl"
-                value={maskedNumber(financialInfo.cardNumber)}
-              />
-              <InfoField
-                label="شماره حساب"  dir="rtl"
-                value={maskedNumber(financialInfo.accountNumber)}
-              />
-            </dl>
-          </InfoCard>
+        <div className="space-y-3">
+          <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+            <InfoCard title="حقوق و دستمزد">
+              <dl className="space-y-4">
+                <InfoField
+                  label="نوع قرارداد"
+                  value={displayEnum(financialInfo.salaryType)}
+                />
+                <InfoField
+                  label="حقوق ثابت"
+                  value={
+                    financialInfo.fixedSalaryAmount != null
+                      ? `${financialInfo.fixedSalaryAmount.toLocaleString("fa-IR")} تومان`
+                      : "—"
+                  }
+                />
+                <InfoField
+                  label="درصد پورسانت"
+                  value={
+                    financialInfo.commissionRate != null
+                      ? `${financialInfo.commissionRate}%`
+                      : "—"
+                  }
+                />
+                <InfoField
+                  label="تاریخ شروع قرارداد"
+                  value={financialInfo.effectiveFrom ? formatDate(financialInfo.effectiveFrom) : "—"}
+                />
+                <InfoField
+                  label="تاریخ پایان قرارداد"
+                  value={financialInfo.effectiveTo ? formatDate(financialInfo.effectiveTo) : "—"}
+                />
+              </dl>
+            </InfoCard>
+
+            <InfoCard title="اطلاعات حساب بانکی">
+              <dl className="grid gap-5 sm:grid-cols-2">
+                <InfoField label="شماره کارت" dir="rtl" value={maskedNumber(financialInfo.cardNumber)} />
+                <InfoField label="شماره حساب" dir="rtl" value={maskedNumber(financialInfo.accountNumber)} />
+              </dl>
+            </InfoCard>
+          </div>
+
+          {personnel.contracts && personnel.contracts.length > 0 && (
+            <InfoCard title="تاریخچه قراردادها">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-500">
+                      <th className="pb-2 ps-2 font-medium">نوع قرارداد</th>
+                      <th className="pb-2 ps-2 font-medium">حقوق ثابت</th>
+                      <th className="pb-2 ps-2 font-medium">پورسانت</th>
+                      <th className="pb-2 ps-2 font-medium">از</th>
+                      <th className="pb-2 ps-2 font-medium">تا</th>
+                      <th className="pb-2 ps-2 font-medium">وضعیت</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {personnel.contracts.map((contract) => (
+                      <tr key={contract.id} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-2 ps-2 text-slate-700">{displayEnum(contract.cooperationType)}</td>
+                        <td className="py-2 ps-2 text-slate-700">
+                          {contract.fixedSalaryAmount != null ? `${contract.fixedSalaryAmount.toLocaleString("fa-IR")} تومان` : "—"}
+                        </td>
+                        <td className="py-2 ps-2 text-slate-700">
+                          {contract.defaultCommissionRate != null ? `${contract.defaultCommissionRate}%` : "—"}
+                        </td>
+                        <td className="py-2 ps-2 text-slate-700">{formatDate(contract.effectiveFrom)}</td>
+                        <td className="py-2 ps-2 text-slate-700">{contract.effectiveTo ? formatDate(contract.effectiveTo) : "—"}</td>
+                        <td className="py-2 ps-2">
+                          <Badge className={contract.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}>
+                            {contract.isActive ? "فعال" : "غیرفعال"}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </InfoCard>
+          )}
         </div>
       );
 
