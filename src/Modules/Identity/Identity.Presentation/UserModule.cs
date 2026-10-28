@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modules.Identity.Persistence.Extensions;
 using SharedKernel.Interface;
 using SmeOpsHub.SharedKernel;
 
@@ -30,7 +31,10 @@ public class UserModule : IModule
         // services.AddScoped<Identity.Application.Contract.Services.IAuthenticationService, AuthenticationService>();
 
     }
-
+    public void RegisterBuilder(IApplicationBuilder builder) =>
+    builder.ApplicationServices.ApplyIdentityMigrationsAsync()
+        .GetAwaiter()
+        .GetResult();
     //public void MapEndpoints(IEndpointRouteBuilder endpoints)
     //{
     //    endpoints.MapAreaControllerRoute(
