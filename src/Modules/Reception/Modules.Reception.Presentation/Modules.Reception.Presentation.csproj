@@ -7,5 +7,6 @@
     <ProjectReference Include="..\..\CashRegister\Modules.CashRegister.Application.Contract\Modules.CashRegister.Application.Contract.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Finance\Modules.Finance.Application.Contract\Modules.Finance.Application.Contract.csproj" />
   </ItemGroup>
 </Project>

@@ -21,6 +21,7 @@ public sealed class ReceptionWriteDbContext(DbContextOptions<BaseDbContext> opti
     public DbSet<ReceptionServiceMaterial> ReceptionServiceMaterials => Set<ReceptionServiceMaterial>();
     public DbSet<ReceptionPayment> ReceptionPayments => Set<ReceptionPayment>();
     public DbSet<CashRegisterPaymentOutbox> CashRegisterPaymentOutbox => Set<CashRegisterPaymentOutbox>();
+    public DbSet<PersonnelCommissionOutbox> PersonnelCommissionOutbox => Set<PersonnelCommissionOutbox>();
 }
 
 public sealed class ReceptionReadDbContext(DbContextOptions<BaseDbContext> options)
@@ -37,6 +38,7 @@ public sealed class ReceptionReadDbContext(DbContextOptions<BaseDbContext> optio
     public DbSet<ReceptionServiceMaterial> ReceptionServiceMaterials => Set<ReceptionServiceMaterial>();
     public DbSet<ReceptionPayment> ReceptionPayments => Set<ReceptionPayment>();
     public DbSet<CashRegisterPaymentOutbox> CashRegisterPaymentOutbox => Set<CashRegisterPaymentOutbox>();
+    public DbSet<PersonnelCommissionOutbox> PersonnelCommissionOutbox => Set<PersonnelCommissionOutbox>();
 }
 
 public sealed class ReceptionWriteDbContextFactory

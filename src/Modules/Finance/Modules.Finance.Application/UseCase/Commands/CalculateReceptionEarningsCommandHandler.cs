@@ -45,7 +45,9 @@ public sealed class CalculateReceptionEarningsCommandHandler(
 
         var createdCount = 0;
         foreach (var service in reception.Services.Where(item =>
-                     item.Status == ReceptionServiceStatus.Completed))
+                     item.Status == ReceptionServiceStatus.Completed &&
+                     (!command.ReceptionServiceId.HasValue ||
+                      item.Id == command.ReceptionServiceId.Value)))
         {
             if (!service.PersonnelId.HasValue)
             {
@@ -119,6 +121,14 @@ public sealed class CalculateReceptionEarningsCommandHandler(
 
             if (!await commandRepository.AddEarningAsync(earning, cancellationToken))
             {
+                if (await queryRepository.EarningExistsAsync(
+                        idempotencyKey,
+                        command.SalonId,
+                        cancellationToken))
+                {
+                    continue;
+                }
+
                 return Result.Conflict("ثبت سهم خدمت انجام نشد؛ عملیات را دوباره بررسی کنید.");
             }
 
@@ -136,5 +146,8 @@ public sealed class CalculateReceptionEarningsCommandValidator
     {
         RuleFor(command => command.SalonId).GreaterThan(0);
         RuleFor(command => command.ReceptionId).GreaterThan(0);
+        RuleFor(command => command.ReceptionServiceId)
+            .GreaterThan(0)
+            .When(command => command.ReceptionServiceId.HasValue);
     }
 }

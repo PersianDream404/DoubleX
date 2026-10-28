@@ -29,6 +29,17 @@ public sealed class ChangeReceptionServiceStatusCommandHandler(IReceptionCommand
             return Result.Error("تغییر وضعیت خدمت در وضعیت فعلی مجاز نیست.");
         }
 
+        if (command.Request.Status == ReceptionServiceStatus.Completed &&
+            reception.Services.Any(service =>
+                service.Id == command.ServiceId && service.PersonnelId.HasValue))
+        {
+            repository.AddPersonnelCommissionOutbox(
+                PersonnelCommissionOutbox.Create(
+                    reception.SalonId,
+                    reception.Id,
+                    command.ServiceId));
+        }
+
         return await repository.SaveChangesAsync(cancellationToken)
             ? Result.Success(true)
             : Result.Conflict("پذیرش هم‌زمان تغییر کرده است.");

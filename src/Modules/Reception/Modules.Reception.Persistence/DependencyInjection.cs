@@ -25,6 +25,8 @@ public static class DependencyInjection
             provider.GetRequiredService<ReceptionCommandRepository>());
         services.AddScoped<ICashRegisterPaymentOutboxRepository>(provider =>
             provider.GetRequiredService<ReceptionCommandRepository>());
+        services.AddScoped<IPersonnelCommissionOutboxRepository>(provider =>
+            provider.GetRequiredService<ReceptionCommandRepository>());
         services.AddScoped<IReceptionQueryRepository, ReceptionQueryRepository>();
         return services;
     }

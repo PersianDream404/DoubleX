@@ -106,4 +106,21 @@ public sealed class CashRegisterPaymentOutboxConfiguration
         builder.HasIndex(item => new { item.OutboxStatus, item.NextAttemptAt, item.Id });
         builder.HasIndex(item => new { item.ReceptionId, item.IdempotencyKey }).IsUnique();
     }
+
+    public sealed class PersonnelCommissionOutboxConfiguration
+        : IEntityTypeConfiguration<PersonnelCommissionOutbox>
+    {
+        public void Configure(EntityTypeBuilder<PersonnelCommissionOutbox> builder)
+        {
+            builder.ToTable("PersonnelCommissionOutbox");
+            builder.HasKey(item => item.Id);
+            builder.Property(item => item.EventId).IsRequired();
+            builder.Property(item => item.OutboxStatus).IsRequired();
+            builder.Property(item => item.LastError).HasMaxLength(2000);
+            builder.HasIndex(item => new { item.ReceptionId, item.ReceptionServiceId })
+                .IsUnique();
+            builder.HasIndex(item => new { item.OutboxStatus, item.NextAttemptAt, item.Id });
+            builder.HasIndex(item => item.EventId).IsUnique();
+        }
+    }
 }

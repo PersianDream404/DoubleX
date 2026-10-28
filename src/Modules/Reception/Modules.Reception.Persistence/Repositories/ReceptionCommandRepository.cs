@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Update;
 using Modules.Reception.Application.Contract.DTOs.Payments.Register;
+using Modules.Reception.Application.Contract.DTOs;
 using Modules.Reception.Application.Contract.Interfaces;
 using Modules.Reception.Domain.Entities;
 using Modules.Reception.Persistence.Context;
@@ -9,10 +10,14 @@ using ReceptionEntity = Modules.Reception.Domain.Entities.Reception;
 namespace Modules.Reception.Persistence.Repositories;
 
 public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
-    : IReceptionCommandRepository, ICashRegisterPaymentOutboxRepository
+    : IReceptionCommandRepository, ICashRegisterPaymentOutboxRepository,
+        IPersonnelCommissionOutboxRepository
 {
     public void AddCashRegisterPaymentOutbox(CashRegisterPaymentOutbox outbox) =>
         context.CashRegisterPaymentOutbox.Add(outbox);
+
+    public void AddPersonnelCommissionOutbox(PersonnelCommissionOutbox outbox) =>
+        context.PersonnelCommissionOutbox.Add(outbox);
 
     public Task<ReceptionEntity?> GetTrackedAsync(
         long id,
@@ -123,6 +128,54 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
         var item = await context.CashRegisterPaymentOutbox
             .SingleOrDefaultAsync(outbox => outbox.Id == id, cancellationToken);
         if (item is null || item.OutboxStatus == CashRegisterPaymentOutboxStatus.Processed)
+            return;
+
+        item.MarkFailed(error, attemptedAt);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    async Task<IReadOnlyList<PersonnelCommissionOutboxMessage>>
+        IPersonnelCommissionOutboxRepository.GetPendingAsync(
+            int batchSize,
+            DateTimeOffset now,
+            CancellationToken cancellationToken) =>
+        await context.PersonnelCommissionOutbox
+            .AsNoTracking()
+            .Where(item => item.OutboxStatus == PersonnelCommissionOutboxStatus.Pending &&
+                           item.NextAttemptAt <= now)
+            .OrderBy(item => item.Id)
+            .Take(batchSize)
+            .Select(item => new PersonnelCommissionOutboxMessage(
+                item.Id,
+                item.EventId,
+                item.SalonId,
+                item.ReceptionId,
+                item.ReceptionServiceId))
+            .ToListAsync(cancellationToken);
+
+    async Task IPersonnelCommissionOutboxRepository.MarkProcessedAsync(
+        long id,
+        DateTimeOffset processedAt,
+        CancellationToken cancellationToken)
+    {
+        var item = await context.PersonnelCommissionOutbox
+            .SingleOrDefaultAsync(outbox => outbox.Id == id, cancellationToken);
+        if (item is null || item.OutboxStatus == PersonnelCommissionOutboxStatus.Processed)
+            return;
+
+        item.MarkProcessed(processedAt);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    async Task IPersonnelCommissionOutboxRepository.MarkFailedAsync(
+        long id,
+        string error,
+        DateTimeOffset attemptedAt,
+        CancellationToken cancellationToken)
+    {
+        var item = await context.PersonnelCommissionOutbox
+            .SingleOrDefaultAsync(outbox => outbox.Id == id, cancellationToken);
+        if (item is null || item.OutboxStatus == PersonnelCommissionOutboxStatus.Processed)
             return;
 
         item.MarkFailed(error, attemptedAt);

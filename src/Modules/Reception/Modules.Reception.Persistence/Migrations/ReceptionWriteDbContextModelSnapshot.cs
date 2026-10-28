@@ -17,7 +17,7 @@ namespace Modules.Reception.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -91,6 +91,61 @@ namespace Modules.Reception.Persistence.Migrations
                     b.HasIndex("OutboxStatus", "NextAttemptAt", "Id");
 
                     b.ToTable("CashRegisterPaymentOutbox", (string)null);
+                });
+
+            modelBuilder.Entity("Modules.Reception.Domain.Entities.PersonnelCommissionOutbox", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("OutboxStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("ReceptionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ReceptionServiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("ReceptionId", "ReceptionServiceId")
+                        .IsUnique();
+
+                    b.HasIndex("OutboxStatus", "NextAttemptAt", "Id");
+
+                    b.ToTable("PersonnelCommissionOutbox", (string)null);
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.Reception", b =>

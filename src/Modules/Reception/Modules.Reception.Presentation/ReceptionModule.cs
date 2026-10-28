@@ -15,6 +15,7 @@ public sealed class ReceptionModule : IModule
         services.AddReceptionInfrastructure(configuration);
         services.AddReceptionApplicationServices();
         services.AddHostedService<CashRegisterPaymentOutboxProcessor>();
+        services.AddHostedService<PersonnelCommissionOutboxProcessor>();
         services.Scan(scan => scan
             .FromAssemblyOf<ReceptionModule>()
             .AddClasses(classes => classes.AssignableTo<IEndpoint>())

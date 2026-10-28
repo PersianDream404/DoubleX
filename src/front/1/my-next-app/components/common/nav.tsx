@@ -68,6 +68,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/cash-registers",
     children: [{ label: "فهرست و گردش صندوق‌ها", href: "/cash-registers" }],
   },
+  {
+    label: "مدیریت مالی",
+    href: "/finance",
+    children: [{ label: "حقوق و تسویه پرسنل", href: "/finance" }],
+  },
   { label: "رزرو و نوبت", href: "/bookings" },
 ];
 
