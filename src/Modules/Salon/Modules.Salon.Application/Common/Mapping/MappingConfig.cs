@@ -91,7 +91,6 @@ public static class MappingConfig
 
         TypeAdapterConfig<FinancialInfo, FinancialInfoDto>
             .NewConfig()
-            .Map(dest => dest.SalaryType, src => src.SalaryType.ToString())
             .Map(dest => dest.CardNumber, src => src.CardNumber.Value)
             .Map(dest => dest.AccountNumber, src => src.AccountNumber);
 

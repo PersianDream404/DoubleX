@@ -89,7 +89,6 @@ public class CreatePersonnelCommandHandler(
             var financialInfoRequest = command.Request.FinancialInfo;
 
             var financialInfoResult = FinancialInfo.Create(
-                financialInfoRequest.SalaryType,
                 financialInfoRequest.CardNumber,
                 financialInfoRequest.AccountNumber);
 
@@ -100,6 +99,16 @@ public class CreatePersonnelCommandHandler(
             if (!updateFinancialInfoResult.IsSuccess)
                 return updateFinancialInfoResult;
 
+            var contractResult = PersonnelContractFactory.Create(
+                personnel,
+                financialInfoRequest,
+                jobInfoRequest.CooperationStartDate);
+            if (!contractResult.IsSuccess)
+                return Result.Invalid(contractResult.ValidationErrors);
+
+            var addContractResult = personnel.AddContract(contractResult.Value);
+            if (!addContractResult.IsSuccess)
+                return addContractResult;
 
             var healthInfoRequest = command.Request.HealthInfo;
 

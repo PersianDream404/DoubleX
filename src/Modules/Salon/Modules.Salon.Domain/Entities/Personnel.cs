@@ -9,6 +9,7 @@ namespace Modules.Personnel.Domain.Entities;
 public sealed class Personnel : BaseEntityIdentity
 {
     private readonly List<PersonnelDocument> _documents = new();
+    private readonly List<PersonnelContract> _contracts = [];
 
     public Personnel()
     {
@@ -24,6 +25,7 @@ public sealed class Personnel : BaseEntityIdentity
 
     //حقوقی
     public GuarantorInfo GuarantorInfo { get; private set; } = null!;
+    public IReadOnlyCollection<PersonnelContract> Contracts => _contracts;
     public long SalonId { get; private set; } 
     public Salon Salon { get; private set; } = null!;
 
@@ -111,6 +113,21 @@ public sealed class Personnel : BaseEntityIdentity
         }
 
         FinancialInfo = financialInfo;
+        return Result.Success();
+    }
+
+    public Result AddContract(PersonnelContract contract)
+    {
+        if (contract is null)
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = nameof(PersonnelContract),
+                ErrorMessage = "قرارداد پرسنل الزامی است."
+            });
+        }
+
+        _contracts.Add(contract);
         return Result.Success();
     }
 

@@ -6,6 +6,7 @@ using Modules.Banner.Persistence.Mapper.Banners;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
 using Modules.Personnel.Application.Contract.Interfaces;
 using Modules.Personnel.Domain.Entities;
+using Modules.Personnel.Domain.Enums;
 using Modules.Personnel.Domain.Interface;
 using Modules.Personnel.Persistence.Context;
 
@@ -32,6 +33,21 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
             return null;
         }
 
+        var contracts = await _dbContext.PersonnelContracts
+            .AsNoTracking()
+            .Where(contract => contract.PersonnelId == personnel.Id)
+            .OrderByDescending(contract => contract.EffectiveFrom)
+            .Select(contract => new PersonnelContractDto(
+                contract.Id,
+                contract.CooperationType,
+                contract.FixedSalaryAmount,
+                contract.DefaultCommissionRate,
+                contract.EffectiveFrom,
+                contract.EffectiveTo,
+                contract.IsActive))
+            .ToListAsync(ct);
+        var activeContract = contracts.FirstOrDefault(contract => contract.IsActive);
+
         return new GetByIdPersonnelResponseDto(
             personnel.Id,
             personnel.Status,
@@ -55,9 +71,13 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
                 personnel.JobInfo.JobPictures.ToArray(),
                 personnel.JobInfo.WorkHistory),
             new FinancialInfoDto(
-                personnel.FinancialInfo.SalaryType.ToString(),
+                ToLegacySalaryType(activeContract?.CooperationType),
                 personnel.FinancialInfo.CardNumber.Value,
-                personnel.FinancialInfo.AccountNumber),
+                personnel.FinancialInfo.AccountNumber,
+                activeContract?.FixedSalaryAmount,
+                activeContract?.DefaultCommissionRate,
+                activeContract?.EffectiveFrom,
+                activeContract?.EffectiveTo),
             new HealthInfoDto(
                 personnel.HealthInfo.HealthStatus,
                 personnel.HealthInfo.Diseases,
@@ -71,8 +91,21 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
                 personnel.GuarantorInfo.GuarantorMobilePhone.Value,
                 personnel.GuarantorInfo.GuarantorLandlinePhone?.Value,
                 personnel.GuarantorInfo.PictureGuaranties.Select(picture => picture.Value).ToArray()),
-            []);
+            [],
+            contracts);
     }
+
+    private static string ToLegacySalaryType(CooperationType? cooperationType) =>
+        cooperationType switch
+        {
+            CooperationType.FixedSalary => SalaryType.Fixed.ToString(),
+            CooperationType.Commission => SalaryType.Commission.ToString(),
+            CooperationType.FixedAndCommission => SalaryType.FixedAndCommission.ToString(),
+            CooperationType.ChairRental => SalaryType.ChairRental.ToString(),
+            CooperationType.RoomRental => SalaryType.RoomRental.ToString(),
+            CooperationType.Other => string.Empty,
+            _ => string.Empty
+        };
 
     public async Task<PagedList<GetAllPersonalResponseDto>> GetAllProjectedAsync(GetAllPersonnelRequestDto request, CancellationToken ct)
     {

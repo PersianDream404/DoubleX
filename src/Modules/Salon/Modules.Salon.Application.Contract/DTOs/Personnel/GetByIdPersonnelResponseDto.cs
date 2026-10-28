@@ -11,7 +11,8 @@ public sealed record GetByIdPersonnelResponseDto(
     FinancialInfoDto FinancialInfo,
     HealthInfoDto HealthInfo,
     GuarantorInfoDto GuarantorInfo,
-    IReadOnlyList<DocumentDto> Documents);
+    IReadOnlyList<DocumentDto> Documents,
+    IReadOnlyList<PersonnelContractDto> Contracts);
 
 
 

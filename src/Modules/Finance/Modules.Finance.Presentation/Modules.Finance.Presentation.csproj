@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Finance.Application.Contract\Modules.Finance.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Finance.Application\Modules.Finance.Application.csproj" />
+    <ProjectReference Include="..\Modules.Finance.Persistence\Modules.Finance.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

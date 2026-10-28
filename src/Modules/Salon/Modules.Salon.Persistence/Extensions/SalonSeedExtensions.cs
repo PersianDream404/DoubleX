@@ -13,11 +13,13 @@ public static class SalonSeedExtensions
     {
         await using var scope = serviceProvider.CreateAsyncScope();
 
+        var migrationContext = scope.ServiceProvider
+            .GetRequiredService<PersonnelReadDbContext>();
+
+        await migrationContext.Database.MigrateAsync(cancellationToken);
+
         var context = scope.ServiceProvider
             .GetRequiredService<PersonnelWriteDbContext>();
-
-    
-        await context.Database.MigrateAsync(cancellationToken);
 
 
         if (await context.Set<Domain.Entities.Salon>().AnyAsync(cancellationToken))

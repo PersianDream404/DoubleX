@@ -20,6 +20,7 @@ public class PersonnelReadDbContext : BaseDbContext
 
     public DbSet<Domain.Entities.Personnel> Personnels { get; set; } = null!;
     public DbSet<Domain.Entities.Salon> Salons { get; set; } = null!;
+    public DbSet<PersonnelContract> PersonnelContracts { get; set; } = null!;
 }
 public class PersonnelReadDbContextFactory : IDesignTimeDbContextFactory<PersonnelReadDbContext>
 {

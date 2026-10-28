@@ -3,4 +3,8 @@ namespace Modules.Personnel.Application.Contract.DTOs.Personnel;
 public sealed record FinancialInfoDto(
     string SalaryType,
     string CardNumber,
-    string AccountNumber);
+    string AccountNumber,
+    decimal? FixedSalaryAmount,
+    decimal? CommissionRate,
+    DateOnly? EffectiveFrom,
+    DateOnly? EffectiveTo);

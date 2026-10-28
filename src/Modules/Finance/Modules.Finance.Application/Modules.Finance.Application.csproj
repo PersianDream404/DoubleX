@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Finance.Application.Contract\Modules.Finance.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Finance.Domain\Modules.Finance.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\Salon\Modules.Salon.Application.Contract\Modules.Salon.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\Reception\Modules.Reception.Application.Contract\Modules.Reception.Application.Contract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Scrutor" />
+  </ItemGroup>
+</Project>

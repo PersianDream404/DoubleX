@@ -48,7 +48,20 @@ public enum SalaryType
     ChairRental = 2,
 
     [Display(Name = "اجاره اتاق")]
-    RoomRental = 3
+    RoomRental = 3,
+
+    [Display(Name = "ثابت و پورسانت")]
+    FixedAndCommission = 4
+}
+
+public enum CooperationType
+{
+    FixedSalary = 1,
+    Commission = 2,
+    FixedAndCommission = 3,
+    ChairRental = 4,
+    RoomRental = 5,
+    Other = 6
 }
 
 public enum DocumentType

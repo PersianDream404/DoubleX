@@ -46,6 +46,56 @@ namespace Modules.Salon.Persistence.Migrations
                     b.ToTable("Personnels", (string)null);
                 });
 
+            modelBuilder.Entity("Modules.Personnel.Domain.Entities.PersonnelContract", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CooperationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal?>("DefaultCommissionRate")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("FixedSalaryAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("PersonnelId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonnelId", "EffectiveFrom");
+
+                    b.HasIndex("PersonnelId", "IsActive")
+                        .IsUnique()
+                        .HasFilter("[IsActive] = 1");
+
+                    b.ToTable("PersonnelContracts", (string)null);
+                });
+
             modelBuilder.Entity("Modules.Personnel.Domain.Entities.Salon", b =>
                 {
                     b.Property<long>("Id")
@@ -93,10 +143,6 @@ namespace Modules.Salon.Persistence.Migrations
                                 .HasMaxLength(16)
                                 .HasColumnType("nvarchar(16)")
                                 .HasColumnName("CardNumber");
-
-                            b1.Property<string>("SalaryType")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)");
 
                             b1.HasKey("PersonnelId");
 
@@ -456,8 +502,7 @@ namespace Modules.Salon.Persistence.Migrations
                             b1.Navigation("NationalCode")
                                 .IsRequired();
 
-                            b1.Navigation("Picture")
-                                .IsRequired();
+                            b1.Navigation("Picture");
                         });
 
                     b.Navigation("FinancialInfo")
@@ -476,6 +521,22 @@ namespace Modules.Salon.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Salon");
+                });
+
+            modelBuilder.Entity("Modules.Personnel.Domain.Entities.PersonnelContract", b =>
+                {
+                    b.HasOne("Modules.Personnel.Domain.Entities.Personnel", "Personnel")
+                        .WithMany("Contracts")
+                        .HasForeignKey("PersonnelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Personnel");
+                });
+
+            modelBuilder.Entity("Modules.Personnel.Domain.Entities.Personnel", b =>
+                {
+                    b.Navigation("Contracts");
                 });
 
             modelBuilder.Entity("Modules.Personnel.Domain.Entities.Salon", b =>

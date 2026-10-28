@@ -17,4 +17,5 @@ public class PersonnelWriteDbContext : BaseDbContext
     }
 
     public DbSet<Domain.Entities.Personnel> Personnels { get; set; } = null!;
+    public DbSet<PersonnelContract> PersonnelContracts { get; set; } = null!;
 }

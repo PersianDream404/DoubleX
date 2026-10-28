@@ -95,10 +95,6 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
         {
             finances.ToTable("PersonnelFinancialInfos");
 
-            finances.Property(x => x.SalaryType)
-                .HasConversion<string>()
-                .IsRequired();
-
             var cardNumberConverter = new ValueConverter<CardNumber, string>(
                 cardNumber => cardNumber.Value,
                 value => CardNumber.Create(value).Value
@@ -113,6 +109,11 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             finances.Property(x => x.AccountNumber)
                 .HasMaxLength(50);
         });
+
+        builder.HasMany(x => x.Contracts)
+            .WithOne(contract => contract.Personnel)
+            .HasForeignKey(contract => contract.PersonnelId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ۵. جدول مجزا برای اطلاعات سلامتی (HealthInfo)
         builder.OwnsOne(x => x.HealthInfo, health =>
@@ -202,5 +203,27 @@ public sealed class PersonnelConfiguration : IEntityTypeConfiguration<Domain.Ent
             .HasForeignKey(x => x.SalonId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Restrict);
+    }
+
+    public sealed class PersonnelContractConfiguration
+        : IEntityTypeConfiguration<PersonnelContract>
+    {
+        public void Configure(EntityTypeBuilder<PersonnelContract> builder)
+        {
+            builder.ToTable("PersonnelContracts");
+            builder.HasKey(contract => contract.Id);
+            builder.Property(contract => contract.CooperationType)
+                .HasConversion<string>()
+                .HasMaxLength(50)
+                .IsRequired();
+            builder.Property(contract => contract.FixedSalaryAmount).HasPrecision(18, 2);
+            builder.Property(contract => contract.DefaultCommissionRate).HasPrecision(5, 2);
+            builder.Property(contract => contract.EffectiveFrom).IsRequired();
+            builder.Property(contract => contract.IsActive).IsRequired();
+            builder.HasIndex(contract => new { contract.PersonnelId, contract.IsActive })
+                .IsUnique()
+                .HasFilter("[IsActive] = 1");
+            builder.HasIndex(contract => new { contract.PersonnelId, contract.EffectiveFrom });
+        }
     }
 }

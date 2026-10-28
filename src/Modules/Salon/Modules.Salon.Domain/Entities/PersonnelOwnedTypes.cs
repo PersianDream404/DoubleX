@@ -266,22 +266,18 @@ public sealed record JobInfo
 
 public sealed record FinancialInfo
 {
-    public SalaryType SalaryType { get; private set; }
     public CardNumber CardNumber { get; private set; }
     public string AccountNumber { get; private set; }
 
     private FinancialInfo(
-        SalaryType salaryType,
         CardNumber cardNumber,
         string accountNumber)
     {
-        SalaryType = salaryType;
         CardNumber = cardNumber;
         AccountNumber = accountNumber;
     }
 
     public static Result<FinancialInfo> Create(
-        SalaryType salaryType,
         string cardNumber,
         string accountNumber)
     {
@@ -304,25 +300,21 @@ public sealed record FinancialInfo
             return Result.Invalid(validationErrors);
 
         return Result.Success(new FinancialInfo(
-            salaryType,
             cardNumberResult.Value,
             accountNumber.Trim()));
     }
 
     public Result Update(
-        SalaryType salaryType,
         string cardNumber,
         string accountNumber)
     {
         var result = Create(
-            salaryType,
             cardNumber,
             accountNumber);
 
         if (!result.IsSuccess)
             return Result.Invalid(result.ValidationErrors);
 
-        SalaryType = result.Value.SalaryType;
         CardNumber = result.Value.CardNumber;
         AccountNumber = result.Value.AccountNumber;
 

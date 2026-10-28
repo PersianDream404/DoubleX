@@ -104,11 +104,51 @@ public class UpdatePersonnelCommandHandler(
                 return Result.Invalid(jobInfoUpdateResult.ValidationErrors);
 
             var financialInfoUpdateResult = existing.FinancialInfo.Update(
-                request.FinancialInfo.SalaryType,
                 request.FinancialInfo.CardNumber,
                 request.FinancialInfo.AccountNumber);
             if (!financialInfoUpdateResult.IsSuccess)
                 return Result.Invalid(financialInfoUpdateResult.ValidationErrors);
+
+            var profile = await PersonnelQueryRepository.GetByIdDtoAsync(command.Id, cancellationToken);
+            var activeContract = profile?.Contracts.SingleOrDefault(contract => contract.IsActive);
+            var contractRequest = request.FinancialInfo;
+            if (!contractRequest.EffectiveFrom.HasValue && activeContract is not null)
+            {
+                var requestedCooperationType =
+                    PersonnelContractFactory.GetCooperationType(contractRequest.SalaryType);
+                var termsUnchanged =
+                    requestedCooperationType == activeContract.CooperationType &&
+                    contractRequest.FixedSalaryAmount == activeContract.FixedSalaryAmount &&
+                    contractRequest.CommissionRate == activeContract.DefaultCommissionRate &&
+                    (!contractRequest.EffectiveTo.HasValue ||
+                     contractRequest.EffectiveTo == activeContract.EffectiveTo);
+                if (!termsUnchanged)
+                {
+                    return Result.Invalid(new ValidationError
+                    {
+                        Identifier = nameof(request.FinancialInfo.EffectiveFrom),
+                        ErrorMessage = "برای تغییر شرایط همکاری، تاریخ شروع قرارداد جدید را مشخص کنید."
+                    });
+                }
+
+                contractRequest = new FinancialInfoRequestDto(
+                    request.FinancialInfo.SalaryType,
+                    request.FinancialInfo.CardNumber,
+                    request.FinancialInfo.AccountNumber)
+                {
+                    FixedSalaryAmount = request.FinancialInfo.FixedSalaryAmount,
+                    CommissionRate = request.FinancialInfo.CommissionRate,
+                    EffectiveFrom = activeContract.EffectiveFrom,
+                    EffectiveTo = request.FinancialInfo.EffectiveTo ?? activeContract.EffectiveTo
+                };
+            }
+
+            var contractResult = PersonnelContractFactory.Create(
+                existing,
+                contractRequest,
+                request.JobInfo.CooperationStartDate);
+            if (!contractResult.IsSuccess)
+                return Result.Invalid(contractResult.ValidationErrors);
 
             if (!TryParseStatus(
                     request.HealthInfo.HealthStatus,
@@ -156,8 +196,12 @@ public class UpdatePersonnelCommandHandler(
             if (!guarantorInfoUpdateResult.IsSuccess)
                 return Result.Invalid(guarantorInfoUpdateResult.ValidationErrors);
 
-            await PersonnelCommandRepository.UpdateAsync(existing, cancellationToken);
-            return Result.Success(true);
+            return await PersonnelCommandRepository.UpdateWithContractAsync(
+                    existing,
+                    contractResult.Value,
+                    cancellationToken)
+                ? Result.Success(true)
+                : Result.Conflict("بازهٔ قرارداد جدید با قراردادهای قبلی هم‌پوشانی دارد یا تاریخ شروع معتبر نیست.");
         }
         catch (Exception)
         {
