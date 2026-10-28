@@ -5,6 +5,7 @@ using Modules.Finance.Application.Contract.DTOs;
 using Modules.Finance.Application.Contract.Interfaces;
 using Modules.Finance.Domain.Entities;
 using Modules.Finance.Persistence.Context;
+using Modules.Finance.Persistence.Mapper;
 
 namespace Modules.Finance.Persistence.Repositories;
 
@@ -37,15 +38,7 @@ public sealed class FinanceQueryRepository(FinanceReadDbContext context)
         return await query
             .OrderByDescending(expense => expense.OccurredAt)
             .ThenByDescending(expense => expense.Id)
-            .Select(expense => new ExpenseListItemDto(
-                expense.Id,
-                expense.Category,
-                expense.Amount,
-                expense.OccurredAt,
-                expense.Description,
-                expense.Status,
-                expense.CancelledAt,
-                expense.CancellationReason))
+            .Select(FinanceMapper.ToExpenseListItemDto())
             .ToPagedList(request.PageNumber, request.PageSize, cancellationToken);
     }
 
@@ -56,15 +49,7 @@ public sealed class FinanceQueryRepository(FinanceReadDbContext context)
         context.Expenses
             .AsNoTracking()
             .Where(expense => expense.SalonId == salonId && expense.Id == id)
-            .Select(expense => new ExpenseListItemDto(
-                expense.Id,
-                expense.Category,
-                expense.Amount,
-                expense.OccurredAt,
-                expense.Description,
-                expense.Status,
-                expense.CancelledAt,
-                expense.CancellationReason))
+            .Select(FinanceMapper.ToExpenseListItemDto())
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<PagedList<PersonnelSettlementListItemDto>> GetSettlementsAsync(
@@ -99,15 +84,7 @@ public sealed class FinanceQueryRepository(FinanceReadDbContext context)
         return await query
             .OrderByDescending(settlement => settlement.PaidAt)
             .ThenByDescending(settlement => settlement.Id)
-            .Select(settlement => new PersonnelSettlementListItemDto(
-                settlement.Id,
-                settlement.PersonnelId,
-                settlement.EarningType,
-                settlement.Amount,
-                settlement.PaidAt,
-                settlement.PaymentMethod,
-                settlement.CreatedBy,
-                settlement.Description))
+            .Select(FinanceMapper.ToPersonnelSettlementListItemDto())
             .ToPagedList(request.PageNumber, request.PageSize, cancellationToken);
     }
 
@@ -121,9 +98,7 @@ public sealed class FinanceQueryRepository(FinanceReadDbContext context)
         var total = await expenses.SumAsync(expense => (decimal?)expense.Amount, cancellationToken) ?? 0m;
         var categories = await expenses
             .GroupBy(expense => expense.Category)
-            .Select(group => new ExpenseCategoryTotalDto(
-                group.Key,
-                group.Sum(expense => expense.Amount)))
+            .Select(FinanceMapper.ToExpenseCategoryTotalDto())
             .OrderBy(item => item.Category)
             .ToListAsync(cancellationToken);
         var list = await GetExpensesAsync(salonId, request, cancellationToken);
