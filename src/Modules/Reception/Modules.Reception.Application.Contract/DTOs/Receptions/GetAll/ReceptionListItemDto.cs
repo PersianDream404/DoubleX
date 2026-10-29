@@ -5,7 +5,7 @@ namespace Modules.Reception.Application.Contract.DTOs.Receptions.GetAll;
 public sealed record ReceptionListItemDto(
     long Id,
     long SalonId,
-    string ReceptionNumber,
+    long ReceptionNumber,
     long CustomerId,
     string CustomerName,
     long ReceptionistId,

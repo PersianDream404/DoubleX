@@ -37,7 +37,7 @@ public sealed record ReceptionPaymentDto(
 public sealed record ReceptionDetailsDto(
     long Id,
     long SalonId,
-    string ReceptionNumber,
+    long ReceptionNumber,
     long CustomerId,
     string CustomerName,
     long ReceptionistId,

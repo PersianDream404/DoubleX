@@ -42,6 +42,10 @@ function amountLabel(amount: number) {
   return `${new Intl.NumberFormat("fa-IR").format(amount)} تومان`;
 }
 
+function receptionNumberLabel(number: number) {
+  return new Intl.NumberFormat("fa-IR").format(number);
+}
+
 function tehranDateKey(value: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return "";
@@ -392,7 +396,7 @@ export function ReceptionsPage() {
                   <table className="w-full min-w-[1050px] text-right">
                     <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500">
                       <tr>
-                        <th className="px-4 py-3">شماره صف</th>
+                        <th className="px-4 py-3">شماره پذیرش</th>
                         <th className="px-4 py-3">مشتری</th>
                         <th className="px-4 py-3">تعرفه</th>
                         <th className="px-4 py-3">پذیرشگر</th>
@@ -412,7 +416,7 @@ export function ReceptionsPage() {
                               : "برای این تاریخ و فیلترها پذیرشی پیدا نشد."}
                           </td>
                         </tr>
-                      ) : visibleItems.map((reception, index) => (
+                      ) : visibleItems.map((reception) => (
                         <tr key={reception.id} className="text-xs text-slate-700 transition-colors hover:bg-fuchsia-50/30">
                           <td className="px-4 py-3.5">
                             <span className={`inline-flex min-w-10 justify-center rounded-lg px-2 py-1.5 font-bold ${
@@ -420,12 +424,11 @@ export function ReceptionsPage() {
                                 reception.status === 2 ? "bg-fuchsia-50 text-fuchsia-700" :
                                   "bg-amber-50 text-amber-700"
                             }`}>
-                              {new Intl.NumberFormat("fa-IR").format((page - 1) * PAGE_SIZE + index + 1)}
+                              {receptionNumberLabel(reception.receptionNumber)}
                             </span>
                           </td>
                           <td className="px-4 py-3.5">
                             <p className="font-semibold text-slate-800">{reception.customerName}</p>
-                            <p className="mt-1 text-[10px] text-slate-400" dir="ltr">{reception.receptionNumber}</p>
                           </td>
                           <td className="px-4 py-3.5">
                             {reception.serviceTariffId
@@ -463,7 +466,9 @@ export function ReceptionsPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold text-slate-800">{reception.customerName}</p>
-                          <p dir="ltr" className="mt-1 text-right text-[10px] text-slate-400">{reception.receptionNumber}</p>
+                          <p className="mt-1 text-xs text-fuchsia-700">
+                            شماره پذیرش {receptionNumberLabel(reception.receptionNumber)}
+                          </p>
                         </div>
                         <StatusBadge status={reception.status} />
                       </div>

@@ -11,7 +11,7 @@ public sealed class ReceptionConfiguration : IEntityTypeConfiguration<ReceptionE
     {
         builder.ToTable("Receptions");
         builder.HasKey(item => item.Id);
-        builder.Property(item => item.ReceptionNumber).HasMaxLength(40).IsRequired();
+        builder.Property(item => item.ReceptionNumber).IsRequired();
         builder.Property(item => item.CustomerName).HasMaxLength(250).IsRequired();
         builder.Property(item => item.Notes).HasMaxLength(2000);
         builder.Property(item => item.ReceptionStatus).IsRequired();
@@ -36,6 +36,24 @@ public sealed class ReceptionConfiguration : IEntityTypeConfiguration<ReceptionE
             .WithOne(payment => payment.Reception)
             .HasForeignKey(payment => payment.ReceptionId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class ReceptionNumberSequence
+{
+    public long SalonId { get; set; }
+    public long LastNumber { get; set; }
+}
+
+internal sealed class ReceptionNumberSequenceConfiguration
+    : IEntityTypeConfiguration<ReceptionNumberSequence>
+{
+    public void Configure(EntityTypeBuilder<ReceptionNumberSequence> builder)
+    {
+        builder.ToTable("ReceptionNumberSequences");
+        builder.HasKey(sequence => sequence.SalonId);
+        builder.Property(sequence => sequence.SalonId).ValueGeneratedNever();
+        builder.Property(sequence => sequence.LastNumber).IsRequired();
     }
 }
 

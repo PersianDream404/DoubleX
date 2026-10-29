@@ -5,7 +5,7 @@ namespace Modules.Reception.Domain.ReadModels;
 public sealed record ReceptionListReadModel(
     long Id,
     long SalonId,
-    string ReceptionNumber,
+    long ReceptionNumber,
     long CustomerId,
     string CustomerName,
     long ReceptionistId,
@@ -53,7 +53,7 @@ public sealed record ReceptionPaymentReadModel(
 public sealed record ReceptionDetailsReadModel(
     long Id,
     long SalonId,
-    string ReceptionNumber,
+    long ReceptionNumber,
     long CustomerId,
     string CustomerName,
     long ReceptionistId,

@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Update;
+using Microsoft.EntityFrameworkCore.Storage;
 using Modules.Reception.Application.Contract.DTOs.Payments.Register;
 using Modules.Reception.Application.Contract.DTOs;
 using Modules.Reception.Application.Contract.Interfaces;
 using Modules.Reception.Domain.Entities;
 using Modules.Reception.Persistence.Context;
+using System.Data;
+using System.Globalization;
 using ReceptionEntity = Modules.Reception.Domain.Entities.Reception;
 
 namespace Modules.Reception.Persistence.Repositories;
@@ -42,10 +45,16 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
         ReceptionEntity reception,
         CancellationToken cancellationToken)
     {
-        await context.Receptions.AddAsync(reception, cancellationToken);
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
         try
         {
+            reception.AssignReceptionNumber(
+                await AllocateReceptionNumberAsync(reception.SalonId, transaction, cancellationToken));
+            await context.Receptions.AddAsync(reception, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             return true;
         }
         catch (DbUpdateException)
@@ -59,6 +68,44 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
                 return false;
             throw;
         }
+    }
+
+    private async Task<long> AllocateReceptionNumberAsync(
+        long salonId,
+        IDbContextTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var connection = context.Database.GetDbConnection();
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction.GetDbTransaction();
+        command.CommandText = """
+            DECLARE @Allocated TABLE (LastNumber bigint NOT NULL);
+
+            MERGE [Reception].[ReceptionNumberSequences] WITH (HOLDLOCK) AS target
+            USING (SELECT @SalonId AS [SalonId]) AS source
+                ON target.[SalonId] = source.[SalonId]
+            WHEN MATCHED THEN
+                UPDATE SET [LastNumber] = target.[LastNumber] + 1
+            WHEN NOT MATCHED THEN
+                INSERT ([SalonId], [LastNumber]) VALUES (source.[SalonId], 1)
+            OUTPUT inserted.[LastNumber] INTO @Allocated;
+
+            SELECT [LastNumber] FROM @Allocated;
+            """;
+
+        var salonIdParameter = command.CreateParameter();
+        salonIdParameter.ParameterName = "@SalonId";
+        salonIdParameter.DbType = DbType.Int64;
+        salonIdParameter.Value = salonId;
+        command.Parameters.Add(salonIdParameter);
+
+        var allocatedNumber = await command.ExecuteScalarAsync(cancellationToken);
+        if (allocatedNumber is null or DBNull)
+        {
+            throw new InvalidOperationException("شماره پذیرش از پایگاه داده دریافت نشد.");
+        }
+
+        return Convert.ToInt64(allocatedNumber, CultureInfo.InvariantCulture);
     }
 
     public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken)

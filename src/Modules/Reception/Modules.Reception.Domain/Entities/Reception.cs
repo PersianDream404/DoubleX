@@ -10,7 +10,7 @@ public sealed class Reception : BaseEntityIdentity
     private readonly List<ReceptionPayment> _payments = [];
 
     public long SalonId { get; private set; }
-    public string ReceptionNumber { get; private set; } = null!;
+    public long ReceptionNumber { get; private set; }
     public long CustomerId { get; private set; }
     public string CustomerName { get; private set; } = null!;
     public long ReceptionistId { get; private set; }
@@ -32,7 +32,6 @@ public sealed class Reception : BaseEntityIdentity
 
     private Reception(
         long salonId,
-        string receptionNumber,
         long customerId,
         string customerName,
         long receptionistId,
@@ -42,7 +41,6 @@ public sealed class Reception : BaseEntityIdentity
         string? notes)
     {
         SalonId = salonId;
-        ReceptionNumber = receptionNumber;
         CustomerId = customerId;
         CustomerName = customerName;
         ReceptionistId = receptionistId;
@@ -65,7 +63,6 @@ public sealed class Reception : BaseEntityIdentity
         long? appointmentId = null) =>
         new(
             salonId,
-            $"R-{Guid.NewGuid():N}",
             customerId,
             customerName,
             receptionistId,
@@ -73,6 +70,16 @@ public sealed class Reception : BaseEntityIdentity
             appointmentId,
             receptionDate,
             notes);
+
+    public void AssignReceptionNumber(long receptionNumber)
+    {
+        if (ReceptionNumber != 0 || receptionNumber <= 0)
+        {
+            throw new InvalidOperationException("شماره پذیرش باید یک‌بار و با مقدار مثبت تعیین شود.");
+        }
+
+        ReceptionNumber = receptionNumber;
+    }
 
     public bool TryAddService(
         long serviceId,

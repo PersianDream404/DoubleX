@@ -182,10 +182,8 @@ namespace Modules.Reception.Persistence.Migrations
                         .HasColumnType("int")
                         .HasColumnName("FinancialStatus");
 
-                    b.Property<string>("ReceptionNumber")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
+                    b.Property<long>("ReceptionNumber")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("ReceptionStatus")
                         .HasColumnType("int");
@@ -408,6 +406,19 @@ namespace Modules.Reception.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("ReceptionServiceMaterials", "Reception");
+                });
+
+            modelBuilder.Entity("Modules.Reception.Persistence.Configuration.ReceptionNumberSequence", b =>
+                {
+                    b.Property<long>("SalonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LastNumber")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("SalonId");
+
+                    b.ToTable("ReceptionNumberSequences", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.ReceptionPayment", b =>

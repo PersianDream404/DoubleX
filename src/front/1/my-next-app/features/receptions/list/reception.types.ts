@@ -3,7 +3,7 @@ import type { PageParams, PagedResult } from "@/lib/api/types/paged-result";
 export interface ReceptionListItem {
   id: number;
   salonId: number;
-  receptionNumber: string;
+  receptionNumber: number;
   customerId: number;
   customerName: string;
   receptionistId: number;
