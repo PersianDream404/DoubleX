@@ -78,7 +78,7 @@ public sealed class GetAppointmentAvailabilityQueryHandler(
         if (startsAt <= DateTimeOffset.UtcNow)
             return Result.Invalid(new ValidationError("زمان نوبت باید در آینده باشد."));
         var endsAt = startsAt.AddMinutes(service.DurationMinutes);
-        var available = await repository.IsAvailableAsync(
+        var hasConflict = await repository.IsAvailableAsync(
             query.SalonId,
             request.PersonnelId,
             startsAt,
@@ -86,7 +86,7 @@ public sealed class GetAppointmentAvailabilityQueryHandler(
             null,
             cancellationToken);
         return Result.Success(new AppointmentAvailabilityDto(
-            available,
+            !hasConflict,
             startsAt,
             endsAt,
             service.DurationMinutes,

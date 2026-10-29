@@ -24,7 +24,9 @@ public sealed class GetAppointmentsQueryValidator : AbstractValidator<GetAppoint
         RuleFor(query => query.Request).NotNull();
         When(query => query.Request is not null, () =>
         {
-            RuleFor(query => query.Request.SalonId).GreaterThan(0);
+            RuleFor(query => query.Request.SalonId)
+                .NotNull()
+                .GreaterThan(0);
             RuleFor(query => query.Request.CustomerId).GreaterThan(0).When(query =>
                 query.Request.CustomerId.HasValue);
             RuleFor(query => query.Request.PersonnelId).GreaterThan(0).When(query =>
