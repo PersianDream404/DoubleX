@@ -17,6 +17,7 @@ namespace Modules.Reception.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("Reception")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -90,7 +91,7 @@ namespace Modules.Reception.Persistence.Migrations
 
                     b.HasIndex("OutboxStatus", "NextAttemptAt", "Id");
 
-                    b.ToTable("CashRegisterPaymentOutbox", (string)null);
+                    b.ToTable("CashRegisterPaymentOutbox", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.PersonnelCommissionOutbox", b =>
@@ -145,7 +146,7 @@ namespace Modules.Reception.Persistence.Migrations
 
                     b.HasIndex("OutboxStatus", "NextAttemptAt", "Id");
 
-                    b.ToTable("PersonnelCommissionOutbox", (string)null);
+                    b.ToTable("PersonnelCommissionOutbox", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.Reception", b =>
@@ -234,7 +235,7 @@ namespace Modules.Reception.Persistence.Migrations
 
                     b.HasIndex("SalonId", "CustomerId", "ReceptionDate");
 
-                    b.ToTable("Receptions", (string)null);
+                    b.ToTable("Receptions", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.ReceptionPayment", b =>
@@ -296,7 +297,7 @@ namespace Modules.Reception.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[TransactionReference] IS NOT NULL");
 
-                    b.ToTable("ReceptionPayments", (string)null);
+                    b.ToTable("ReceptionPayments", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.ReceptionService", b =>
@@ -353,7 +354,7 @@ namespace Modules.Reception.Persistence.Migrations
 
                     b.HasIndex("ReceptionId", "ServiceId");
 
-                    b.ToTable("ReceptionServices", (string)null);
+                    b.ToTable("ReceptionServices", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.ReceptionServiceMaterial", b =>
@@ -406,7 +407,7 @@ namespace Modules.Reception.Persistence.Migrations
                     b.HasIndex("ReceptionServiceId", "IdempotencyKey")
                         .IsUnique();
 
-                    b.ToTable("ReceptionServiceMaterials", (string)null);
+                    b.ToTable("ReceptionServiceMaterials", "Reception");
                 });
 
             modelBuilder.Entity("Modules.Reception.Domain.Entities.ReceptionPayment", b =>

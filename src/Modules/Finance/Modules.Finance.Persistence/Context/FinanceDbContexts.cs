@@ -11,6 +11,7 @@ public sealed class FinanceWriteDbContext(DbContextOptions<BaseDbContext> option
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Finance");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FinanceWriteDbContext).Assembly);
     }
 
@@ -26,6 +27,7 @@ public sealed class FinanceReadDbContext(DbContextOptions<BaseDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Finance");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FinanceReadDbContext).Assembly);
     }
 

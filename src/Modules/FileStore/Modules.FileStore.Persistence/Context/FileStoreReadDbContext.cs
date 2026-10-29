@@ -13,6 +13,7 @@ public class FileStoreReadDbContext : BaseDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("FileStore");
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
     }
     #region DbSet

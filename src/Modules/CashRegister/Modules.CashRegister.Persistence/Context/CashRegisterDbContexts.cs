@@ -13,6 +13,7 @@ public sealed class CashRegisterWriteDbContext(DbContextOptions<BaseDbContext> o
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("CashRegister");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CashRegisterWriteDbContext).Assembly);
     }
 
@@ -27,6 +28,7 @@ public sealed class CashRegisterReadDbContext(DbContextOptions<BaseDbContext> op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("CashRegister");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CashRegisterReadDbContext).Assembly);
     }
 

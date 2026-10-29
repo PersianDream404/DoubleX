@@ -17,7 +17,8 @@ namespace Modules.Finance.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasDefaultSchema("Finance")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -77,7 +78,7 @@ namespace Modules.Finance.Persistence.Migrations
 
                     b.HasIndex("SalonId", "OccurredAt", "Status");
 
-                    b.ToTable("FinanceExpenses", (string)null);
+                    b.ToTable("FinanceExpenses", "Finance");
                 });
 
             modelBuilder.Entity("Modules.Finance.Domain.Entities.PersonnelEarning", b =>
@@ -153,7 +154,7 @@ namespace Modules.Finance.Persistence.Migrations
 
                     b.HasIndex("SalonId", "PersonnelId", "EarningType", "OccurredAt");
 
-                    b.ToTable("FinancePersonnelEarnings", (string)null);
+                    b.ToTable("FinancePersonnelEarnings", "Finance");
                 });
 
             modelBuilder.Entity("Modules.Finance.Domain.Entities.PersonnelSettlement", b =>
@@ -210,7 +211,7 @@ namespace Modules.Finance.Persistence.Migrations
 
                     b.HasIndex("SalonId", "PersonnelId", "EarningType", "PaidAt");
 
-                    b.ToTable("FinancePersonnelSettlements", (string)null);
+                    b.ToTable("FinancePersonnelSettlements", "Finance");
                 });
 
             modelBuilder.Entity("Modules.Finance.Domain.Entities.PersonnelSettlementItem", b =>
@@ -244,7 +245,7 @@ namespace Modules.Finance.Persistence.Migrations
                     b.HasIndex("SettlementId", "PersonnelEarningId")
                         .IsUnique();
 
-                    b.ToTable("FinancePersonnelSettlementItems", (string)null);
+                    b.ToTable("FinancePersonnelSettlementItems", "Finance");
                 });
 
             modelBuilder.Entity("Modules.Finance.Domain.Entities.PersonnelSettlementItem", b =>

@@ -17,7 +17,8 @@ namespace Modules.Salon.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasDefaultSchema("Salon")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -43,7 +44,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                     b.HasIndex("SalonId");
 
-                    b.ToTable("Personnels", (string)null);
+                    b.ToTable("Personnels", "Salon");
                 });
 
             modelBuilder.Entity("Modules.Personnel.Domain.Entities.PersonnelContract", b =>
@@ -93,7 +94,7 @@ namespace Modules.Salon.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[IsActive] = 1");
 
-                    b.ToTable("PersonnelContracts", (string)null);
+                    b.ToTable("PersonnelContracts", "Salon");
                 });
 
             modelBuilder.Entity("Modules.Personnel.Domain.Entities.Salon", b =>
@@ -117,7 +118,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Salons", (string)null);
+                    b.ToTable("Salons", "Salon");
                 });
 
             modelBuilder.Entity("Modules.Personnel.Domain.Entities.Personnel", b =>
@@ -146,7 +147,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.HasKey("PersonnelId");
 
-                            b1.ToTable("PersonnelFinancialInfos", (string)null);
+                            b1.ToTable("PersonnelFinancialInfos", "Salon");
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
@@ -169,7 +170,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.HasKey("PersonnelId");
 
-                            b1.ToTable("PersonnelGuarantorInfo", (string)null);
+                            b1.ToTable("PersonnelGuarantorInfo", "Salon");
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
@@ -187,7 +188,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("GuarantorInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelGuarantorInfo");
+                                    b2.ToTable("PersonnelGuarantorInfo", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("GuarantorInfoPersonnelId");
@@ -206,7 +207,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("GuarantorInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelGuarantorInfo");
+                                    b2.ToTable("PersonnelGuarantorInfo", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("GuarantorInfoPersonnelId");
@@ -231,7 +232,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasIndex("PersonnelId");
 
-                                    b2.ToTable("PersonnelGuarantorPictures", (string)null);
+                                    b2.ToTable("PersonnelGuarantorPictures", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonnelId");
@@ -269,7 +270,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.HasKey("PersonnelId");
 
-                            b1.ToTable("PersonnelHealthInfo", (string)null);
+                            b1.ToTable("PersonnelHealthInfo", "Salon");
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
@@ -293,7 +294,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasIndex("PersonnelId");
 
-                                    b2.ToTable("PersonnelHealthCoursePicture", (string)null);
+                                    b2.ToTable("PersonnelHealthCoursePicture", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonnelId");
@@ -318,7 +319,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasIndex("PersonnelId");
 
-                                    b2.ToTable("PersonnelHealthTestPicture", (string)null);
+                                    b2.ToTable("PersonnelHealthTestPicture", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonnelId");
@@ -361,7 +362,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.HasKey("PersonnelId");
 
-                            b1.ToTable("PersonnelJobInfos", (string)null);
+                            b1.ToTable("PersonnelJobInfos", "Salon");
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
@@ -389,7 +390,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                             b1.HasKey("PersonnelId");
 
-                            b1.ToTable("PersonnelPersonalInfos", (string)null);
+                            b1.ToTable("PersonnelPersonalInfos", "Salon");
 
                             b1.WithOwner()
                                 .HasForeignKey("PersonnelId");
@@ -407,7 +408,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("PersonalInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelPersonalInfos");
+                                    b2.ToTable("PersonnelPersonalInfos", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonalInfoPersonnelId");
@@ -426,7 +427,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("PersonalInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelPersonalInfos");
+                                    b2.ToTable("PersonnelPersonalInfos", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonalInfoPersonnelId");
@@ -443,7 +444,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("PersonalInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelPicture", (string)null);
+                                    b2.ToTable("PersonnelPicture", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonalInfoPersonnelId");
@@ -466,7 +467,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("PersonalInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelPersonalInfos");
+                                    b2.ToTable("PersonnelPersonalInfos", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonalInfoPersonnelId");
@@ -485,7 +486,7 @@ namespace Modules.Salon.Persistence.Migrations
 
                                     b2.HasKey("PersonalInfoPersonnelId");
 
-                                    b2.ToTable("PersonnelPersonalInfos");
+                                    b2.ToTable("PersonnelPersonalInfos", "Salon");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PersonalInfoPersonnelId");

@@ -11,6 +11,7 @@ public sealed class CustomerWriteDbContext(DbContextOptions<BaseDbContext> optio
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Customer");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CustomerWriteDbContext).Assembly);
         CustomerModelConfiguration.ConfigureSalonEntity(modelBuilder);
     }
@@ -24,6 +25,7 @@ public sealed class CustomerReadDbContext(DbContextOptions<BaseDbContext> option
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Customer");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CustomerReadDbContext).Assembly);
         CustomerModelConfiguration.ConfigureSalonEntity(modelBuilder);
     }
@@ -38,7 +40,7 @@ internal static class CustomerModelConfiguration
     {
         modelBuilder.Entity<CustomerSalonReference>(builder =>
         {
-            builder.ToTable("Salons");
+            builder.ToTable("Salons", "Salon", table => table.ExcludeFromMigrations());
             builder.HasKey(salon => salon.Id);
         });
     }

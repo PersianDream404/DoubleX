@@ -15,6 +15,7 @@ public class PersonnelReadDbContext : BaseDbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Salon");
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
     }
 

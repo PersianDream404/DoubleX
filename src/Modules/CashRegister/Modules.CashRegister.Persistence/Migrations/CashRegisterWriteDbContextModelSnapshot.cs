@@ -17,6 +17,7 @@ namespace Modules.CashRegister.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("CashRegister")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -60,7 +61,7 @@ namespace Modules.CashRegister.Persistence.Migrations
 
                     b.HasIndex("SalonId", "Status");
 
-                    b.ToTable("CashRegisters", (string)null);
+                    b.ToTable("CashRegisters", "CashRegister");
                 });
 
             modelBuilder.Entity("Modules.CashRegister.Domain.Entities.CashRegisterSession", b =>
@@ -126,7 +127,7 @@ namespace Modules.CashRegister.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[SessionStatus] = 1");
 
-                    b.ToTable("CashRegisterSessions", (string)null);
+                    b.ToTable("CashRegisterSessions", "CashRegister");
                 });
 
             modelBuilder.Entity("Modules.CashRegister.Domain.Entities.CashRegisterTransaction", b =>
@@ -190,13 +191,13 @@ namespace Modules.CashRegister.Persistence.Migrations
 
                     b.HasIndex("SessionId", "OccurredAt");
 
-                    b.ToTable("CashRegisterTransactions", (string)null);
+                    b.ToTable("CashRegisterTransactions", "CashRegister");
                 });
 
             modelBuilder.Entity("Modules.CashRegister.Domain.Entities.CashRegisterSession", b =>
                 {
                     b.HasOne("Modules.CashRegister.Domain.Entities.CashRegister", null)
-                        .WithMany()
+                        .WithMany("Sessions")
                         .HasForeignKey("CashRegisterId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -217,6 +218,11 @@ namespace Modules.CashRegister.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Modules.CashRegister.Domain.Entities.CashRegister", b =>
+                {
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Modules.CashRegister.Domain.Entities.CashRegisterSession", b =>

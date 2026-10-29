@@ -17,6 +17,7 @@ namespace Modules.FileStore.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("FileStore")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -88,7 +89,7 @@ namespace Modules.FileStore.Persistence.Migrations
                     b.HasIndex("StoredFileName")
                         .IsUnique();
 
-                    b.ToTable("FileStores", (string)null);
+                    b.ToTable("FileStores", "FileStore");
                 });
 #pragma warning restore 612, 618
         }

@@ -11,6 +11,7 @@ public sealed class InventoryWriteDbContext(DbContextOptions<BaseDbContext> opti
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Inventory");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventoryWriteDbContext).Assembly);
     }
 
@@ -26,6 +27,7 @@ public sealed class InventoryReadDbContext(DbContextOptions<BaseDbContext> optio
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Inventory");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventoryReadDbContext).Assembly);
     }
 

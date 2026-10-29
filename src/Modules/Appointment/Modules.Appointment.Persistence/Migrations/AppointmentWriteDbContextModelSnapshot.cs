@@ -17,6 +17,7 @@ namespace Modules.Appointment.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("Appointment")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -121,7 +122,7 @@ namespace Modules.Appointment.Persistence.Migrations
 
                     b.HasIndex("SalonId", "PersonnelId", "StartsAt");
 
-                    b.ToTable("Appointments", (string)null);
+                    b.ToTable("Appointments", "Appointment");
                 });
 #pragma warning restore 612, 618
         }

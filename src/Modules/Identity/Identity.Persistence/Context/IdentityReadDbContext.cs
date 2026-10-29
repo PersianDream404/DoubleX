@@ -18,6 +18,7 @@ public class IdentityReadDbContext : IdentityDbContext<ApplicationUser, Identity
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Identity");
         
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
     }

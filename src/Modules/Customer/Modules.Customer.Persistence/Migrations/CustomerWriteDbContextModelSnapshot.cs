@@ -17,6 +17,7 @@ namespace Modules.Customer.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("Customer")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -82,7 +83,7 @@ namespace Modules.Customer.Persistence.Migrations
 
                     b.HasIndex("SalonId", "NationalCode");
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers", "Customer");
                 });
 
             modelBuilder.Entity("Modules.Customer.Persistence.Context.CustomerSalonReference", b =>
@@ -95,7 +96,10 @@ namespace Modules.Customer.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Salons", (string)null);
+                    b.ToTable("Salons", "Salon", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("Modules.Customer.Domain.Entities.Customer", b =>

@@ -12,6 +12,7 @@ public sealed class AppointmentWriteDbContext(DbContextOptions<BaseDbContext> op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Appointment");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppointmentWriteDbContext).Assembly);
     }
 
@@ -24,6 +25,7 @@ public sealed class AppointmentReadDbContext(DbContextOptions<BaseDbContext> opt
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Appointment");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppointmentReadDbContext).Assembly);
     }
 

@@ -17,6 +17,7 @@ namespace Modules.Service.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("Service")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -67,7 +68,7 @@ namespace Modules.Service.Persistence.Migrations
                     b.HasIndex("SalonId", "Code")
                         .IsUnique();
 
-                    b.ToTable("Services", null, t =>
+                    b.ToTable("Services", "Service", t =>
                         {
                             t.HasCheckConstraint("CK_Services_DurationMinutes", "[DurationMinutes] > 0");
                         });
@@ -105,7 +106,7 @@ namespace Modules.Service.Persistence.Migrations
                     b.HasIndex("SalonId", "Name")
                         .IsUnique();
 
-                    b.ToTable("ServiceCategories", (string)null);
+                    b.ToTable("ServiceCategories", "Service");
                 });
 
             modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceMaterial", b =>
@@ -151,7 +152,7 @@ namespace Modules.Service.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[Deleted] = 0");
 
-                    b.ToTable("ServiceMaterials", null, t =>
+                    b.ToTable("ServiceMaterials", "Service", t =>
                         {
                             t.HasCheckConstraint("CK_ServiceMaterials_QuantityPerService", "[QuantityPerService] > 0");
                         });
@@ -190,7 +191,7 @@ namespace Modules.Service.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("[Deleted] = 0");
 
-                    b.ToTable("ServicePersonnels", (string)null);
+                    b.ToTable("ServicePersonnels", "Service");
                 });
 
             modelBuilder.Entity("Modules.Service.Domain.Entities.ServiceTariff", b =>
@@ -226,7 +227,7 @@ namespace Modules.Service.Persistence.Migrations
                     b.HasIndex("SalonId", "Name")
                         .IsUnique();
 
-                    b.ToTable("ServiceTariffs", null, t =>
+                    b.ToTable("ServiceTariffs", "Service", t =>
                         {
                             t.HasCheckConstraint("CK_ServiceTariffs_Validity", "[ValidTo] IS NULL OR [ValidTo] > [ValidFrom]");
                         });
@@ -268,7 +269,7 @@ namespace Modules.Service.Persistence.Migrations
                     b.HasIndex("TariffId", "ServiceId")
                         .IsUnique();
 
-                    b.ToTable("ServiceTariffItems", null, t =>
+                    b.ToTable("ServiceTariffItems", "Service", t =>
                         {
                             t.HasCheckConstraint("CK_ServiceTariffItems_Amount", "[Amount] >= 0");
                         });
@@ -295,7 +296,7 @@ namespace Modules.Service.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Materials", null, t =>
+                    b.ToTable("Materials", "Inventory", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -319,7 +320,7 @@ namespace Modules.Service.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Units", null, t =>
+                    b.ToTable("Units", "Inventory", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -335,7 +336,7 @@ namespace Modules.Service.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Personnels", null, t =>
+                    b.ToTable("Personnels", "Salon", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -351,7 +352,7 @@ namespace Modules.Service.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Salons", null, t =>
+                    b.ToTable("Salons", "Salon", t =>
                         {
                             t.ExcludeFromMigrations();
                         });

@@ -13,6 +13,7 @@ public sealed class ReceptionWriteDbContext(DbContextOptions<BaseDbContext> opti
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Reception");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReceptionWriteDbContext).Assembly);
     }
 
@@ -30,6 +31,7 @@ public sealed class ReceptionReadDbContext(DbContextOptions<BaseDbContext> optio
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Reception");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ReceptionReadDbContext).Assembly);
     }
 

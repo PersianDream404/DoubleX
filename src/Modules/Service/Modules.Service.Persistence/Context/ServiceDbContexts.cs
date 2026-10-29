@@ -11,6 +11,7 @@ public sealed class ServiceWriteDbContext(DbContextOptions<BaseDbContext> option
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Service");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ServiceWriteDbContext).Assembly);
         ServiceModelConfiguration.ConfigureReferences(modelBuilder);
     }
@@ -29,6 +30,7 @@ public sealed class ServiceReadDbContext(DbContextOptions<BaseDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema("Service");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ServiceReadDbContext).Assembly);
         ServiceModelConfiguration.ConfigureReferences(modelBuilder);
     }
@@ -47,23 +49,23 @@ internal static class ServiceModelConfiguration
     {
         modelBuilder.Entity<ServiceSalonReference>(builder =>
         {
-            builder.ToTable("Salons", table => table.ExcludeFromMigrations());
+            builder.ToTable("Salons", "Salon", table => table.ExcludeFromMigrations());
             builder.HasKey(salon => salon.Id);
         });
         modelBuilder.Entity<ServiceInventoryMaterialReference>(builder =>
         {
-            builder.ToTable("Materials", table => table.ExcludeFromMigrations());
+            builder.ToTable("Materials", "Inventory", table => table.ExcludeFromMigrations());
             builder.HasKey(material => material.Id);
             builder.Property(material => material.IsActive).HasColumnName("IsActive");
         });
         modelBuilder.Entity<ServiceInventoryUnitReference>(builder =>
         {
-            builder.ToTable("Units", table => table.ExcludeFromMigrations());
+            builder.ToTable("Units", "Inventory", table => table.ExcludeFromMigrations());
             builder.HasKey(unit => unit.Id);
         });
         modelBuilder.Entity<ServicePersonnelReference>(builder =>
         {
-            builder.ToTable("Personnels", table => table.ExcludeFromMigrations());
+            builder.ToTable("Personnels", "Salon", table => table.ExcludeFromMigrations());
             builder.HasKey(personnel => personnel.Id);
         });
     }

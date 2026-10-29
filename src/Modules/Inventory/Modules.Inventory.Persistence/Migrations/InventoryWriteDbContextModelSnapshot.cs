@@ -17,7 +17,8 @@ namespace Modules.Inventory.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasDefaultSchema("Inventory")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -74,7 +75,7 @@ namespace Modules.Inventory.Persistence.Migrations
 
                     b.HasIndex("PurchaseUnitId");
 
-                    b.ToTable("Materials", null, t =>
+                    b.ToTable("Materials", "Inventory", t =>
                         {
                             t.HasCheckConstraint("CK_Materials_MinimumStock", "[MinimumStock] >= 0");
 
@@ -114,7 +115,7 @@ namespace Modules.Inventory.Persistence.Migrations
                     b.HasIndex("MaterialId")
                         .IsUnique();
 
-                    b.ToTable("StockBalances", null, t =>
+                    b.ToTable("StockBalances", "Inventory", t =>
                         {
                             t.HasCheckConstraint("CK_StockBalances_Quantity", "[Quantity] >= 0");
                         });
@@ -170,7 +171,7 @@ namespace Modules.Inventory.Persistence.Migrations
 
                     b.HasIndex("MaterialId", "OccurredAt");
 
-                    b.ToTable("StockMovements", null, t =>
+                    b.ToTable("StockMovements", "Inventory", t =>
                         {
                             t.HasCheckConstraint("CK_StockMovements_Quantity", "[Quantity] > 0");
                         });
@@ -212,7 +213,7 @@ namespace Modules.Inventory.Persistence.Migrations
                     b.HasIndex("Symbol")
                         .IsUnique();
 
-                    b.ToTable("Units", (string)null);
+                    b.ToTable("Units", "Inventory");
                 });
 
             modelBuilder.Entity("Modules.Inventory.Domain.Entities.Material", b =>
