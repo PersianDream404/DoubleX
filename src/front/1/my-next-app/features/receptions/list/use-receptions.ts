@@ -80,7 +80,7 @@ export function useReceptions(refreshKey = 0) {
         if (!controller.signal.aborted) {
           setState({
             requestKey: refreshKey,
-            data: items.filter((item) => item.status === 1),
+            data: items,
             error: null,
             loading: false,
           });

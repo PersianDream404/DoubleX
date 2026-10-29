@@ -13,6 +13,8 @@ import type {
   RegisterReceptionPaymentRequest,
 } from "./reception.types";
 
+export type ReceptionStatus = 1 | 2 | 3 | 4;
+
 export class ReceptionService {
   private readonly api = new ApiClient();
   private readonly path = "/api/Receptions";
@@ -37,6 +39,17 @@ export class ReceptionService {
     return this.api.post<{ id: number }, CreateReceptionRequest>(
       this.path,
       request,
+    );
+  }
+
+  changeStatus(
+    id: number,
+    salonId: number,
+    status: ReceptionStatus,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.api.put<{ message: string }, { salonId: number; status: ReceptionStatus }>(
+      `${this.path}/${id}/status`,
+      { salonId, status },
     );
   }
 

@@ -8,12 +8,17 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Check,
+  ChevronsUpDown,
   LoaderCircle,
   Plus,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AppointmentCalendar } from "./appointment-calendar";
 import {
   addJalaliDays,
@@ -76,6 +81,8 @@ export function AppointmentsCalendarPage({
   const [selectedDate, setSelectedDate] = useState(tehranTodayJalali);
   const [mode, setMode] = useState<ViewMode>("day");
   const [serviceFilter, setServiceFilter] = useState("");
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [servicePickerOpen, setServicePickerOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [personnel, setPersonnel] = useState<PersonnelDto[]>([]);
@@ -94,6 +101,10 @@ export function AppointmentsCalendarPage({
     range.to,
     serviceFilter ? Number(serviceFilter) : null,
   );
+  const filteredServices = services.filter((service) =>
+    service.name.toLocaleLowerCase("fa").includes(serviceSearch.trim().toLocaleLowerCase("fa")),
+  );
+  const selectedService = services.find((service) => String(service.id) === serviceFilter);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -176,7 +187,7 @@ export function AppointmentsCalendarPage({
         </div>
 
         <div className="flex min-h-[60px] flex-wrap items-center justify-between gap-2 py-2">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="order-2 flex flex-wrap items-center gap-2">
             <div className="flex h-9 overflow-hidden rounded-md border border-slate-200 bg-white">
               <Button
                 type="button"
@@ -231,19 +242,7 @@ export function AppointmentsCalendarPage({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="sr-only" htmlFor="appointment-service-filter">فیلتر نوع خدمت</label>
-            <select
-              id="appointment-service-filter"
-              value={serviceFilter}
-              onChange={(event) => setServiceFilter(event.target.value)}
-              className="h-9 min-w-[140px] rounded-md border border-slate-200 bg-white px-2.5 text-[11px] text-slate-700 outline-none focus-visible:border-fuchsia-500 focus-visible:ring-2 focus-visible:ring-fuchsia-200"
-            >
-              <option value="">نوع خدمت</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>{service.name}</option>
-              ))}
-            </select>
+          <div className="order-1 flex flex-wrap items-center gap-2">
             <Button
               type="button"
               onClick={openCreate}
@@ -252,6 +251,95 @@ export function AppointmentsCalendarPage({
               <Plus className="ml-1 size-3.5" />
               رزرو نوبت جدید
             </Button>
+            <div className="relative">
+              <Button
+                type="button"
+                variant="outline"
+                aria-haspopup="listbox"
+                aria-expanded={servicePickerOpen}
+                onClick={() => {
+                  setServiceSearch("");
+                  setServicePickerOpen((open) => !open);
+                }}
+                className="h-9 min-w-[150px] justify-between rounded-md border-slate-200 bg-white px-2.5 text-[11px] text-slate-700 hover:bg-slate-50"
+              >
+                <span className="max-w-[145px] truncate">{selectedService?.name ?? "نوع خدمت"}</span>
+                <ChevronsUpDown className="mr-2 size-3.5 shrink-0 text-slate-500" />
+              </Button>
+              {servicePickerOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="بستن فهرست خدمات"
+                    onClick={() => setServicePickerOpen(false)}
+                    className="fixed inset-0 z-30 cursor-default"
+                  />
+                  <div
+                    className="absolute left-0 top-full z-40 mt-1 w-64 overflow-hidden rounded-lg border border-slate-200 bg-white p-2 text-slate-800 shadow-xl"
+                    dir="rtl"
+                  >
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute right-2.5 top-2.5 size-3.5 text-slate-400" />
+                      <Input
+                        autoFocus
+                        value={serviceSearch}
+                        onChange={(event) => setServiceSearch(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setServicePickerOpen(false);
+                        }}
+                        placeholder="جستجوی نوع خدمت..."
+                        aria-label="جستجوی خدمت"
+                        className="h-9 rounded-md border-slate-200 bg-white pr-8 text-xs"
+                      />
+                      {serviceSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setServiceSearch("")}
+                          aria-label="پاک کردن جستجو"
+                          className="absolute left-2 top-2 rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div role="listbox" aria-label="انواع خدمت" className="mt-1 max-h-56 overflow-y-auto">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={!serviceFilter}
+                        onClick={() => {
+                          setServiceFilter("");
+                          setServicePickerOpen(false);
+                        }}
+                        className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-right text-xs hover:bg-fuchsia-50"
+                      >
+                        همهٔ خدمات
+                        {!serviceFilter && <Check className="size-3.5 text-fuchsia-700" />}
+                      </button>
+                      {filteredServices.map((service) => (
+                        <button
+                          key={service.id}
+                          type="button"
+                          role="option"
+                          aria-selected={serviceFilter === String(service.id)}
+                          onClick={() => {
+                            setServiceFilter(String(service.id));
+                            setServicePickerOpen(false);
+                          }}
+                          className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-right text-xs hover:bg-fuchsia-50"
+                        >
+                          <span className="truncate">{service.name}</span>
+                          {serviceFilter === String(service.id) && <Check className="size-3.5 shrink-0 text-fuchsia-700" />}
+                        </button>
+                      ))}
+                      {filteredServices.length === 0 && (
+                        <p className="px-2.5 py-3 text-center text-xs text-slate-500">خدمتی با این نام پیدا نشد.</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <Button
               type="button"
               variant="ghost"
