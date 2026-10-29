@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { handleApiError } from "@/lib/api/handle-api-error";
 
-import { ReceptionService } from "./reception.service";
+import {
+  ReceptionService,
+  type ReceptionServiceStatus,
+} from "./reception.service";
 import type { ReceptionDetails } from "./reception.types";
 
 const RECEPTION_STATUS: Record<number, string> = {
@@ -55,6 +58,9 @@ export function ReceptionDetailsDialog({
   const [details, setDetails] = useState<ReceptionDetails | null>(null);
   const [loading, setLoading] = useState(open && receptionId !== null);
   const [error, setError] = useState<string | null>(null);
+  const [serviceActionId, setServiceActionId] = useState<number | null>(null);
+  const [serviceActionError, setServiceActionError] = useState<string | null>(null);
+  const [serviceActionMessage, setServiceActionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || receptionId === null) return;
@@ -78,6 +84,45 @@ export function ReceptionDetailsDialog({
     return () => controller.abort();
   }, [open, receptionId]);
 
+  async function changeServiceStatus(
+    serviceId: number,
+    status: ReceptionServiceStatus,
+  ) {
+    if (!details || !receptionId || serviceActionId !== null) return;
+    setServiceActionId(serviceId);
+    setServiceActionError(null);
+    setServiceActionMessage(null);
+
+    try {
+      const service = new ReceptionService();
+      const response = await service.changeServiceStatus(
+        receptionId,
+        serviceId,
+        details.salonId,
+        status,
+      );
+      if (!response.data) {
+        throw new Error(response.message ?? "وضعیت خدمت تغییر نکرد.");
+      }
+
+      setDetails((current) => current && ({
+        ...current,
+        services: current.services.map((item) =>
+          item.id === serviceId ? { ...item, status } : item,
+        ),
+      }));
+      setServiceActionMessage(
+        status === 3
+          ? "خدمت تکمیل شد؛ محاسبه و ثبت پورسانت در Finance به‌صورت خودکار در صف انجام قرار گرفت."
+          : "خدمت شروع شد.",
+      );
+    } catch (cause: unknown) {
+      setServiceActionError(handleApiError(cause));
+    } finally {
+      setServiceActionId(null);
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -87,6 +132,8 @@ export function ReceptionDetailsDialog({
           setDetails(null);
           setError(null);
           setLoading(false);
+          setServiceActionError(null);
+          setServiceActionMessage(null);
         }
       }}
     >
@@ -114,6 +161,18 @@ export function ReceptionDetailsDialog({
           </div>
         ) : details ? (
           <div className="space-y-5">
+            {(serviceActionError || serviceActionMessage) && (
+              <p
+                role={serviceActionError ? "alert" : "status"}
+                className={`rounded-xl border px-3 py-2.5 text-xs leading-5 ${
+                  serviceActionError
+                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {serviceActionError ?? serviceActionMessage}
+              </p>
+            )}
             <dl className="grid gap-3 sm:grid-cols-2">
               <DetailValue label="مشتری" value={details.customerName} />
               <DetailValue label="تاریخ پذیرش" value={dateTimeLabel(details.receptionDate)} />
@@ -147,6 +206,39 @@ export function ReceptionDetailsDialog({
                           شناسه پرسنل: {new Intl.NumberFormat("fa-IR").format(service.personnelId)}
                         </p>
                       )}
+                      {service.personnelId !== null &&
+                        (service.status === 1 || service.status === 2) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {service.status === 1 && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={serviceActionId !== null}
+                                onClick={() => void changeServiceStatus(service.id, 2)}
+                                className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800"
+                              >
+                                {serviceActionId === service.id
+                                  ? <LoaderCircle className="ml-1 size-3.5 animate-spin" />
+                                  : <Play className="ml-1 size-3.5" />}
+                                شروع خدمت
+                              </Button>
+                            )}
+                            {service.status === 2 && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={serviceActionId !== null}
+                                onClick={() => void changeServiceStatus(service.id, 3)}
+                                className="h-8 rounded-lg bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
+                              >
+                                {serviceActionId === service.id
+                                  ? <LoaderCircle className="ml-1 size-3.5 animate-spin" />
+                                  : <CheckCircle2 className="ml-1 size-3.5" />}
+                                تکمیل خدمت
+                              </Button>
+                            )}
+                          </div>
+                        )}
                     </article>
                   ))}
                 </div>

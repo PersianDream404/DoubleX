@@ -14,6 +14,7 @@ import type {
 } from "./reception.types";
 
 export type ReceptionStatus = 1 | 2 | 3 | 4;
+export type ReceptionServiceStatus = 1 | 2 | 3 | 4;
 
 export class ReceptionService {
   private readonly api = new ApiClient();
@@ -49,6 +50,21 @@ export class ReceptionService {
   ): Promise<ApiResponse<{ message: string }>> {
     return this.api.put<{ message: string }, { salonId: number; status: ReceptionStatus }>(
       `${this.path}/${id}/status`,
+      { salonId, status },
+    );
+  }
+
+  changeServiceStatus(
+    receptionId: number,
+    serviceId: number,
+    salonId: number,
+    status: ReceptionServiceStatus,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.api.put<
+      { message: string },
+      { salonId: number; status: ReceptionServiceStatus }
+    >(
+      `${this.path}/${receptionId}/services/${serviceId}/status`,
       { salonId, status },
     );
   }

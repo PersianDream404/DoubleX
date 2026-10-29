@@ -17,6 +17,9 @@ type UseFinanceOptions = {
   personnelId: number | null;
   page: number;
   refreshKey: number;
+  earningsFrom?: string;
+  earningsTo?: string;
+  earningsRangeValid: boolean;
 };
 
 type EarningsState = {
@@ -30,6 +33,9 @@ export function useFinance({
   personnelId,
   page,
   refreshKey,
+  earningsFrom,
+  earningsTo,
+  earningsRangeValid,
 }: UseFinanceOptions): FinancePageData {
   const [personnel, setPersonnel] = useState<FinancePageData["personnel"]>([]);
   const [personnelLoading, setPersonnelLoading] = useState(true);
@@ -111,7 +117,7 @@ export function useFinance({
   }, [personnelId, page, refreshKey]);
 
   useEffect(() => {
-    if (personnelId === null) return;
+    if (personnelId === null || !earningsRangeValid) return;
 
     const controller = new AbortController();
     Promise.resolve()
@@ -124,6 +130,8 @@ export function useFinance({
           error: null,
         });
         return new FinanceService().getPersonnelEarnings(personnelId, {
+          from: earningsFrom,
+          to: earningsTo,
           signal: controller.signal,
         });
       })
@@ -151,7 +159,7 @@ export function useFinance({
       })
 
     return () => controller.abort();
-  }, [personnelId, refreshKey]);
+  }, [personnelId, refreshKey, earningsFrom, earningsTo, earningsRangeValid]);
 
   const currentEarnings =
     personnelId !== null && earningsState?.personnelId === personnelId

@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  Banknote,
+  CreditCard,
+  FileText,
+  FlaskConical,
+  LoaderCircle,
+  Plus,
+  ReceiptText,
+  Trash2,
+} from "lucide-react";
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -161,17 +171,24 @@ function FormSelect({
 
 function InfoCard({
   title,
+  icon,
   action,
   children,
 }: {
   title: string;
+  icon: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <section className="min-w-0 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
+    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_8px_28px_-22px_rgba(54,16,70,0.3)] sm:p-4">
+      <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <span className="grid size-8 place-items-center rounded-lg bg-fuchsia-50 text-fuchsia-700">
+            {icon}
+          </span>
+          {title}
+        </h2>
         {action}
       </div>
       {children}
@@ -556,9 +573,9 @@ export function NewReceptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="h-[142px] bg-[linear-gradient(110deg,#10000f_0%,#210020_55%,#10000f_100%)]">
-        <div className="mx-auto w-[92%] pt-2 sm:w-[84%] sm:max-w-[1200px]">
+    <div className="min-h-screen bg-slate-50">
+      <section className="h-[142px] bg-[linear-gradient(110deg,#10000f_0%,#210020_55%,#10000f_100%)] sm:h-[150px]">
+        <div className="mx-auto w-[94%] pt-2 sm:w-[90%] sm:max-w-[1200px]">
           <Breadcrumb>
             <BreadcrumbList className="text-xs text-white/70">
               <BreadcrumbItem><BreadcrumbLink href="/receptions">مدیریت پذیرش</BreadcrumbLink></BreadcrumbItem>
@@ -566,25 +583,26 @@ export function NewReceptionPage() {
               <BreadcrumbItem><BreadcrumbPage className="text-white">ثبت پذیرش جدید</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="mt-4 flex items-center gap-3 text-white">
+          <div className="mt-3 flex items-center gap-3 text-white">
             <Button
               render={<Link href="/receptions" />}
               variant="ghost"
               size="icon"
               aria-label="بازگشت به فهرست پذیرش‌ها"
-              className="text-white hover:bg-white/10 hover:text-white"
+              className="rounded-xl text-white hover:bg-white/10 hover:text-white"
             >
               <ArrowRight className="size-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-semibold">ثبت پذیرش جدید</h1>
-              <p className="mt-1 text-xs text-white/70">اطلاعات مشتری، خدمات، مواد مصرفی و پرداخت را وارد کنید.</p>
+              <p className="text-xs font-medium text-fuchsia-300">پذیرش و صف</p>
+              <h1 className="mt-1 text-xl font-bold sm:text-2xl">ثبت پذیرش جدید</h1>
+              <p className="mt-1 text-xs text-white/70">اطلاعات مشتری، خدمات و پرداخت پذیرش را ثبت کنید.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <main className="mx-auto -mt-7 w-[92%] pb-10 sm:w-[84%] sm:max-w-[1200px]">
+      <main className="mx-auto -mt-7 w-[94%] pb-10 sm:w-[90%] sm:max-w-[1200px]">
         <form onSubmit={submitReception} className="space-y-4">
           {currentOptionsError && (
             <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
@@ -602,8 +620,8 @@ export function NewReceptionPage() {
             </p>
           )}
 
-          <InfoCard title="اطلاعات پذیرش">
-            <div className="grid gap-4 md:grid-cols-2">
+          <InfoCard title="اطلاعات پذیرش" icon={<ReceiptText className="size-4" />}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="تعرفه پذیرش">
                 <FormSelect
                   ariaLabel="انتخاب تعرفه پذیرش"
@@ -629,33 +647,33 @@ export function NewReceptionPage() {
                   ))}
                 </FormSelect>
               </Field>
-              <Field label="جستجوی مشتری">
-                <Input
-                  value={customerQuery}
-                  onChange={(event) => {
-                    setCustomerQuery(event.target.value);
-                    setCustomerId(null);
-                  }}
-                  placeholder="نام مشتری را جستجو کنید"
-                  className="h-10 rounded-lg border-slate-200 text-sm"
-                  disabled={!salonId}
-                />
-              </Field>
               <Field label="مشتری">
-                <FormSelect
-                  ariaLabel="انتخاب مشتری"
-                  value={customerId ? String(customerId) : ""}
-                  onChange={(value) => setCustomerId(value ? Number(value) : null)}
-                  disabled={!salonId || customerLoading || customers.length === 0}
-                >
-                  <option value="">
-                    {customerLoading ? "در حال دریافت مشتریان..." : "انتخاب مشتری"}
-                  </option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>{customer.fullName}</option>
-                  ))}
-                </FormSelect>
-                {customerError && <p className="text-xs text-destructive" role="alert">{customerError}</p>}
+                <div className="space-y-2">
+                  <Input
+                    value={customerQuery}
+                    onChange={(event) => {
+                      setCustomerQuery(event.target.value);
+                      setCustomerId(null);
+                    }}
+                    placeholder="جستجو بر اساس نام مشتری..."
+                    className="h-10 rounded-xl border-slate-200 text-sm"
+                    disabled={!salonId || Boolean(createdReceptionId)}
+                  />
+                  <FormSelect
+                    ariaLabel="انتخاب مشتری"
+                    value={customerId ? String(customerId) : ""}
+                    onChange={(value) => setCustomerId(value ? Number(value) : null)}
+                    disabled={!salonId || customerLoading || customers.length === 0 || Boolean(createdReceptionId)}
+                  >
+                    <option value="">
+                      {customerLoading ? "در حال دریافت مشتریان..." : customers.length === 0 ? "مشتری‌ای پیدا نشد" : "انتخاب مشتری"}
+                    </option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>{customer.fullName}</option>
+                    ))}
+                  </FormSelect>
+                  {customerError && <p className="text-xs text-destructive" role="alert">{customerError}</p>}
+                </div>
               </Field>
               <Field label="پذیرشگر">
                 <FormSelect
@@ -672,22 +690,27 @@ export function NewReceptionPage() {
                   ))}
                 </FormSelect>
               </Field>
-              <Field label="یادداشت">
-                <Input
+              <div className="sm:col-span-2 lg:col-span-3">
+                <Field label="یادداشت پذیرش (اختیاری)">
+                  <textarea
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   maxLength={2000}
-                  placeholder="یادداشت پذیرش (اختیاری)"
-                  className="h-10 rounded-lg border-slate-200 text-sm"
-                />
-              </Field>
+                  placeholder="یادداشت یا توضیح مربوط به این پذیرش را بنویسید..."
+                  rows={2}
+                  disabled={Boolean(createdReceptionId)}
+                  className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus-visible:border-fuchsia-500 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20 disabled:bg-slate-50"
+                  />
+                </Field>
+              </div>
             </div>
           </InfoCard>
 
           <InfoCard
             title="خدمات"
+            icon={<FileText className="size-4" />}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={addService} disabled={Boolean(createdReceptionId) || !serviceTariffId}>
+              <Button type="button" size="sm" onClick={addService} disabled={Boolean(createdReceptionId) || !serviceTariffId} className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800">
                 <Plus className="size-4" />
                 افزودن خدمت
               </Button>
@@ -702,9 +725,14 @@ export function NewReceptionPage() {
             ) : (
               <div className="space-y-4">
                 {services.map((service, index) => (
-                  <div key={service.key} className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-700">خدمت {new Intl.NumberFormat("fa-IR").format(index + 1)}</span>
+                  <div key={service.key} className="rounded-xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50/50 to-white p-3 sm:p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2 border-b border-fuchsia-100 pb-2.5">
+                      <span className="flex items-center gap-2 text-xs font-bold text-fuchsia-800">
+                        <span className="grid size-6 place-items-center rounded-md bg-fuchsia-100 text-[11px]">
+                          {new Intl.NumberFormat("fa-IR").format(index + 1)}
+                        </span>
+                        خدمت پذیرش
+                      </span>
                       {services.length > 1 && (
                         <Button
                           type="button"
@@ -713,7 +741,7 @@ export function NewReceptionPage() {
                           aria-label={`حذف خدمت ${index + 1}`}
                           onClick={() => setServices((current) => current.filter((item) => item.key !== service.key))}
                           disabled={Boolean(createdReceptionId)}
-                          className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          className="rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -781,18 +809,21 @@ export function NewReceptionPage() {
                       </Field>
                     </div>
 
-                    <div className="mt-3 rounded-lg bg-white p-3">
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <h3 className="text-xs font-semibold text-slate-700">مواد مصرفی این خدمت</h3>
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="mb-3 flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                        <h3 className="flex items-center gap-2 text-xs font-bold text-fuchsia-800">
+                          <FlaskConical className="size-4" />
+                          مواد مصرفی این خدمت
+                        </h3>
                         <Button
                           type="button"
-                          variant="outline"
                           size="sm"
                           onClick={() => updateService(service.key, (current) => ({
                             ...current,
                             materials: [...current.materials, createMaterialDraft(`material-${nextKey.current++}`)],
                           }))}
                           disabled={Boolean(createdReceptionId) || !options?.materials.length}
+                          className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800"
                         >
                           <Plus className="size-3.5" />
                           افزودن ماده
@@ -887,19 +918,22 @@ export function NewReceptionPage() {
 
           <InfoCard
             title="پرداخت‌ها"
+            icon={<CreditCard className="size-4" />}
             action={
-              <Button type="button" variant="outline" size="sm" onClick={addPayment} disabled={Boolean(createdReceptionId) || totalAmount <= 0}>
+              <Button type="button" size="sm" onClick={addPayment} disabled={Boolean(createdReceptionId) || totalAmount <= 0} className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800">
                 <Plus className="size-4" />
                 افزودن پرداخت
               </Button>
             }
           >
             {payments.length === 0 ? (
-              <p className="text-sm text-slate-500">در صورت دریافت وجه، پرداخت را ثبت کنید. پرداخت می‌تواند جزئی باشد.</p>
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5 text-center text-sm text-slate-500">
+                در صورت دریافت وجه، پرداخت را ثبت کنید. ثبت پذیرش به‌تنهایی وجهی دریافت نمی‌کند.
+              </div>
             ) : (
               <div className="space-y-3">
                 {payments.map((payment, index) => (
-                  <div key={payment.key} className="grid items-end gap-3 rounded-lg border border-slate-100 p-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div key={payment.key} className="grid items-end gap-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3 sm:grid-cols-2 lg:grid-cols-4">
                     <Field label={`مبلغ پرداخت ${index + 1}`}>
                       <Input
                         type="number"
@@ -1005,25 +1039,31 @@ export function NewReceptionPage() {
             )}
           </InfoCard>
 
-          <div className="flex flex-col-reverse items-stretch justify-between gap-4 rounded-xl border border-fuchsia-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
-            <div className="text-sm text-slate-600">
-              <div>مبلغ کل: <strong className="text-slate-900">{amountLabel(totalAmount)}</strong></div>
-              <div className="mt-1">مانده: <strong className="text-fuchsia-800">{amountLabel(remainingAmount)}</strong></div>
+          <div className="rounded-2xl border border-fuchsia-100 bg-white p-3 shadow-[0_8px_28px_-22px_rgba(54,16,70,0.3)] sm:p-4">
+            <div className="grid gap-2 rounded-xl border border-fuchsia-100 bg-gradient-to-l from-fuchsia-50 to-white p-3 sm:grid-cols-2 sm:p-4">
+              <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                <span className="flex items-center gap-2"><Banknote className="size-4 text-fuchsia-700" /> مبلغ کل</span>
+                <strong className="text-sm font-bold text-fuchsia-800">{amountLabel(totalAmount)}</strong>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-fuchsia-100 pt-2 text-xs text-slate-500 sm:border-r sm:border-t-0 sm:pr-4 sm:pt-0">
+                <span className="flex items-center gap-2"><CreditCard className="size-4 text-fuchsia-700" /> مانده</span>
+                <strong className="text-sm font-bold text-fuchsia-800">{amountLabel(remainingAmount)}</strong>
+              </div>
             </div>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <div className="mt-3 flex flex-col-reverse justify-between gap-2 sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 render={<Link href="/receptions" />}
                 disabled={submitting}
-                className="border-slate-300"
+                className="h-10 rounded-xl border-slate-300 px-5 text-slate-600"
               >
                 انصراف
               </Button>
               <Button
                 type="submit"
                 disabled={submitting || currentOptionsLoading || !salonId || Boolean(currentOptionsError) || createdReceptionId !== null}
-                className="bg-fuchsia-700 text-white hover:bg-fuchsia-800"
+                className="h-10 rounded-xl bg-fuchsia-700 px-6 text-white shadow-sm shadow-fuchsia-950/15 hover:bg-fuchsia-800"
               >
                 {submitting && <LoaderCircle className="size-4 animate-spin" />}
                 {submitting ? "در حال ثبت پذیرش..." : "ثبت پذیرش"}

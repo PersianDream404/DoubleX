@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import DatePicker, { type DateObject } from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
-import { toGregorian } from "jalaali-js";
+import { jalaaliMonthLength, toGregorian } from "jalaali-js";
 import {
   BadgeDollarSign,
   Banknote,
@@ -53,6 +53,19 @@ const EMPTY_FIXED_SALARY = {
   periodEnd: "",
 };
 
+type EarningsPeriodPreset = "all" | "daily" | "monthly" | "custom";
+type EarningsDateRange = {
+  from: string;
+  to: string;
+  preset: EarningsPeriodPreset;
+};
+
+const EMPTY_EARNINGS_DATE_RANGE: EarningsDateRange = {
+  from: "",
+  to: "",
+  preset: "all",
+};
+
 function normalizeDigits(value: string) {
   return value
     .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
@@ -63,6 +76,36 @@ function toApiDate(value: string) {
   const [year, month, day] = normalizeDigits(value).split("/").map(Number);
   const date = toGregorian(year, month, day);
   return `${date.gy}-${String(date.gm).padStart(2, "0")}-${String(date.gd).padStart(2, "0")}`;
+}
+
+function currentJalaliDate() {
+  const parts = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${getPart("year")}/${getPart("month")}/${getPart("day")}`;
+}
+
+function toApiDateTime(value: string, endOfDay: boolean) {
+  const normalized = normalizeDigits(value);
+  const [year, month, day] = normalized.split("/").map(Number);
+  const gregorian = toGregorian(year, month, day);
+  const date = `${gregorian.gy}-${String(gregorian.gm).padStart(2, "0")}-${String(gregorian.gd).padStart(2, "0")}`;
+  const offsetParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    timeZoneName: "longOffset",
+  }).formatToParts(new Date(Date.UTC(gregorian.gy, gregorian.gm - 1, gregorian.gd, 12)));
+  const offsetLabel = offsetParts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+03:30";
+  const offset = offsetLabel === "GMT" ? "+00:00" : offsetLabel.replace(/^GMT/, "");
+  return `${date}T${endOfDay ? "23:59:59.999" : "00:00:00"}${offset}`;
+}
+
+function normalizeJalaliDate(value: string) {
+  return normalizeDigits(value);
 }
 
 function persianDigits(value: string) {
@@ -175,6 +218,9 @@ export function FinancePage() {
   const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [earningsDateRange, setEarningsDateRange] = useState<EarningsDateRange>(
+    EMPTY_EARNINGS_DATE_RANGE,
+  );
   const [fixedSalary, setFixedSalary] = useState(EMPTY_FIXED_SALARY);
   const [receptionId, setReceptionId] = useState("");
   const [settlementAmount, setSettlementAmount] = useState("");
@@ -184,6 +230,17 @@ export function FinancePage() {
   const [submitting, setSubmitting] = useState<"fixed" | "reception" | "settlement" | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const earningsRangeValid =
+    !earningsDateRange.from ||
+    !earningsDateRange.to ||
+    normalizeJalaliDate(earningsDateRange.from) <= normalizeJalaliDate(earningsDateRange.to);
+  const earningsFrom = earningsDateRange.from
+    ? toApiDateTime(earningsDateRange.from, false)
+    : undefined;
+  const earningsTo = earningsDateRange.to
+    ? toApiDateTime(earningsDateRange.to, true)
+    : undefined;
 
   const {
     personnel,
@@ -199,6 +256,9 @@ export function FinancePage() {
     personnelId: selectedPersonnelId,
     page,
     refreshKey,
+    earningsFrom,
+    earningsTo,
+    earningsRangeValid,
   });
 
   const personnelNames = useMemo(
@@ -319,6 +379,20 @@ export function FinancePage() {
     setSuccessMessage(null);
   }
 
+  function setDailyEarningsRange() {
+    const today = currentJalaliDate();
+    setEarningsDateRange({ from: today, to: today, preset: "daily" });
+  }
+
+  function setMonthlyEarningsRange() {
+    const [year, month] = currentJalaliDate().split("/").map(Number);
+    setEarningsDateRange({
+      from: `${year}/${String(month).padStart(2, "0")}/01`,
+      to: `${year}/${String(month).padStart(2, "0")}/${String(jalaaliMonthLength(year, month)).padStart(2, "0")}`,
+      preset: "monthly",
+    });
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <section className="h-[182px] bg-[linear-gradient(110deg,#10000f_0%,#210020_55%,#10000f_100%)]">
@@ -418,34 +492,100 @@ export function FinancePage() {
 
         {tab === "earnings" ? (
           <section role="tabpanel" className="space-y-4">
+            <section className="rounded-xl border border-fuchsia-100 bg-white p-4 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <CalendarDays className="size-4 text-fuchsia-700" />
+                    بازهٔ گزارش حقوق و پورسانت
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    تاریخ شروع و پایان بر اساس تاریخ ثبت درآمد در گزارش اعمال می‌شود.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    aria-pressed={earningsDateRange.preset === "daily"}
+                    onClick={setDailyEarningsRange}
+                    className={earningsDateRange.preset === "daily"
+                      ? "h-8 rounded-lg bg-fuchsia-700 text-white hover:bg-fuchsia-800"
+                      : "h-8 rounded-lg bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
+                  >
+                    روزانه
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    aria-pressed={earningsDateRange.preset === "monthly"}
+                    onClick={setMonthlyEarningsRange}
+                    className={earningsDateRange.preset === "monthly"
+                      ? "h-8 rounded-lg bg-fuchsia-700 text-white hover:bg-fuchsia-800"
+                      : "h-8 rounded-lg bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
+                  >
+                    ماهانه
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-pressed={earningsDateRange.preset === "all"}
+                    onClick={() => setEarningsDateRange(EMPTY_EARNINGS_DATE_RANGE)}
+                    className="h-8 rounded-lg"
+                  >
+                    همهٔ تاریخ‌ها
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <JalaliDateInput
+                  id="finance-earnings-from"
+                  label="از تاریخ"
+                  value={earningsDateRange.from}
+                  onChange={(from) => setEarningsDateRange({ from, to: earningsDateRange.to, preset: "custom" })}
+                />
+                <JalaliDateInput
+                  id="finance-earnings-to"
+                  label="تا تاریخ"
+                  value={earningsDateRange.to}
+                  onChange={(to) => setEarningsDateRange({ from: earningsDateRange.from, to, preset: "custom" })}
+                />
+              </div>
+              {!earningsRangeValid && (
+                <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  تاریخ پایان باید مساوی یا بعد از تاریخ شروع باشد.
+                </p>
+              )}
+            </section>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <SummaryCard
                 title="حقوق ثابت"
-                value={earningsLoading ? "..." : amountLabel(earnings?.fixedSalaryAmount ?? 0)}
+                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.fixedSalaryAmount ?? 0)}
                 icon={Wallet}
                 tone="bg-blue-50 text-blue-700"
               />
               <SummaryCard
                 title="پورسانت خدمات"
-                value={earningsLoading ? "..." : amountLabel(earnings?.serviceCommissionAmount ?? 0)}
+                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.serviceCommissionAmount ?? 0)}
                 icon={CircleDollarSign}
                 tone="bg-fuchsia-50 text-fuchsia-700"
               />
               <SummaryCard
                 title="کل مطالبات"
-                value={earningsLoading ? "..." : amountLabel(earnings?.totalEarned ?? 0)}
+                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.totalEarned ?? 0)}
                 icon={ReceiptText}
                 tone="bg-violet-50 text-violet-700"
               />
               <SummaryCard
                 title="پرداخت‌شده"
-                value={earningsLoading ? "..." : amountLabel(earnings?.settledAmount ?? 0)}
+                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.settledAmount ?? 0)}
                 icon={Banknote}
                 tone="bg-emerald-50 text-emerald-700"
               />
               <SummaryCard
                 title="مانده بدهی"
-                value={earningsLoading ? "..." : amountLabel(earnings?.remainingAmount ?? 0)}
+                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.remainingAmount ?? 0)}
                 icon={BadgeDollarSign}
                 tone="bg-amber-50 text-amber-700"
               />

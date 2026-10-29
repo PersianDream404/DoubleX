@@ -32,12 +32,12 @@ export class FinanceService {
 
   getPersonnelEarnings(
     personnelId: number,
-    config?: { signal?: AbortSignal },
+    request?: { from?: string; to?: string; signal?: AbortSignal },
   ): Promise<ApiResponse<PersonnelEarningsReportDto>> {
     return this.api.get<PersonnelEarningsReportDto>(
       `/api/Finance/reports/personnel/${personnelId}/earnings`,
-      undefined,
-      config,
+      { from: request?.from, to: request?.to },
+      { signal: request?.signal },
     );
   }
 
