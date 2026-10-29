@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Identity.Persistence.Migrations
 {
-    [DbContext(typeof(IdentityReadDbContext))]
-    partial class IdentityReadDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(IdentityWriteDbContext))]
+    partial class IdentityWriteDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

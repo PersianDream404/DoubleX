@@ -3,7 +3,9 @@ using Infrastructure.Context;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using SharedKernel.Base;
+using SharedKernel.Constants;
 using System.Linq.Expressions;
 
 namespace Identity.Persistence.Context;
@@ -27,4 +29,15 @@ public class IdentityWriteDbContext : IdentityDbContext<ApplicationUser, Identit
     #endregion
 
 
+}
+
+public class IdentityWriteDbContextFactory : IDesignTimeDbContextFactory<IdentityWriteDbContext>
+{
+    public IdentityWriteDbContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<IdentityWriteDbContext>();
+        optionsBuilder.UseSqlServer(AppSetting.ConnectionStringText);
+
+        return new IdentityWriteDbContext(optionsBuilder.Options);
+    }
 }
