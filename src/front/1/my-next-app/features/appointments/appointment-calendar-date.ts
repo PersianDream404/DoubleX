@@ -1,12 +1,32 @@
-import { jalaaliMonthLength, toGregorian, toJalaali } from "jalaali-js";
+import {
+  isValidJalaaliDate,
+  jalaaliMonthLength,
+  toGregorian,
+  toJalaali,
+} from "jalaali-js";
 
 import { jalaliDateToApi } from "@/features/services/tariffs/service-tariff-date";
 
 export type JalaliDateParts = { year: number; month: number; day: number };
 
 export function parseJalaliDate(value: string): JalaliDateParts {
-  const [year, month, day] = value.split("/").map(Number);
-  return { year, month, day };
+  const normalized = value.replace(/[۰-۹٠-٩]/g, (digit) => {
+    const persianIndex = "۰۱۲۳۴۵۶۷۸۹".indexOf(digit);
+    return String(persianIndex >= 0 ? persianIndex : "٠١٢٣٤٥٦٧٨٩".indexOf(digit));
+  });
+  const match = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(normalized);
+  if (!match) throw new Error("تاریخ جلالی باید به شکل سال/ماه/روز باشد.");
+
+  const [, yearText, monthText, dayText] = match;
+  const parts = {
+    year: Number(yearText),
+    month: Number(monthText),
+    day: Number(dayText),
+  };
+  if (!isValidJalaaliDate(parts.year, parts.month, parts.day)) {
+    throw new Error("تاریخ جلالی انتخاب‌شده معتبر نیست.");
+  }
+  return parts;
 }
 
 export function formatJalaliDate({ year, month, day }: JalaliDateParts) {
