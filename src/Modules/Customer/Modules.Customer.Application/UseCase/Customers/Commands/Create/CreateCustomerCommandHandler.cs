@@ -25,6 +25,15 @@ public sealed class CreateCustomerCommandHandler(
             return Result.NotFound("سالن موردنظر پیدا نشد.");
         }
 
+        if (await queryRepository.MobilePhoneExistsAsync(
+                request.SalonId,
+                request.MobilePhone.Trim(),
+                null,
+                cancellationToken))
+        {
+            return Result.Conflict("مشتری‌ای با این شماره موبایل در سالن وجود دارد.");
+        }
+
         var customer = CustomerEntity.Create(
             request.FullName.Trim(),
             request.BirthDate,

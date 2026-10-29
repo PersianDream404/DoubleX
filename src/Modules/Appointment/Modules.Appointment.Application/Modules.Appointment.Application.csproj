@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Appointment.Application.Contract\Modules.Appointment.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Appointment.Domain\Modules.Appointment.Domain.csproj" />
+    <ProjectReference Include="..\..\Customer\Modules.Customer.Application.Contract\Modules.Customer.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\Service\Modules.Service.Application.Contract\Modules.Service.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\Salon\Modules.Salon.Application.Contract\Modules.Salon.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Scrutor" />
+  </ItemGroup>
+</Project>

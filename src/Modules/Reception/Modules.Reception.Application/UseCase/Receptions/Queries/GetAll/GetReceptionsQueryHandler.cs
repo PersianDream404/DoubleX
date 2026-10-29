@@ -33,6 +33,7 @@ public sealed class GetReceptionsQueryHandler(IReceptionQueryRepository reposito
                 item.CustomerName,
                 item.ReceptionistId,
                 item.ServiceTariffId,
+                item.AppointmentId,
                 item.ReceptionDate,
                 item.Status,
                 item.TotalAmount,

@@ -25,6 +25,17 @@ public sealed class CustomerQueryRepository(CustomerReadDbContext context)
         context.Set<CustomerSalonReference>()
             .AnyAsync(salon => salon.Id == salonId, cancellationToken);
 
+    public Task<bool> MobilePhoneExistsAsync(
+        long salonId,
+        string mobilePhone,
+        long? excludingCustomerId,
+        CancellationToken cancellationToken) =>
+        context.Customers.AnyAsync(customer =>
+                customer.SalonId == salonId &&
+                customer.MobilePhone == mobilePhone &&
+                (!excludingCustomerId.HasValue || customer.Id != excludingCustomerId.Value),
+            cancellationToken);
+
     public async Task<PagedList<CustomerListItemDto>> GetAllProjectedAsync(
         GetCustomersRequestDto request,
         CancellationToken cancellationToken)

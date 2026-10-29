@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Appointment.Application.Contract\Modules.Appointment.Application.Contract.csproj" />
+    <ProjectReference Include="..\Modules.Appointment.Application\Modules.Appointment.Application.csproj" />
+    <ProjectReference Include="..\Modules.Appointment.Persistence\Modules.Appointment.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

@@ -41,5 +41,8 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(customer => new { customer.SalonId, customer.NationalCode });
+        builder.HasIndex(customer => new { customer.SalonId, customer.MobilePhone })
+            .IsUnique()
+            .HasFilter("[Deleted] = 0");
     }
 }

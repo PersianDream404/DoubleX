@@ -21,5 +21,10 @@ public interface ICustomerQueryRepository : IQueryRepository<CustomerEntity>
         CancellationToken cancellationToken);
 
     Task<CustomerEntity?> GetEntityByIdAsync(long id, CancellationToken cancellationToken);
+    Task<bool> MobilePhoneExistsAsync(
+        long salonId,
+        string mobilePhone,
+        long? excludingCustomerId,
+        CancellationToken cancellationToken);
     Task<bool> SalonExistsAsync(long salonId, CancellationToken cancellationToken);
 }

@@ -2,6 +2,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules.Reception.Application.Contract\Modules.Reception.Application.Contract.csproj" />
     <ProjectReference Include="..\Modules.Reception.Domain\Modules.Reception.Domain.csproj" />
+    <ProjectReference Include="..\..\Appointment\Modules.Appointment.Application.Contract\Modules.Appointment.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\Appointment\Modules.Appointment.Domain\Modules.Appointment.Domain.csproj" />
     <ProjectReference Include="..\..\Inventory\Modules.Inventory.Application.Contract\Modules.Inventory.Application.Contract.csproj" />
     <ProjectReference Include="..\..\Service\Modules.Service.Application.Contract\Modules.Service.Application.Contract.csproj" />
     <ProjectReference Include="..\..\Customer\Modules.Customer.Application.Contract\Modules.Customer.Application.Contract.csproj" />

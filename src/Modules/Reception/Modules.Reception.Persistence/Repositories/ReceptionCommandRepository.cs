@@ -31,10 +31,34 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
                 reception => reception.Id == id && reception.SalonId == salonId,
                 cancellationToken);
 
-    public async Task AddAsync(ReceptionEntity reception, CancellationToken cancellationToken)
+    public Task<bool> AppointmentAlreadyLinkedAsync(
+        long appointmentId,
+        CancellationToken cancellationToken) =>
+        context.Receptions.IgnoreQueryFilters().AnyAsync(
+            item => item.AppointmentId == appointmentId,
+            cancellationToken);
+
+    public async Task<bool> AddAsync(
+        ReceptionEntity reception,
+        CancellationToken cancellationToken)
     {
         await context.Receptions.AddAsync(reception, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            if (!reception.AppointmentId.HasValue)
+                throw;
+
+            var appointmentId = reception.AppointmentId.Value;
+            context.ChangeTracker.Clear();
+            if (await AppointmentAlreadyLinkedAsync(appointmentId, cancellationToken))
+                return false;
+            throw;
+        }
     }
 
     public async Task<bool> SaveChangesAsync(CancellationToken cancellationToken)

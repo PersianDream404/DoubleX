@@ -34,6 +34,15 @@ public sealed class UpdateCustomerCommandHandler(
             return Result.NotFound("سالن موردنظر پیدا نشد.");
         }
 
+        if (await queryRepository.MobilePhoneExistsAsync(
+                request.SalonId,
+                request.MobilePhone.Trim(),
+                request.Id,
+                cancellationToken))
+        {
+            return Result.Conflict("مشتری دیگری با این شماره موبایل در سالن وجود دارد.");
+        }
+
         customer.Update(
             request.FullName.Trim(),
             request.BirthDate,

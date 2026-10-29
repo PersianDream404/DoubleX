@@ -4,6 +4,9 @@ using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Modules.Customer.Application.Contract.DTOs.Customers.Get;
 using Modules.Customer.Application.Contract.UseCase.Customers.Queries.Get;
+using Modules.Appointment.Application.Contract.DTOs.Appointments;
+using Modules.Appointment.Application.Contract.UseCase.Appointments.Queries.GetById;
+using Modules.Appointment.Domain.Entities;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Queries;
 using Modules.Reception.Application.Contract.Interfaces;
@@ -25,11 +28,6 @@ public sealed class CreateReceptionCommandHandler(
         CancellationToken cancellationToken)
     {
         var request = command.Request;
-        if (request.AppointmentId.HasValue)
-        {
-            return Result.Error("اتصال پذیرش به نوبت پشتیبانی نمی‌شود؛ ماژول Appointment در سامانه موجود نیست.");
-        }
-
         var tariffResult = await queryBus.Send<GetServiceTariffByIdQuery, ServiceTariffDto>(
             new GetServiceTariffByIdQuery(request.ServiceTariffId),
             cancellationToken);
@@ -52,6 +50,32 @@ public sealed class CreateReceptionCommandHandler(
             return Result.Invalid(new ValidationError("مشتری فعال و متعلق به سالن انتخاب‌شده نیست."));
         }
 
+        if (request.AppointmentId.HasValue)
+        {
+            if (await repository.AppointmentAlreadyLinkedAsync(
+                    request.AppointmentId.Value,
+                    cancellationToken))
+            {
+                return Result.Conflict("این نوبت قبلاً به پذیرش متصل شده است.");
+            }
+
+            var appointmentResult = await queryBus.Send<
+                GetAppointmentByIdQuery,
+                AppointmentDetailsDto>(
+                new GetAppointmentByIdQuery(request.AppointmentId.Value, request.SalonId),
+                cancellationToken);
+            if (!appointmentResult.IsSuccess ||
+                appointmentResult.Value.Status != AppointmentStatus.Confirmed ||
+                appointmentResult.Value.CustomerId != request.CustomerId ||
+                appointmentResult.Value.SalonId != request.SalonId ||
+                !tariffResult.Value.Services.Any(service =>
+                    service.ServiceId == appointmentResult.Value.ServiceId))
+            {
+                return Result.Invalid(new ValidationError(
+                    "نوبت تأییدشده و متعلق به مشتری و سالن انتخاب‌شده پیدا نشد."));
+            }
+        }
+
         var receptionistResult = await queryBus.Send<GetPersonnelByIdQuery, GetByIdPersonnelResponseDto>(
             new GetPersonnelByIdQuery(request.ReceptionistId),
             cancellationToken);
@@ -69,8 +93,10 @@ public sealed class CreateReceptionCommandHandler(
             request.ReceptionistId,
             request.ServiceTariffId,
             request.ReceptionDate,
-            request.Notes);
-        await repository.AddAsync(reception, cancellationToken);
+            request.Notes,
+            request.AppointmentId);
+        if (!await repository.AddAsync(reception, cancellationToken))
+            return Result.Conflict("این نوبت هم‌زمان به پذیرش دیگری متصل شده است.");
         return Result.Success(reception.Id);
     }
 }

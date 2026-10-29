@@ -10,6 +10,7 @@ public sealed record ReceptionListItemDto(
     string CustomerName,
     long ReceptionistId,
     long? ServiceTariffId,
+    long? AppointmentId,
     DateTimeOffset ReceptionDate,
     ReceptionStatus Status,
     decimal TotalAmount,

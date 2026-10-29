@@ -25,6 +25,9 @@ public sealed class ReceptionConfiguration : IEntityTypeConfiguration<ReceptionE
         builder.Property(item => item.Revision).IsConcurrencyToken();
         builder.HasIndex(item => new { item.SalonId, item.ReceptionNumber }).IsUnique();
         builder.HasIndex(item => new { item.SalonId, item.CustomerId, item.ReceptionDate });
+        builder.HasIndex(item => item.AppointmentId)
+            .IsUnique()
+            .HasFilter("[AppointmentId] IS NOT NULL");
         builder.HasMany(item => item.Services)
             .WithOne(service => service.Reception)
             .HasForeignKey(service => service.ReceptionId)

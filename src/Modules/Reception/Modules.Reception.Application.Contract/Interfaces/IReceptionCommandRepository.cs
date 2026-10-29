@@ -8,6 +8,7 @@ public interface IReceptionCommandRepository
     Task<ReceptionEntity?> GetTrackedAsync(long id, long salonId, CancellationToken cancellationToken);
     void AddCashRegisterPaymentOutbox(CashRegisterPaymentOutbox outbox);
     void AddPersonnelCommissionOutbox(PersonnelCommissionOutbox outbox);
-    Task AddAsync(ReceptionEntity reception, CancellationToken cancellationToken);
+    Task<bool> AppointmentAlreadyLinkedAsync(long appointmentId, CancellationToken cancellationToken);
+    Task<bool> AddAsync(ReceptionEntity reception, CancellationToken cancellationToken);
     Task<bool> SaveChangesAsync(CancellationToken cancellationToken);
 }

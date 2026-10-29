@@ -24,6 +24,13 @@
     <Project Path="src/Modules/Reception/Modules.Reception.Persistence/Modules.Reception.Persistence.csproj" />
     <Project Path="src/Modules/Reception/Modules.Reception.Presentation/Modules.Reception.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Appointment/">
+    <Project Path="src/Modules/Appointment/Modules.Appointment.Application.Contract/Modules.Appointment.Application.Contract.csproj" />
+    <Project Path="src/Modules/Appointment/Modules.Appointment.Application/Modules.Appointment.Application.csproj" />
+    <Project Path="src/Modules/Appointment/Modules.Appointment.Domain/Modules.Appointment.Domain.csproj" />
+    <Project Path="src/Modules/Appointment/Modules.Appointment.Persistence/Modules.Appointment.Persistence.csproj" />
+    <Project Path="src/Modules/Appointment/Modules.Appointment.Presentation/Modules.Appointment.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Service/">
     <Project Path="src/Modules/Service/Modules.Service.Application.Contract/Modules.Service.Application.Contract.csproj" />
     <Project Path="src/Modules/Service/Modules.Service.Application/Modules.Service.Application.csproj" />

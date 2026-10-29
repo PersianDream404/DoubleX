@@ -42,6 +42,7 @@ public sealed record ReceptionDetailsDto(
     string CustomerName,
     long ReceptionistId,
     long? ServiceTariffId,
+    long? AppointmentId,
     DateTimeOffset ReceptionDate,
     ReceptionStatus Status,
     decimal SubTotal,
