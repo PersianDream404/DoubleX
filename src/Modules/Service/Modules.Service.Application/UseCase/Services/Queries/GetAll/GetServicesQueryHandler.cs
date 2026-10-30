@@ -18,7 +18,10 @@ public sealed class GetServicesQueryHandler(
     {
         if (!await categoryRepository.SalonExistsAsync(query.SalonId, cancellationToken))
             return Result.NotFound("سالن موردنظر پیدا نشد.");
-        var services = await repository.GetServicesAsync(query.SalonId, cancellationToken);
+        var services = await repository.GetServicesAsync(
+            query.SalonId,
+            query.SearchTerm,
+            cancellationToken);
         return Result.Success<IReadOnlyList<ServiceDto>>(services
             .Select(service => new ServiceDto(
                 service.Id,
@@ -35,5 +38,9 @@ public sealed class GetServicesQueryHandler(
 
 public sealed class GetServicesQueryValidator : AbstractValidator<GetServicesQuery>
 {
-    public GetServicesQueryValidator() => RuleFor(query => query.SalonId).GreaterThan(0);
+    public GetServicesQueryValidator()
+    {
+        RuleFor(query => query.SalonId).GreaterThan(0);
+        RuleFor(query => query.SearchTerm).MaximumLength(250);
+    }
 }

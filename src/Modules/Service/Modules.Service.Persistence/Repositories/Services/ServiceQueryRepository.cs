@@ -19,13 +19,26 @@ public sealed class ServiceQueryRepository(ServiceReadDbContext readContext)
 
     public async Task<IReadOnlyList<ServiceReadModel>> GetServicesAsync(
         long salonId,
-        CancellationToken cancellationToken) =>
-        await readContext.Services
+        string? searchTerm,
+        CancellationToken cancellationToken)
+    {
+        var query = readContext.Services
             .AsNoTracking()
             .Where(service => service.SalonId == salonId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(service =>
+                service.Name.Contains(term) || service.Code.Contains(term));
+        }
+
+        return await query
             .OrderBy(service => service.Name)
             .Select(ServiceMapper.ToReadModel())
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<ServiceReadModel>> GetActiveServicesAsync(
         long salonId,

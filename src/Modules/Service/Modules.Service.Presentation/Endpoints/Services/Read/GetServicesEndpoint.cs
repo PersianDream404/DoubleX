@@ -16,6 +16,7 @@ public sealed class GetServicesEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app) =>
             app.MapGet(ServiceApiInfo.Prefix, async (
+                    [FromQuery] string? q,
                     [FromServices] IQueryBus bus,
                     HttpContext context,
                     CancellationToken cancellationToken) =>
@@ -24,7 +25,7 @@ public sealed class GetServicesEndpoint
                         return Unauthorized();
 
                     var result = await bus.Send<GetServicesQuery, IReadOnlyList<ServiceDto>>(
-                        new GetServicesQuery(salonId), cancellationToken);
+                        new GetServicesQuery(salonId, q), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
                 .RequireAuthorization()
