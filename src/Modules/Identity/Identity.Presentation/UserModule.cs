@@ -1,4 +1,4 @@
-﻿using Identity.Presentation.Users.Create;
+﻿using Identity.Presentation.Endpoints.Account.Write;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
