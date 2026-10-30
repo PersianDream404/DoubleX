@@ -50,6 +50,18 @@ Customer feature files are organized by capability under `Customers`:
 
 Use the target module's established singular/plural and folder conventions. For a new Customer capability, place files with the matching feature rather than accumulating unrelated feature types in a shared file. Avoid moving unrelated code.
 
+## Repository-wide organization conventions
+
+Apply these layout rules consistently across all modules when creating or reorganizing code:
+
+- Domain enums belong in an `Enums` folder within the relevant Domain project. Before adding an enum, check for existing enums outside that folder and use the established namespace and naming conventions.
+- In each Persistence project, keep `ReadDbContext`, `WriteDbContext`, and `DbContextFactory` in the `Context` folder, each in its own source file. Do not combine these types in one file.
+- Put EF Core Fluent API configurations in the Persistence project's `Configuration` folder. Keep each entity's configuration in a separate file; do not aggregate multiple entity configurations into a shared file.
+- Put each API endpoint in its own source file and organize endpoint files as `Endpoints/<Route>/Read/<Endpoint>.cs` or `Endpoints/<Route>/Write/<Endpoint>.cs`. Group by the route first, then by operation type. Classify by behavior: queries go in `Read` even if their HTTP verb is POST; commands go in `Write`.
+- Preserve endpoint behavior when moving or splitting files, including HTTP method and route, binding, authorization, cancellation, response shape, and status-code mapping. Update namespaces and references affected by the new locations, and check that endpoint discovery still includes the moved types.
+
+When modifying a module, inspect its current layout and apply these conventions to the affected code without changing unrelated behavior. Check the relevant Domain, Persistence, and Presentation projects for violations when the task requests repository-wide organization.
+
 ## Domain model
 
 `Customer` is a sealed `BaseEntityIdentity` entity. It uses a private EF constructor, private-set properties, a static `Create(...)` factory, and an `Update(...)` method. It has primitive properties and a `SalonId`; no Customer-specific value objects or separate domain services are currently implemented.
