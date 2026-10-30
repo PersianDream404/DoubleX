@@ -12,7 +12,6 @@ public sealed class CustomerReadDbContext(DbContextOptions<BaseDbContext> option
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("Customer");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CustomerReadDbContext).Assembly);
-        CustomerModelConfiguration.ConfigureSalonEntity(modelBuilder);
     }
 
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();

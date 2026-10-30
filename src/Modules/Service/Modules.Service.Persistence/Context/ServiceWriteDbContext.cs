@@ -12,7 +12,6 @@ public sealed class ServiceWriteDbContext(DbContextOptions<BaseDbContext> option
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("Service");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ServiceWriteDbContext).Assembly);
-        ServiceModelConfiguration.ConfigureReferences(modelBuilder);
     }
 
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();

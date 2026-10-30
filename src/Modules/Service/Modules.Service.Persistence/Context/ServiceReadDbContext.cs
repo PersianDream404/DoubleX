@@ -12,7 +12,6 @@ public sealed class ServiceReadDbContext(DbContextOptions<BaseDbContext> options
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("Service");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ServiceReadDbContext).Assembly);
-        ServiceModelConfiguration.ConfigureReferences(modelBuilder);
     }
 
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();

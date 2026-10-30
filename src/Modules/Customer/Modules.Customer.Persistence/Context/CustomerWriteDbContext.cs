@@ -12,7 +12,6 @@ public sealed class CustomerWriteDbContext(DbContextOptions<BaseDbContext> optio
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("Customer");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CustomerWriteDbContext).Assembly);
-        CustomerModelConfiguration.ConfigureSalonEntity(modelBuilder);
     }
 
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
