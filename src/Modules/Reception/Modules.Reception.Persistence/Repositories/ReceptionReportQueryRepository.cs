@@ -479,7 +479,7 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
 
         return new ReceptionReportPageReadModel<ReceptionReportDebtReadModel, ReceptionReportDebtTotalsReadModel>(
             page,
-            totals ?? new ReceptionReportDebtTotalsReadModel(0, 0m, 0m, 0m));
+            totals);
     }
 
     public async Task<ReceptionReportPageReadModel<ReceptionReportDiscountReadModel, ReceptionReportDiscountTotalsReadModel>>
