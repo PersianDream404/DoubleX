@@ -7,6 +7,8 @@ public sealed class StockMovement : BaseEntityIdentity
     public long MaterialId { get; private set; }
     public StockMovementType Type { get; private set; }
     public decimal Quantity { get; private set; }
+    public decimal? PurchaseQuantity { get; private set; }
+    public decimal? PurchaseUnitPrice { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
     public string? ReferenceType { get; private set; }
     public long? ReferenceId { get; private set; }
@@ -22,6 +24,8 @@ public sealed class StockMovement : BaseEntityIdentity
         long materialId,
         StockMovementType type,
         decimal quantity,
+        decimal? purchaseQuantity,
+        decimal? purchaseUnitPrice,
         DateTimeOffset occurredAt,
         string? referenceType,
         long? referenceId,
@@ -31,6 +35,8 @@ public sealed class StockMovement : BaseEntityIdentity
         MaterialId = materialId;
         Type = type;
         Quantity = quantity;
+        PurchaseQuantity = purchaseQuantity;
+        PurchaseUnitPrice = purchaseUnitPrice;
         OccurredAt = occurredAt;
         ReferenceType = referenceType;
         ReferenceId = referenceId;
@@ -42,6 +48,8 @@ public sealed class StockMovement : BaseEntityIdentity
         long materialId,
         StockMovementType type,
         decimal quantity,
+        decimal? purchaseQuantity,
+        decimal? purchaseUnitPrice,
         DateTimeOffset occurredAt,
         string? referenceType,
         long? referenceId,
@@ -51,6 +59,8 @@ public sealed class StockMovement : BaseEntityIdentity
             materialId,
             type,
             quantity,
+            purchaseQuantity,
+            purchaseUnitPrice,
             occurredAt,
             referenceType,
             referenceId,

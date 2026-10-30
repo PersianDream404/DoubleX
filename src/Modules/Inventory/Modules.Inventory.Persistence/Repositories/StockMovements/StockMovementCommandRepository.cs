@@ -31,6 +31,8 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                 return existingMovement.MaterialId == movement.MaterialId &&
                        existingMovement.Type == movement.Type &&
                        existingMovement.Quantity == movement.Quantity &&
+                       existingMovement.PurchaseQuantity == movement.PurchaseQuantity &&
+                       existingMovement.PurchaseUnitPrice == movement.PurchaseUnitPrice &&
                        existingMovement.ReferenceType == movement.ReferenceType &&
                        existingMovement.ReferenceId == movement.ReferenceId
                     ? InventoryOperationStatus.Succeeded
@@ -48,6 +50,16 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
         if (!material.Status)
         {
             return InventoryOperationStatus.Inactive;
+        }
+
+        if (movement.Type == StockMovementType.Receipt &&
+            (movement.PurchaseQuantity is null ||
+             movement.PurchaseUnitPrice is null ||
+             decimal.Round(
+                 movement.PurchaseQuantity.Value * material.PurchaseConversionFactor,
+                 3) != movement.Quantity))
+        {
+            return InventoryOperationStatus.InvalidInput;
         }
 
         var balance = await context.StockBalances
@@ -91,6 +103,8 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                 return existingMovement.MaterialId == movement.MaterialId &&
                        existingMovement.Type == movement.Type &&
                        existingMovement.Quantity == movement.Quantity &&
+                       existingMovement.PurchaseQuantity == movement.PurchaseQuantity &&
+                       existingMovement.PurchaseUnitPrice == movement.PurchaseUnitPrice &&
                        existingMovement.ReferenceType == movement.ReferenceType &&
                        existingMovement.ReferenceId == movement.ReferenceId
                     ? InventoryOperationStatus.Succeeded

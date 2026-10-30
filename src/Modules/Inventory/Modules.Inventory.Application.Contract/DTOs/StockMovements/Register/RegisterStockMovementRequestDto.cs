@@ -7,6 +7,8 @@ public sealed class RegisterStockMovementRequestDto
     public long MaterialId { get; set; }
     public StockMovementType Type { get; set; }
     public decimal Quantity { get; set; }
+    public decimal? PurchaseQuantity { get; set; }
+    public decimal? PurchaseUnitPrice { get; set; }
     public DateTimeOffset OccurredAt { get; set; }
     public string? ReferenceType { get; set; }
     public long? ReferenceId { get; set; }

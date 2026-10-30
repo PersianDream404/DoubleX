@@ -20,6 +20,8 @@ public sealed class RegisterStockMovementCommandHandler(IStockMovementCommandRep
             request.MaterialId,
             request.Type,
             request.Quantity,
+            request.PurchaseQuantity,
+            request.PurchaseUnitPrice,
             request.OccurredAt,
             request.ReferenceType?.Trim(),
             request.ReferenceId,
@@ -32,7 +34,7 @@ public sealed class RegisterStockMovementCommandHandler(IStockMovementCommandRep
             InventoryOperationStatus.NotFound => Result.NotFound("کالای موردنظر پیدا نشد."),
             InventoryOperationStatus.Inactive => Result.Error("برای کالای غیرفعال گردش ثبت نمی‌شود."),
             InventoryOperationStatus.Conflict => Result.Error("این کلید جلوگیری از ثبت تکراری قبلاً استفاده شده است."),
-            InventoryOperationStatus.InvalidInput => Result.Error("برای مصرف کالا، کلید یکتای جلوگیری از ثبت تکراری الزامی است."),
+            InventoryOperationStatus.InvalidInput => Result.Error("اطلاعات مقدار یا قیمت گردش انبار معتبر نیست."),
             InventoryOperationStatus.InsufficientStock => Result.Error("موجودی برای این خروج کافی نیست."),
             InventoryOperationStatus.ConcurrencyConflict => Result.Error("تغییر هم‌زمان موجودی رخ داده است؛ عملیات را دوباره بررسی کنید."),
             _ => Result.Error("ثبت گردش انبار انجام نشد.")
@@ -53,6 +55,24 @@ public sealed class RegisterStockMovementCommandValidator : AbstractValidator<Re
                 .GreaterThan(0)
                 .LessThanOrEqualTo(999999999999999.999m)
                 .Must(value => decimal.Round(value, 3) == value);
+            When(command => command.Request.Type == StockMovementType.Receipt, () =>
+            {
+                RuleFor(command => command.Request.PurchaseQuantity)
+                    .NotNull()
+                    .GreaterThan(0)
+                    .LessThanOrEqualTo(999999999999.999999m)
+                    .Must(value => value.HasValue && decimal.Round(value.Value, 6) == value.Value);
+                RuleFor(command => command.Request.PurchaseUnitPrice)
+                    .NotNull()
+                    .GreaterThanOrEqualTo(0)
+                    .LessThanOrEqualTo(9999999999999999.99m)
+                    .Must(value => value.HasValue && decimal.Round(value.Value, 2) == value.Value);
+            });
+            When(command => command.Request.Type != StockMovementType.Receipt, () =>
+            {
+                RuleFor(command => command.Request.PurchaseQuantity).Null();
+                RuleFor(command => command.Request.PurchaseUnitPrice).Null();
+            });
             RuleFor(command => command.Request.OccurredAt).NotEmpty();
             RuleFor(command => command.Request.ReferenceType).MaximumLength(50);
             RuleFor(command => command.Request.ReferenceId).GreaterThan(0).When(command =>

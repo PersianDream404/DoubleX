@@ -39,6 +39,7 @@ export function StockMovementDialog({
   onSaved,
 }: StockMovementDialogProps) {
   const [quantity, setQuantity] = useState("");
+  const [purchaseUnitPrice, setPurchaseUnitPrice] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,15 @@ export function StockMovementDialog({
       ? parsedQuantity * material.purchaseConversionFactor
       : parsedQuantity
     : null;
+  const parsedPurchaseUnitPrice = Number(purchaseUnitPrice);
+  const previewTotalPrice =
+    operation === "receipt" &&
+    Number.isFinite(parsedQuantity) &&
+    parsedQuantity > 0 &&
+    Number.isFinite(parsedPurchaseUnitPrice) &&
+    parsedPurchaseUnitPrice >= 0
+      ? parsedQuantity * parsedPurchaseUnitPrice
+      : null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,10 +68,19 @@ export function StockMovementDialog({
 
     const parsed = StockMovementQuantitySchema.safeParse({
       quantity: Number(quantity),
+      purchaseUnitPrice: Number(purchaseUnitPrice),
       description,
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "اطلاعات واردشده معتبر نیست.");
+      return;
+    }
+
+    if (
+      operation === "receipt" &&
+      Math.round(parsed.data.quantity * 1000000) / 1000000 !== parsed.data.quantity
+    ) {
+      setError("مقدار خرید حداکثر ۶ رقم اعشار دارد.");
       return;
     }
 
@@ -101,6 +120,8 @@ export function StockMovementDialog({
         materialId: target.material.id,
         type: operation === "receipt" ? 1 : 2,
         quantity: baseQuantity,
+        purchaseQuantity: operation === "receipt" ? parsed.data.quantity : null,
+        purchaseUnitPrice: operation === "receipt" ? parsed.data.purchaseUnitPrice : null,
         occurredAt: new Date().toISOString(),
         referenceType: null,
         referenceId: null,
@@ -175,6 +196,23 @@ export function StockMovementDialog({
                 onChange={(event) => setQuantity(event.target.value)}
               />
             </div>
+            {operation === "receipt" && (
+              <div className="space-y-2">
+                <Label htmlFor="stock-receipt-unit-price">
+                  قیمت هر {material.purchaseUnitName} (تومان)
+                </Label>
+                <Input
+                  id="stock-receipt-unit-price"
+                  type="number"
+                  min="0"
+                  max="9999999999999999"
+                  step="0.01"
+                  required
+                  value={purchaseUnitPrice}
+                  onChange={(event) => setPurchaseUnitPrice(event.target.value)}
+                />
+              </div>
+            )}
             {previewBaseQuantity !== null && Number.isFinite(previewBaseQuantity) && (
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 مقدار {operation === "receipt" ? "افزوده‌شده" : "برداشت‌شده"}:{" "}
@@ -182,6 +220,15 @@ export function StockMovementDialog({
                   maximumFractionDigits: 3,
                 })}{" "}
                 {material.baseUnitSymbol}
+              </p>
+            )}
+            {previewTotalPrice !== null && Number.isFinite(previewTotalPrice) && (
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                مبلغ کل خرید:{" "}
+                {previewTotalPrice.toLocaleString("fa-IR", {
+                  maximumFractionDigits: 2,
+                })}{" "}
+                تومان
               </p>
             )}
             <div className="space-y-2">
