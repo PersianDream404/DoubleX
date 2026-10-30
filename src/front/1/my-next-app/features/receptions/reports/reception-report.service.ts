@@ -1,5 +1,6 @@
 import { ApiClient } from "@/lib/api/api-client";
 import type { ApiResponse } from "@/lib/api/types/api-response";
+import type { PagedResult } from "@/lib/api/types/paged-result";
 
 import type {
   ReceptionReportDebt,
@@ -13,6 +14,8 @@ import type {
   ReceptionReportPersonnel,
   ReceptionReportReception,
   ReceptionReportServiceItem,
+  ReceptionReportSelectOption,
+  ReceptionReportSelectPage,
   ReceptionReportSummary,
   ReceptionReportTotals,
 } from "./reception-report.types";
@@ -25,6 +28,12 @@ export type ReceptionReportTab =
   | "debts"
   | "discounts"
   | "materials";
+
+export type ReceptionReportSelectKind =
+  | "customer"
+  | "personnel"
+  | "service"
+  | "material";
 
 const PAGE_SIZE = 15;
 
@@ -109,5 +118,106 @@ export class ReceptionReportService {
       { ...filters, PageNumber: pageNumber, PageSize: PAGE_SIZE },
       config,
     );
+  }
+
+  async searchCustomers(
+    query: string,
+    pageNumber: number,
+    signal: AbortSignal,
+  ): Promise<ReceptionReportSelectPage> {
+    const response = await this.api.get<PagedResult<{
+      id: number;
+      fullName: string;
+      mobilePhone: string;
+      status: boolean;
+    }>>(
+      "/api/Customer",
+      { Q: query || undefined, PageNumber: pageNumber, PageSize: 15 },
+      { signal },
+    );
+    if (!response.data) throw new Error(response.message ?? "فهرست مشتریان دریافت نشد.");
+    return {
+      list: response.data.list.map((item) => ({
+        id: item.id,
+        label: item.fullName,
+        description: `${item.mobilePhone}${item.status ? "" : " • غیرفعال"}`,
+      })),
+      hasMore: pageNumber < response.data.pagination.totalPages,
+    };
+  }
+
+  async searchPersonnel(
+    query: string,
+    pageNumber: number,
+    signal: AbortSignal,
+  ): Promise<ReceptionReportSelectPage> {
+    const response = await this.api.get<PagedResult<{
+      id: number;
+      fullName: string;
+      jobTitle: string;
+      status: boolean;
+    }>>(
+      "/api/Personnel",
+      { Q: query || undefined, PageNumber: pageNumber, PageSize: 15 },
+      { signal },
+    );
+    if (!response.data) throw new Error(response.message ?? "فهرست پرسنل دریافت نشد.");
+    return {
+      list: response.data.list.map((item) => ({
+        id: item.id,
+        label: item.fullName,
+        description: `${item.jobTitle || `شناسه ${new Intl.NumberFormat("fa-IR").format(item.id)}`}${item.status ? "" : " • غیرفعال"}`,
+      })),
+      hasMore: pageNumber < response.data.pagination.totalPages,
+    };
+  }
+
+  async searchServices(
+    query: string,
+    _pageNumber: number,
+    signal: AbortSignal,
+  ): Promise<ReceptionReportSelectPage> {
+    const response = await this.api.get<{
+      id: number;
+      name: string;
+      code: string;
+      isActive: boolean;
+    }[]>("/api/Services", { Q: query || undefined }, { signal });
+    if (!response.data) throw new Error(response.message ?? "فهرست خدمات دریافت نشد.");
+    return {
+      list: response.data.map((item): ReceptionReportSelectOption => ({
+        id: item.id,
+        label: item.name,
+        description: `${item.code}${item.isActive ? "" : " • غیرفعال"}`,
+      })),
+      hasMore: false,
+    };
+  }
+
+  async searchMaterials(
+    query: string,
+    pageNumber: number,
+    signal: AbortSignal,
+  ): Promise<ReceptionReportSelectPage> {
+    const response = await this.api.get<PagedResult<{
+      id: number;
+      name: string;
+      code: string;
+      baseUnitName: string;
+      isActive: boolean;
+    }>>(
+      "/api/Inventory/Materials",
+      { Q: query || undefined, PageNumber: pageNumber, PageSize: 15 },
+      { signal },
+    );
+    if (!response.data) throw new Error(response.message ?? "فهرست مواد مصرفی دریافت نشد.");
+    return {
+      list: response.data.list.map((item) => ({
+        id: item.id,
+        label: item.name,
+        description: `${item.code} • ${item.baseUnitName}${item.isActive ? "" : " • غیرفعال"}`,
+      })),
+      hasMore: pageNumber < response.data.pagination.totalPages,
+    };
   }
 }

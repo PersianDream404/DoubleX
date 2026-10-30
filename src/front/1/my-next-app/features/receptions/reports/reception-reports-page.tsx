@@ -65,6 +65,7 @@ import {
 } from "./reception-report-date";
 import { receptionReportFilterSchema } from "./reception-report.schema";
 import type { ReceptionReportTab } from "./reception-report.service";
+import { ReportSearchSelect } from "./report-search-select";
 import type {
   ReceptionReportDebt,
   ReceptionReportDiscount,
@@ -79,12 +80,15 @@ import { useReceptionReports } from "./use-reception-reports";
 type ReportFormState = {
   fromDate: string;
   toDate: string;
-  customerSearch: string;
   customerId: string;
+  customerLabel: string;
   receptionNumber: string;
   personnelId: string;
+  personnelLabel: string;
   serviceId: string;
+  serviceLabel: string;
   materialId: string;
+  materialLabel: string;
   receptionStatus: string;
   financialStatus: string;
   serviceStatus: string;
@@ -128,12 +132,15 @@ function initialFormValues(): ReportFormState {
   return {
     fromDate: `${today.slice(0, 4)}/${today.slice(5, 7)}/01`,
     toDate: today,
-    customerSearch: "",
     customerId: "",
+    customerLabel: "",
     receptionNumber: "",
     personnelId: "",
+    personnelLabel: "",
     serviceId: "",
+    serviceLabel: "",
     materialId: "",
+    materialLabel: "",
     receptionStatus: "",
     financialStatus: "",
     serviceStatus: "",
@@ -421,6 +428,15 @@ export function ReceptionReportsPage() {
     value: ReportFormState[K],
   ) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateSelection(
+    idField: "customerId" | "personnelId" | "serviceId" | "materialId",
+    labelField: "customerLabel" | "personnelLabel" | "serviceLabel" | "materialLabel",
+    id: string,
+    label: string,
+  ) {
+    setForm((current) => ({ ...current, [idField]: id, [labelField]: label }));
   }
 
   function parsedFilters(values: ReportFormState): ReceptionReportFilters | null {
@@ -730,19 +746,13 @@ export function ReceptionReportsPage() {
               value={form.toDate}
               onChange={(value) => updateForm("toDate", value)}
             />
-            <FilterInput
-              id="report-customer-search"
-              label="جستجوی مشتری"
-              value={form.customerSearch}
-              onChange={(value) => updateForm("customerSearch", value)}
-              placeholder="نام یا شماره همراه"
-            />
-            <FilterInput
+            <ReportSearchSelect
               id="report-customer-id"
-              label="شناسه مشتری"
-              value={form.customerId}
-              onChange={(value) => updateForm("customerId", value)}
-              type="number"
+              label="مشتری"
+              kind="customer"
+              selectedId={form.customerId}
+              selectedLabel={form.customerLabel}
+              onChange={(id, label) => updateSelection("customerId", "customerLabel", id, label)}
             />
             <FilterInput
               id="report-reception-number"
@@ -751,26 +761,29 @@ export function ReceptionReportsPage() {
               onChange={(value) => updateForm("receptionNumber", value)}
               type="number"
             />
-            <FilterInput
+            <ReportSearchSelect
               id="report-personnel-id"
-              label="شناسه پرسنل"
-              value={form.personnelId}
-              onChange={(value) => updateForm("personnelId", value)}
-              type="number"
+              label="پرسنل"
+              kind="personnel"
+              selectedId={form.personnelId}
+              selectedLabel={form.personnelLabel}
+              onChange={(id, label) => updateSelection("personnelId", "personnelLabel", id, label)}
             />
-            <FilterInput
+            <ReportSearchSelect
               id="report-service-id"
-              label="شناسه خدمت"
-              value={form.serviceId}
-              onChange={(value) => updateForm("serviceId", value)}
-              type="number"
+              label="خدمت"
+              kind="service"
+              selectedId={form.serviceId}
+              selectedLabel={form.serviceLabel}
+              onChange={(id, label) => updateSelection("serviceId", "serviceLabel", id, label)}
             />
-            <FilterInput
+            <ReportSearchSelect
               id="report-material-id"
-              label="شناسه ماده مصرفی"
-              value={form.materialId}
-              onChange={(value) => updateForm("materialId", value)}
-              type="number"
+              label="ماده مصرفی"
+              kind="material"
+              selectedId={form.materialId}
+              selectedLabel={form.materialLabel}
+              onChange={(id, label) => updateSelection("materialId", "materialLabel", id, label)}
             />
             <FilterSelect
               id="report-reception-status"

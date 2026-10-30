@@ -28,7 +28,12 @@ export const receptionReportFilterSchema = z
   .object({
     fromDate: jalaliDate,
     toDate: jalaliDate,
-    customerSearch: z.string().trim().max(250, "عبارت جستجو نباید بیشتر از ۲۵۰ نویسه باشد."),
+    customerSearch: z
+      .string()
+      .trim()
+      .max(250, "عبارت جستجو نباید بیشتر از ۲۵۰ نویسه باشد.")
+      .optional()
+      .default(""),
     customerId: optionalPositiveInteger,
     receptionNumber: optionalPositiveInteger,
     personnelId: optionalPositiveInteger,

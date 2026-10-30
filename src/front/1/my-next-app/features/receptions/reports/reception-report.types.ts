@@ -5,6 +5,17 @@ export interface ReceptionReportDateFilters {
   toDateExclusive: string;
 }
 
+export interface ReceptionReportSelectOption {
+  id: number;
+  label: string;
+  description: string;
+}
+
+export interface ReceptionReportSelectPage {
+  list: ReceptionReportSelectOption[];
+  hasMore: boolean;
+}
+
 export interface ReceptionReportFilters extends ReceptionReportDateFilters {
   customerSearch?: string;
   customerId?: number;
