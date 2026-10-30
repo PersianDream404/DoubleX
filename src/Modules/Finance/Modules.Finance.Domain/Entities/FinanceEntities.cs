@@ -2,18 +2,6 @@ using SharedKernel.Base;
 
 namespace Modules.Finance.Domain.Entities;
 
-public enum PersonnelEarningType
-{
-    FixedSalary = 1,
-    ServiceCommission = 2
-}
-
-public enum FinanceRecordStatus
-{
-    Active = 1,
-    Cancelled = 2
-}
-
 public sealed class PersonnelEarning : BaseEntityIdentity
 {
     public long SalonId { get; private set; }

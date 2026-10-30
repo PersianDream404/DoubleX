@@ -2,14 +2,6 @@ using AppointmentEntity = Modules.Appointment.Domain.Entities.Appointment;
 
 namespace Modules.Appointment.Domain.Interfaces;
 
-public enum AppointmentWriteResult
-{
-    Created,
-    ExistingRequest,
-    IdempotencyKeyReused,
-    TimeConflict
-}
-
 public interface IAppointmentCommandRepository
 {
     Task<AppointmentEntity?> GetTrackedAsync(

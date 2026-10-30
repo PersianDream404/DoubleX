@@ -2,12 +2,6 @@ using SharedKernel.Base;
 
 namespace Modules.Reception.Domain.Entities;
 
-public enum PersonnelCommissionOutboxStatus
-{
-    Pending = 1,
-    Processed = 2
-}
-
 public sealed class PersonnelCommissionOutbox : BaseEntityIdentity
 {
     private PersonnelCommissionOutbox() { }
