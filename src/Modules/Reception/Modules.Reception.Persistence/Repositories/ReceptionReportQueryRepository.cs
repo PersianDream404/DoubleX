@@ -485,7 +485,7 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
     public async Task<ReceptionReportPageReadModel<ReceptionReportDiscountReadModel, ReceptionReportDiscountTotalsReadModel>>
         GetDiscountsAsync(ReceptionReportFilter filter, CancellationToken cancellationToken)
     {
-        var query = FilterServices(filter, defaultToCompleted: false)
+        var baseQuery = FilterServices(filter, defaultToCompleted: false)
             .Where(service =>
                 service.ServiceStatus != ReceptionServiceStatus.Cancelled &&
                 service.DiscountAmount > 0m)
@@ -500,23 +500,39 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 service.Quantity * service.UnitPrice,
                 service.DiscountAmount,
                 service.FinalAmount));
+        var query = await baseQuery.ToListAsync(cancellationToken);
 
-        var totals = await query
-            .GroupBy(_ => 1)
-            .Select(group => new ReceptionReportDiscountTotalsReadModel(
-                group.Count(),
-                group.Sum(item => item.ServiceSubtotal),
-                group.Sum(item => item.DiscountAmount),
-                group.Sum(item => item.ServiceFinalAmount)))
-            .SingleOrDefaultAsync(cancellationToken);
-        var page = await query
+        var totals = new ReceptionReportDiscountTotalsReadModel(
+            query.Count,
+            query.Sum(item => item.ServiceSubtotal),
+            query.Sum(item => item.DiscountAmount),
+            query.Sum(item => item.ServiceFinalAmount));
+        var orderedData = query
             .OrderByDescending(item => item.ReceptionDate)
             .ThenBy(item => item.ReceptionNumber)
-            .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
+            .ToList();
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+        var totalCount = orderedData.Count;
+        var pagedData = orderedData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var page = new Framwork.PagedList.PagedList<ReceptionReportDiscountReadModel>
+        {
+            List = pagedData,
+            Pagination = new Framwork.PagedList.PagedListInfo
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            }
+        };
 
         return new ReceptionReportPageReadModel<ReceptionReportDiscountReadModel, ReceptionReportDiscountTotalsReadModel>(
             page,
-            totals ?? new ReceptionReportDiscountTotalsReadModel(0, 0m, 0m, 0m));
+            totals);
     }
 
     public async Task<ReceptionReportPageReadModel<ReceptionReportMaterialReadModel, ReceptionReportMaterialTotalsReadModel>>
