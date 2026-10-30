@@ -181,7 +181,10 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
         GetReceptionsAsync(ReceptionReportFilter filter, CancellationToken cancellationToken)
     {
         var query = FilterReceptions(filter);
-        var rows = query.Select(reception => new ReceptionReportReceptionReadModel(
+        var orderedQuery = filter.OldestFirst
+            ? query.OrderBy(reception => reception.ReceptionDate)
+            : query.OrderByDescending(reception => reception.ReceptionDate);
+        var rows = orderedQuery.Select(reception => new ReceptionReportReceptionReadModel(
             reception.Id,
             reception.ReceptionNumber,
             reception.CustomerId,
@@ -305,7 +308,7 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 group.Sum(item => item.RemainingAmount)))
             .SingleOrDefaultAsync(cancellationToken);
 
-        var page = await OrderByReceptionDate(rows, filter.OldestFirst)
+        var page = await rows
             .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
 
         return new ReceptionReportPageReadModel<ReceptionReportReceptionReadModel, ReceptionReportTotalsReadModel>(
@@ -327,9 +330,26 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 group.Sum(service => service.Quantity * service.UnitPrice),
                 group.Sum(service => service.DiscountAmount),
                 group.Sum(service => service.FinalAmount)));
-        var page = await grouped
-            .OrderByDescending(item => item.ServiceFinalAmount)
-            .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
+        var pageData = await grouped.ToListAsync(cancellationToken);
+        var orderedData = pageData.OrderByDescending(item => item.ServiceFinalAmount).ToList();
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+        var totalCount = orderedData.Count;
+        var pagedData = orderedData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var page = new Framwork.PagedList.PagedList<ReceptionReportPersonnelReadModel>
+        {
+            List = pagedData,
+            Pagination = new Framwork.PagedList.PagedListInfo
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            }
+        };
         var totals = await query
             .GroupBy(_ => 1)
             .Select(group => new ReceptionReportTotalsReadModel(
@@ -361,9 +381,26 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 group.Sum(service => service.DiscountAmount),
                 group.Sum(service => service.FinalAmount),
                 group.Sum(service => service.FinalAmount) / group.Count()));
-        var page = await grouped
-            .OrderByDescending(item => item.ServiceFinalAmount)
-            .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
+        var pageData = await grouped.ToListAsync(cancellationToken);
+        var orderedData = pageData.OrderByDescending(item => item.ServiceFinalAmount).ToList();
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+        var totalCount = orderedData.Count;
+        var pagedData = orderedData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var page = new Framwork.PagedList.PagedList<ReceptionReportServiceReadModel>
+        {
+            List = pagedData,
+            Pagination = new Framwork.PagedList.PagedListInfo
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            }
+        };
         var totals = await query
             .GroupBy(_ => 1)
             .Select(group => new ReceptionReportTotalsReadModel(
@@ -383,7 +420,7 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
     public async Task<ReceptionReportPageReadModel<ReceptionReportDebtReadModel, ReceptionReportDebtTotalsReadModel>>
         GetDebtsAsync(ReceptionReportFilter filter, CancellationToken cancellationToken)
     {
-        var query = FilterReceptions(filter)
+        var baseQuery = FilterReceptions(filter)
             .Where(item => item.ReceptionStatus != ReceptionStatus.Cancelled)
             .Select(reception => new ReceptionReportDebtReadModel(
                 reception.Id,
@@ -399,26 +436,46 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 reception.TotalAmount -
                 (reception.Payments
                     .Where(payment => payment.PaymentStatus == ReceptionPaymentStatus.Succeeded)
-                    .Sum(payment => (decimal?)payment.Amount) ?? 0m)))
+                    .Sum(payment => (decimal?)payment.Amount) ?? 0m)));
+        var allDebts = await baseQuery.ToListAsync(cancellationToken);
+        var query = allDebts
             .Where(item => item.RemainingAmount > 0m)
             .Where(item => !filter.MinimumRemainingAmount.HasValue ||
                            item.RemainingAmount >= filter.MinimumRemainingAmount.Value)
             .Where(item => !filter.MaximumRemainingAmount.HasValue ||
-                           item.RemainingAmount <= filter.MaximumRemainingAmount.Value);
+                           item.RemainingAmount <= filter.MaximumRemainingAmount.Value)
+            .ToList();
 
-        var totals = await query
+        var totals = query
             .GroupBy(_ => 1)
             .Select(group => new ReceptionReportDebtTotalsReadModel(
                 group.Count(),
                 group.Sum(item => item.TotalAmount),
                 group.Sum(item => item.PaidAmount),
                 group.Sum(item => item.RemainingAmount)))
-            .SingleOrDefaultAsync(cancellationToken);
-        var page = await (filter.OldestFirst
-                ? query.OrderBy(item => item.ReceptionDate)
-                : query.OrderByDescending(item => item.RemainingAmount)
-                    .ThenBy(item => item.ReceptionDate))
-            .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
+            .FirstOrDefault() ?? new ReceptionReportDebtTotalsReadModel(0, 0m, 0m, 0m);
+        var orderedData = filter.OldestFirst
+            ? query.OrderBy(item => item.ReceptionDate).ToList()
+            : query.OrderByDescending(item => item.RemainingAmount)
+                .ThenBy(item => item.ReceptionDate).ToList();
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+        var totalCount = orderedData.Count;
+        var pagedData = orderedData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var page = new Framwork.PagedList.PagedList<ReceptionReportDebtReadModel>
+        {
+            List = pagedData,
+            Pagination = new Framwork.PagedList.PagedListInfo
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            }
+        };
 
         return new ReceptionReportPageReadModel<ReceptionReportDebtReadModel, ReceptionReportDebtTotalsReadModel>(
             page,
@@ -504,10 +561,29 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 group.Sum(item => item.Material.Quantity),
                 group.Sum(item => (decimal?)item.Material.TotalCost) ?? 0m))
             .SingleOrDefaultAsync(cancellationToken);
-        var page = await grouped
+        var pageData = await grouped.ToListAsync(cancellationToken);
+        var orderedData = pageData
             .OrderByDescending(item => item.Quantity)
             .ThenBy(item => item.MaterialId)
-            .ToPagedList(filter.PageNumber, filter.PageSize, cancellationToken);
+            .ToList();
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize > 0 ? filter.PageSize : 50;
+        var totalCount = orderedData.Count;
+        var pagedData = orderedData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        var page = new Framwork.PagedList.PagedList<ReceptionReportMaterialReadModel>
+        {
+            List = pagedData,
+            Pagination = new Framwork.PagedList.PagedListInfo
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            }
+        };
 
         return new ReceptionReportPageReadModel<ReceptionReportMaterialReadModel, ReceptionReportMaterialTotalsReadModel>(
             page,
@@ -621,13 +697,6 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                       service.ServiceStatus == ReceptionServiceStatus.Completed));
     }
 
-    private static IOrderedQueryable<ReceptionReportReceptionReadModel> OrderByReceptionDate(
-        IQueryable<ReceptionReportReceptionReadModel> query,
-        bool oldestFirst) =>
-        oldestFirst
-            ? query.OrderBy(item => item.ReceptionDate)
-            : query.OrderByDescending(item => item.ReceptionDate);
-
     private sealed class TrendAccumulator(int receptionCount)
     {
         public int ReceptionCount { get; } = receptionCount;
@@ -637,3 +706,4 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
         public decimal PaidAmount { get; set; }
     }
 }
+
