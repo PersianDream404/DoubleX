@@ -46,10 +46,16 @@ public sealed class ReverseReceptionServiceMaterialCommandHandler(
         {
             return Result.Success(true);
         }
+        if (!reception.CanReverseMaterialMovement(command.ReceptionServiceId, material.Id))
+        {
+            return Result.Error("به‌دلیل پرداخت ثبت‌شده، برگشت این ماده مبلغ پذیرش را کمتر از مبلغ پرداختی می‌کند.");
+        }
 
         var returnKey = Convert.ToHexString(SHA256.HashData(
             Encoding.UTF8.GetBytes($"reverse:{material.IdempotencyKey}")));
-        var result = await commandBus.Send<RegisterStockMovementCommand, bool>(
+        var result = await commandBus.Send<
+            RegisterStockMovementCommand,
+            RegisterStockMovementResponseDto>(
             new RegisterStockMovementCommand(new RegisterStockMovementRequestDto
             {
                 MaterialId = material.MaterialId,

@@ -7,6 +7,7 @@ public enum InventoryOperationStatus
     Inactive,
     Conflict,
     HistoricalDataConflict,
+    AmountLimitExceeded,
     InvalidInput,
     InsufficientStock,
     ConcurrencyConflict

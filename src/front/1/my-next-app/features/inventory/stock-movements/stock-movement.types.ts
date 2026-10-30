@@ -10,3 +10,20 @@ export interface RegisterStockMovementRequest {
   description: string | null;
   idempotencyKey: string;
 }
+
+export interface QuoteStockMovementCostsRequest {
+  items: {
+    key: string;
+    materialId: number;
+    quantity: number;
+  }[];
+}
+
+export interface StockMovementCostQuote {
+  items: {
+    key: string;
+    unitCost: number;
+    totalCost: number;
+  }[];
+  totalCost: number;
+}

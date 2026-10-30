@@ -73,15 +73,26 @@ public sealed class ReceptionService : BaseEntityIdentity
         return true;
     }
 
-    public bool MarkMaterialMovementRegistered(string idempotencyKey)
+    public decimal? GetMaterialCharge(string idempotencyKey, decimal totalCost)
     {
         var material = _materials.SingleOrDefault(item => item.IdempotencyKey == idempotencyKey);
-        if (material is null)
+        return material is null || material.MovementRegistered
+            ? null
+            : decimal.Round(totalCost, 2);
+    }
+
+    public bool MarkMaterialMovementRegistered(
+        string idempotencyKey,
+        decimal unitCost,
+        decimal totalCost)
+    {
+        var material = _materials.SingleOrDefault(item => item.IdempotencyKey == idempotencyKey);
+        if (material is null || material.MovementRegistered)
         {
             return false;
         }
 
-        material.MarkMovementRegistered();
+        material.MarkMovementRegistered(unitCost, totalCost);
         return true;
     }
 

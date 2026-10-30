@@ -15,6 +15,8 @@ public sealed class StockMovementConfiguration : IEntityTypeConfiguration<StockM
         builder.Property(movement => movement.Quantity).HasPrecision(18, 3).IsRequired();
         builder.Property(movement => movement.PurchaseQuantity).HasPrecision(18, 6);
         builder.Property(movement => movement.PurchaseUnitPrice).HasPrecision(18, 2);
+        builder.Property(movement => movement.UnitCost).HasPrecision(38, 8);
+        builder.Property(movement => movement.TotalCost).HasPrecision(38, 2);
         builder.Property(movement => movement.OccurredAt).IsRequired();
         builder.Property(movement => movement.ReferenceType).HasMaxLength(50);
         builder.Property(movement => movement.Description).HasMaxLength(1000);

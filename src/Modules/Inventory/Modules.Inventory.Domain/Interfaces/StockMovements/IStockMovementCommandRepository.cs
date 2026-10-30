@@ -5,7 +5,13 @@ namespace Modules.Inventory.Domain.Interfaces.StockMovements;
 
 public interface IStockMovementCommandRepository
 {
-    Task<InventoryOperationStatus> RegisterAsync(
+    Task<StockMovementRegistrationResult> RegisterAsync(
         StockMovement movement,
+        decimal? maximumTotalCost,
         CancellationToken cancellationToken);
 }
+
+public sealed record StockMovementRegistrationResult(
+    InventoryOperationStatus Status,
+    decimal? UnitCost = null,
+    decimal? TotalCost = null);

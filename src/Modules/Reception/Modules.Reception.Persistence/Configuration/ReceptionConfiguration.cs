@@ -84,7 +84,8 @@ public sealed class ReceptionServiceMaterialConfiguration
         builder.ToTable("ReceptionServiceMaterials");
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Quantity).HasPrecision(18, 3);
-        builder.Property(item => item.UnitCost).HasPrecision(18, 2);
+        builder.Property(item => item.UnitCost).HasPrecision(38, 8);
+        builder.Property(item => item.TotalCost).HasPrecision(18, 2);
         builder.Property(item => item.IdempotencyKey).HasMaxLength(150).IsRequired();
         builder.Property(item => item.Description).HasMaxLength(1000);
         builder.HasIndex(item => new { item.ReceptionServiceId, item.IdempotencyKey }).IsUnique();

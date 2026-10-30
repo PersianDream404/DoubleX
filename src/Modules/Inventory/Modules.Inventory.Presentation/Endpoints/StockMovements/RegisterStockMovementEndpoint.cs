@@ -21,7 +21,7 @@ public sealed class RegisterStockMovementEndpoint
                     [FromServices] ICommandBus commandBus,
                     CancellationToken cancellationToken) =>
                 {
-                    var result = await commandBus.Send<RegisterStockMovementCommand, bool>(
+                    var result = await commandBus.Send<RegisterStockMovementCommand, RegisterStockMovementResponseDto>(
                         new RegisterStockMovementCommand(request), cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { message = "گردش انبار با موفقیت ثبت شد." })

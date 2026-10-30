@@ -21,6 +21,7 @@ export interface ReceptionServiceMaterial {
   materialId: number;
   quantity: number;
   unitCost: number | null;
+  totalCost: number | null;
   description: string | null;
   movementRegistered: boolean;
   movementReversed: boolean;

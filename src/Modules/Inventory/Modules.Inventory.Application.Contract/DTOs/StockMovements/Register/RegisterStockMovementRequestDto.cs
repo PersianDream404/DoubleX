@@ -15,3 +15,5 @@ public sealed class RegisterStockMovementRequestDto
     public string? Description { get; set; }
     public string? IdempotencyKey { get; set; }
 }
+
+public sealed record RegisterStockMovementResponseDto(decimal? UnitCost, decimal? TotalCost);

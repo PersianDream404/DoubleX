@@ -25,6 +25,8 @@ import type { PagedResult } from "@/lib/api/types/paged-result";
 import { useUserContext } from "@/contexts/user-context";
 import { MaterialService } from "@/features/inventory/materials/material.service";
 import type { MaterialDto } from "@/features/inventory/materials/material.types";
+import { StockMovementService } from "@/features/inventory/stock-movements/stock-movement.service";
+import type { StockMovementCostQuote } from "@/features/inventory/stock-movements/stock-movement.types";
 import { PersonnelService } from "@/features/personnel/list/personnel.service";
 import type { PersonnelDto } from "@/features/personnel/list/personnel.types";
 import { ServiceCatalogService } from "@/features/services/list/service.service";
@@ -200,6 +202,7 @@ export function NewReceptionPage() {
   const router = useRouter();
   const { salonId, loading: userLoading, error: userError } = useUserContext();
   const receptionService = useMemo(() => new ReceptionService(), []);
+  const stockMovementService = useMemo(() => new StockMovementService(), []);
   const nextKey = useRef(2);
   const [options, setOptions] = useState<ReceptionOptions | null>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
@@ -214,6 +217,11 @@ export function NewReceptionPage() {
   const [notes, setNotes] = useState("");
   const [services, setServices] = useState<ServiceDraft[]>([EMPTY_SERVICE]);
   const [payments, setPayments] = useState<PaymentDraft[]>([]);
+  const [materialQuote, setMaterialQuote] = useState<StockMovementCostQuote | null>(null);
+  const [quotedMaterialQuoteSignature, setQuotedMaterialQuoteSignature] = useState<string | null>(null);
+  const [loadingMaterialQuoteSignature, setLoadingMaterialQuoteSignature] = useState<string | null>(null);
+  const [materialQuoteError, setMaterialQuoteError] = useState<string | null>(null);
+  const [materialQuoteErrorSignature, setMaterialQuoteErrorSignature] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [createdReceptionId, setCreatedReceptionId] = useState<number | null>(null);
@@ -359,13 +367,115 @@ export function NewReceptionPage() {
     });
   }, [options, serviceTariffId]);
 
-  const totalAmount = services.reduce(
+  const materialQuoteRows = useMemo(
+    () =>
+      services.flatMap((service) =>
+        service.materials.map((material) => ({
+          key: material.key,
+          materialId: material.materialId,
+          quantity: material.quantity,
+        })),
+      ),
+    [services],
+  );
+  const materialQuoteSignature = JSON.stringify(materialQuoteRows);
+  const hasMaterialRows = materialQuoteRows.length > 0;
+  const hasInvalidMaterialQuoteRows = materialQuoteRows.some(
+    (item) =>
+      item.materialId === null ||
+      !Number.isInteger(item.materialId) ||
+      !Number.isFinite(item.quantity) ||
+      item.quantity <= 0 ||
+      Math.round(item.quantity * 1000) / 1000 !== item.quantity,
+  );
+
+  useEffect(() => {
+    if (!hasMaterialRows || hasInvalidMaterialQuoteRows) return;
+
+    const request = {
+      items: materialQuoteRows.flatMap((item) =>
+        item.materialId === null
+          ? []
+          : [{ key: item.key, materialId: item.materialId, quantity: item.quantity }],
+      ),
+    };
+    const controller = new AbortController();
+
+    const timeout = window.setTimeout(() => {
+      setMaterialQuote(null);
+      setQuotedMaterialQuoteSignature(null);
+      setLoadingMaterialQuoteSignature(materialQuoteSignature);
+      setMaterialQuoteError(null);
+      setMaterialQuoteErrorSignature(null);
+      stockMovementService
+        .quoteCosts(request, { signal: controller.signal })
+        .then((response) => {
+          if (!response.data) {
+            throw new Error(response.message ?? "بهای FIFO مواد از سرور دریافت نشد.");
+          }
+          if (!controller.signal.aborted) {
+            setMaterialQuote(response.data);
+            setQuotedMaterialQuoteSignature(materialQuoteSignature);
+          }
+        })
+        .catch((error: unknown) => {
+          if (!controller.signal.aborted) {
+            setMaterialQuoteError(handleApiError(error));
+            setMaterialQuoteErrorSignature(materialQuoteSignature);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setLoadingMaterialQuoteSignature((current) =>
+              current === materialQuoteSignature ? null : current,
+            );
+          }
+        });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [
+    hasInvalidMaterialQuoteRows,
+    hasMaterialRows,
+    materialQuoteRows,
+    materialQuoteSignature,
+    stockMovementService,
+  ]);
+
+  const materialQuoteReady =
+    !hasMaterialRows ||
+    (!hasInvalidMaterialQuoteRows &&
+      materialQuote !== null &&
+      quotedMaterialQuoteSignature === materialQuoteSignature &&
+      loadingMaterialQuoteSignature !== materialQuoteSignature &&
+      materialQuoteErrorSignature !== materialQuoteSignature);
+  const currentMaterialQuoteError =
+    materialQuoteErrorSignature === materialQuoteSignature
+      ? materialQuoteError
+      : null;
+  const materialQuotePending =
+    hasMaterialRows &&
+    !hasInvalidMaterialQuoteRows &&
+    !materialQuoteReady &&
+    currentMaterialQuoteError === null;
+  const materialCostsByKey = new Map<string, StockMovementCostQuote["items"][number]>(
+    materialQuoteReady
+      ? (materialQuote?.items ?? []).map((item) => [item.key, item])
+      : [],
+  );
+  const serviceSubtotal = services.reduce(
     (total, service) =>
       total + Math.max(0, service.quantity * service.unitPrice - service.discountAmount),
     0,
   );
+  const materialSubtotal =
+    materialQuoteReady && hasMaterialRows ? materialQuote?.totalCost ?? 0 : 0;
+  const payableAmount = serviceSubtotal + materialSubtotal;
   const totalPayment = payments.reduce((total, payment) => total + payment.amount, 0);
-  const remainingAmount = Math.max(0, totalAmount - totalPayment);
+  const remainingAmount = Math.max(0, payableAmount - totalPayment);
   const salonError = userError
     ? `${userError} لطفاً خارج شوید و دوباره وارد شوید.`
     : !userLoading && !salonId
@@ -388,6 +498,7 @@ export function NewReceptionPage() {
   }
 
   function addPayment() {
+    if (!materialQuoteReady) return;
     setPayments((current) => [
       ...current,
       {
@@ -408,6 +519,15 @@ export function NewReceptionPage() {
       setFormError("شناسه سالن در توکن ورود شما موجود نیست.");
       return;
     }
+    if (!materialQuoteReady) {
+      setFormError(
+        currentMaterialQuoteError ??
+          (materialQuotePending
+            ? "در حال محاسبه بهای مواد مصرفی هستیم؛ کمی صبر کنید."
+            : "برای محاسبه بهای مواد، ماده و مقدار معتبر را وارد کنید."),
+      );
+      return;
+    }
     setFormError(null);
 
     const parsedForm = CreateReceptionFormSchema.safeParse({
@@ -415,6 +535,7 @@ export function NewReceptionPage() {
       receptionistId: receptionistId ?? 0,
       serviceTariffId: serviceTariffId ?? 0,
       notes,
+      materialCostTotal: materialSubtotal,
       services: services.map((service) => ({
         serviceId: service.serviceId ?? 0,
         serviceTariffId: service.serviceTariffId ?? 0,
@@ -835,7 +956,16 @@ export function NewReceptionPage() {
                         <div className="space-y-2">
                           {service.materials.map((material, materialIndex) => (
                             <div key={material.key} className="grid items-end gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(100px,1fr)_minmax(0,2fr)_auto]">
-                              <Field label={`ماده ${materialIndex + 1}`}>
+                              <Field
+                                label={`ماده ${materialIndex + 1}`}
+                                hint={
+                                  materialCostsByKey.has(material.key)
+                                    ? `بهای واحد ${amountLabel(materialCostsByKey.get(material.key)!.unitCost)} | مبلغ این ردیف ${amountLabel(materialCostsByKey.get(material.key)!.totalCost)}`
+                                    : materialQuotePending && material.materialId !== null
+                                      ? "در حال محاسبه بهای FIFO..."
+                                      : undefined
+                                }
+                              >
                                 <FormSelect
                                   ariaLabel={`انتخاب ماده مصرفی ${materialIndex + 1}`}
                                   value={material.materialId ? String(material.materialId) : ""}
@@ -920,7 +1050,7 @@ export function NewReceptionPage() {
             title="پرداخت‌ها"
             icon={<CreditCard className="size-4" />}
             action={
-              <Button type="button" size="sm" onClick={addPayment} disabled={Boolean(createdReceptionId) || totalAmount <= 0} className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800">
+              <Button type="button" size="sm" onClick={addPayment} disabled={Boolean(createdReceptionId) || !materialQuoteReady || payableAmount <= 0} className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800">
                 <Plus className="size-4" />
                 افزودن پرداخت
               </Button>
@@ -1042,14 +1172,45 @@ export function NewReceptionPage() {
           <div className="rounded-2xl border border-fuchsia-100 bg-white p-3 shadow-[0_8px_28px_-22px_rgba(54,16,70,0.3)] sm:p-4">
             <div className="grid gap-2 rounded-xl border border-fuchsia-100 bg-gradient-to-l from-fuchsia-50 to-white p-3 sm:grid-cols-2 sm:p-4">
               <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
-                <span className="flex items-center gap-2"><Banknote className="size-4 text-fuchsia-700" /> مبلغ کل</span>
-                <strong className="text-sm font-bold text-fuchsia-800">{amountLabel(totalAmount)}</strong>
+                <span className="flex items-center gap-2"><Banknote className="size-4 text-fuchsia-700" /> جمع خدمات</span>
+                <strong className="text-sm font-bold text-fuchsia-800">{amountLabel(serviceSubtotal)}</strong>
               </div>
               <div className="flex items-center justify-between gap-3 border-t border-fuchsia-100 pt-2 text-xs text-slate-500 sm:border-r sm:border-t-0 sm:pr-4 sm:pt-0">
-                <span className="flex items-center gap-2"><CreditCard className="size-4 text-fuchsia-700" /> مانده</span>
-                <strong className="text-sm font-bold text-fuchsia-800">{amountLabel(remainingAmount)}</strong>
+                <span className="flex items-center gap-2"><FlaskConical className="size-4 text-fuchsia-700" /> بهای مواد مصرفی</span>
+                <strong className="text-sm font-bold text-fuchsia-800">
+                  {hasMaterialRows && !materialQuoteReady
+                    ? materialQuotePending
+                      ? "در حال محاسبه..."
+                      : "قابل محاسبه نیست"
+                    : amountLabel(materialSubtotal)}
+                </strong>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-fuchsia-100 pt-2 text-xs font-semibold text-slate-700 sm:border-t sm:pt-2">
+                <span>مبلغ قابل پرداخت</span>
+                <strong className="text-sm font-bold text-fuchsia-800">
+                  {hasMaterialRows && !materialQuoteReady ? "پس از محاسبه بهای مواد" : amountLabel(payableAmount)}
+                </strong>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-fuchsia-100 pt-2 text-xs text-slate-500 sm:border-r sm:pr-4">
+                <span className="flex items-center gap-2"><CreditCard className="size-4 text-fuchsia-700" /> مانده قابل پرداخت</span>
+                <strong className="text-sm font-bold text-fuchsia-800">
+                  {hasMaterialRows && !materialQuoteReady ? "—" : amountLabel(remainingAmount)}
+                </strong>
               </div>
             </div>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              قیمت هر ماده و مبلغ پذیرش بر اساس لایه‌های FIFO انبار پیش‌نمایش می‌شود؛ مبلغ قطعی هنگام ثبت دوباره در سرور محاسبه خواهد شد.
+            </p>
+            {hasInvalidMaterialQuoteRows && (
+              <p role="status" className="mt-2 text-xs text-amber-700">
+                برای محاسبه قیمت، همه مواد را انتخاب و مقدار معتبر وارد کنید.
+              </p>
+            )}
+            {currentMaterialQuoteError && (
+              <p role="alert" className="mt-2 text-xs text-rose-700">
+                محاسبه بهای مواد ناموفق بود: {currentMaterialQuoteError}
+              </p>
+            )}
             <div className="mt-3 flex flex-col-reverse justify-between gap-2 sm:flex-row">
               <Button
                 type="button"
@@ -1062,7 +1223,7 @@ export function NewReceptionPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={submitting || currentOptionsLoading || !salonId || Boolean(currentOptionsError) || createdReceptionId !== null}
+                disabled={submitting || currentOptionsLoading || !salonId || Boolean(currentOptionsError) || !materialQuoteReady || createdReceptionId !== null}
                 className="h-10 rounded-xl bg-fuchsia-700 px-6 text-white shadow-sm shadow-fuchsia-950/15 hover:bg-fuchsia-800"
               >
                 {submitting && <LoaderCircle className="size-4 animate-spin" />}

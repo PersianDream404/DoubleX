@@ -394,9 +394,13 @@ namespace Modules.Reception.Persistence.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
-                    b.Property<decimal?>("UnitCost")
+                    b.Property<decimal?>("TotalCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(38, 8)
+                        .HasColumnType("decimal(38,8)");
 
                     b.HasKey("Id");
 

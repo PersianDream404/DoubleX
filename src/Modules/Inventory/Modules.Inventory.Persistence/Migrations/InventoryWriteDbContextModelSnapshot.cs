@@ -168,8 +168,16 @@ namespace Modules.Inventory.Persistence.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
+                    b.Property<decimal?>("TotalCost")
+                        .HasPrecision(38, 2)
+                        .HasColumnType("decimal(38,2)");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(38, 8)
+                        .HasColumnType("decimal(38,8)");
 
                     b.HasKey("Id");
 

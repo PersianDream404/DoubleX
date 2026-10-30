@@ -54,6 +54,7 @@ public sealed class GetReceptionByIdQueryHandler(IReceptionQueryRepository repos
                     material.MaterialId,
                     material.Quantity,
                     material.UnitCost,
+                    material.TotalCost,
                     material.Description,
                     material.MovementRegistered,
                     material.MovementReversed)).ToList())).ToList(),

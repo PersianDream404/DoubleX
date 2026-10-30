@@ -9,6 +9,8 @@ public sealed class StockMovement : BaseEntityIdentity
     public decimal Quantity { get; private set; }
     public decimal? PurchaseQuantity { get; private set; }
     public decimal? PurchaseUnitPrice { get; private set; }
+    public decimal? UnitCost { get; private set; }
+    public decimal? TotalCost { get; private set; }
     public DateTimeOffset OccurredAt { get; private set; }
     public string? ReferenceType { get; private set; }
     public long? ReferenceId { get; private set; }
@@ -73,4 +75,24 @@ public sealed class StockMovement : BaseEntityIdentity
         StockMovementType.Consumption or StockMovementType.AdjustmentDecrease => -Quantity,
         _ => throw new InvalidOperationException($"Unsupported stock movement type: {Type}.")
     };
+
+    public void SetUnitCost(decimal unitCost)
+    {
+        if (unitCost < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(unitCost));
+        }
+
+        UnitCost = decimal.Round(unitCost, 8);
+    }
+
+    public void SetTotalCost(decimal totalCost)
+    {
+        if (totalCost < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalCost));
+        }
+
+        TotalCost = decimal.Round(totalCost, 2);
+    }
 }

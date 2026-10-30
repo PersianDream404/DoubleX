@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.Inventory.Application.Contract.Interfaces.Materials;
+using Modules.Inventory.Application.Contract.Interfaces.StockMovements;
 using Modules.Inventory.Application.Contract.Interfaces.Units;
 using Modules.Inventory.Domain.Interfaces.Materials;
 using Modules.Inventory.Domain.Interfaces.StockMovements;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IStockMovementCommandRepository, StockMovementCommandRepository>();
         services.AddScoped<IUnitQueryRepository, UnitQueryRepository>();
         services.AddScoped<IMaterialQueryRepository, MaterialQueryRepository>();
+        services.AddScoped<IStockMovementCostQueryRepository, StockMovementCostQueryRepository>();
         return services;
     }
 }

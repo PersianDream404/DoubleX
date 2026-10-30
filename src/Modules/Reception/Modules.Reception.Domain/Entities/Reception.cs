@@ -176,16 +176,38 @@ public sealed class Reception : BaseEntityIdentity
         return true;
     }
 
-    public bool MarkMaterialMovementRegistered(long receptionServiceId, string idempotencyKey)
+    public bool MarkMaterialMovementRegistered(
+        long receptionServiceId,
+        string idempotencyKey,
+        decimal unitCost,
+        decimal totalCost)
     {
         var service = _services.SingleOrDefault(item => item.Id == receptionServiceId);
-        if (service is null || !service.MarkMaterialMovementRegistered(idempotencyKey))
+        var materialCharge = service?.GetMaterialCharge(idempotencyKey, totalCost);
+        if (service is null ||
+            materialCharge is null ||
+            SubTotal + materialCharge.Value > MaximumAmount ||
+            TotalAmount + materialCharge.Value > MaximumAmount ||
+            !service.MarkMaterialMovementRegistered(idempotencyKey, unitCost, totalCost))
         {
             return false;
         }
 
+        RecalculateTotals();
         Revision++;
         return true;
+    }
+
+    public bool CanReverseMaterialMovement(long receptionServiceId, long materialRecordId)
+    {
+        var material = _services
+            .SingleOrDefault(item => item.Id == receptionServiceId)?
+            .Materials
+            .SingleOrDefault(item => item.Id == materialRecordId);
+        return material is not null &&
+               material.MovementRegistered &&
+               !material.MovementReversed &&
+               TotalAmount - (material.TotalCost ?? 0m) >= NetPaidAmount;
     }
 
     public bool MarkMaterialMovementReversed(long receptionServiceId, long materialRecordId)
@@ -196,6 +218,7 @@ public sealed class Reception : BaseEntityIdentity
             return false;
         }
 
+        RecalculateTotals();
         Revision++;
         return true;
     }
@@ -205,6 +228,8 @@ public sealed class Reception : BaseEntityIdentity
             .Sum(payment => payment.Amount);
 
     public decimal RemainingAmount => TotalAmount - NetPaidAmount;
+    public decimal MaximumAdditionalMaterialCharge =>
+        Math.Min(MaximumAmount - SubTotal, MaximumAmount - TotalAmount);
 
     public bool ChangeStatus(ReceptionStatus status)
     {
@@ -231,7 +256,14 @@ public sealed class Reception : BaseEntityIdentity
     {
         var billableServices = _services.Where(service =>
             service.ServiceStatus != ReceptionServiceStatus.Cancelled);
-        SubTotal = billableServices.Sum(service => service.Quantity * service.UnitPrice);
+        SubTotal = billableServices.Sum(service =>
+            service.Quantity * service.UnitPrice +
+            service.Materials
+                .Where(material =>
+                    material.MovementRegistered &&
+                    !material.MovementReversed &&
+                    material.TotalCost.HasValue)
+                .Sum(material => material.TotalCost!.Value));
         TotalDiscountAmount = billableServices.Sum(service => service.DiscountAmount);
         TotalAmount = SubTotal - TotalDiscountAmount;
         RecalculateFinancialStatus();

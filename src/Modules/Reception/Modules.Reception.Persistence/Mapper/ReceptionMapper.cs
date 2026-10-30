@@ -67,6 +67,7 @@ public static class ReceptionMapper
                     material.MaterialId,
                     material.Quantity,
                     material.UnitCost,
+                    material.TotalCost,
                     material.Description,
                     material.MovementRegistered,
                     material.MovementReversed)).ToList())).ToList(),

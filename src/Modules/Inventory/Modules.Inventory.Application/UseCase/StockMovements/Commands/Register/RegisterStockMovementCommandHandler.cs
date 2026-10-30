@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentValidation;
 using Framwork.Bus.Command;
+using Modules.Inventory.Application.Contract.DTOs;
 using Modules.Inventory.Application.Contract.UseCase;
 using Modules.Inventory.Domain.Entities;
 using Modules.Inventory.Domain.Enums;
@@ -9,9 +10,9 @@ using Modules.Inventory.Domain.Interfaces.StockMovements;
 namespace Modules.Inventory.Application.UseCase;
 
 public sealed class RegisterStockMovementCommandHandler(IStockMovementCommandRepository repository)
-    : ICommandHandler<RegisterStockMovementCommand, bool>
+    : ICommandHandler<RegisterStockMovementCommand, RegisterStockMovementResponseDto>
 {
-    public async Task<Result<bool>> Handle(
+    public async Task<Result<RegisterStockMovementResponseDto>> Handle(
         RegisterStockMovementCommand command,
         CancellationToken cancellationToken)
     {
@@ -27,13 +28,23 @@ public sealed class RegisterStockMovementCommandHandler(IStockMovementCommandRep
             request.ReferenceId,
             request.Description?.Trim(),
             request.IdempotencyKey?.Trim());
-        var status = await repository.RegisterAsync(movement, cancellationToken);
-        return status switch
+        var status = await repository.RegisterAsync(
+            movement,
+            command.MaximumTotalCost,
+            cancellationToken);
+        return status.Status switch
         {
-            InventoryOperationStatus.Succeeded => Result.Success(true),
+            InventoryOperationStatus.Succeeded =>
+                Result.Success(new RegisterStockMovementResponseDto(
+                    status.UnitCost,
+                    status.TotalCost)),
             InventoryOperationStatus.NotFound => Result.NotFound("کالای موردنظر پیدا نشد."),
             InventoryOperationStatus.Inactive => Result.Error("برای کالای غیرفعال گردش ثبت نمی‌شود."),
             InventoryOperationStatus.Conflict => Result.Error("این کلید جلوگیری از ثبت تکراری قبلاً استفاده شده است."),
+            InventoryOperationStatus.HistoricalDataConflict =>
+                Result.Error("بهای FIFO این موجودی مشخص نیست؛ برای ثبت مصرف، ابتدا موجودیِ بدون قیمت خرید را تعیین تکلیف کنید."),
+            InventoryOperationStatus.AmountLimitExceeded =>
+                Result.Error("هزینهٔ FIFO این ماده از سقف مبلغ مجاز پذیرش بیشتر است."),
             InventoryOperationStatus.InvalidInput => Result.Error("اطلاعات مقدار یا قیمت گردش انبار معتبر نیست."),
             InventoryOperationStatus.InsufficientStock => Result.Error("موجودی برای این خروج کافی نیست."),
             InventoryOperationStatus.ConcurrencyConflict => Result.Error("تغییر هم‌زمان موجودی رخ داده است؛ عملیات را دوباره بررسی کنید."),
@@ -47,6 +58,9 @@ public sealed class RegisterStockMovementCommandValidator : AbstractValidator<Re
     public RegisterStockMovementCommandValidator()
     {
         RuleFor(command => command.Request).NotNull();
+        RuleFor(command => command.MaximumTotalCost)
+            .GreaterThanOrEqualTo(0)
+            .When(command => command.MaximumTotalCost.HasValue);
         When(command => command.Request is not null, () =>
         {
             RuleFor(command => command.Request.MaterialId).GreaterThan(0);
@@ -83,6 +97,16 @@ public sealed class RegisterStockMovementCommandValidator : AbstractValidator<Re
             RuleFor(command => command.Request.IdempotencyKey)
                 .NotEmpty()
                 .When(command => command.Request.Type == StockMovementType.Consumption);
+            RuleFor(command => command.Request.ReferenceType)
+                .Equal("ReceptionServiceMaterial")
+                .When(command => command.Request.Type == StockMovementType.Return);
+            RuleFor(command => command.Request.ReferenceId)
+                .NotNull()
+                .GreaterThan(0)
+                .When(command => command.Request.Type == StockMovementType.Return);
+            RuleFor(command => command.Request.IdempotencyKey)
+                .NotEmpty()
+                .When(command => command.Request.Type == StockMovementType.Return);
         });
     }
 }

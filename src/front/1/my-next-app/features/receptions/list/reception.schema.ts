@@ -35,6 +35,7 @@ export const CreateReceptionFormSchema = z
     receptionistId: z.number().int().positive(),
     serviceTariffId: z.number().int().positive(),
     notes: z.string().max(2000),
+    materialCostTotal: z.number().nonnegative(),
     services: z.array(ReceptionServiceFormSchema).min(1),
     payments: z.array(ReceptionPaymentFormSchema),
   })
@@ -56,6 +57,7 @@ export const CreateReceptionFormSchema = z
           message: "تعرفه همه خدمات باید با تعرفه انتخاب‌شده برای پذیرش یکسان باشد.",
           path: ["services", index, "serviceTariffId"],
         });
+        totalAmount += form.materialCostTotal;
       }
     });
 

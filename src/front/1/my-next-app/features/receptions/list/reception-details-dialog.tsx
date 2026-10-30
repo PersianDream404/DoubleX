@@ -51,6 +51,10 @@ function amountLabel(amount: number) {
   return `${new Intl.NumberFormat("fa-IR").format(amount)} تومان`;
 }
 
+function unitCostLabel(amount: number) {
+  return `${new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 8 }).format(amount)} تومان`;
+}
+
 function receptionNumberLabel(number: number) {
   return new Intl.NumberFormat("fa-IR").format(number);
 }
@@ -383,8 +387,18 @@ export function ReceptionDetailsDialog({
                                     مقدار: {new Intl.NumberFormat("fa-IR").format(material.quantity)}
                                   </span>
                                   <span className="text-slate-500">
-                                    {material.unitCost === null ? "هزینه ثبت نشده" : amountLabel(material.unitCost)}
+                                    {material.unitCost === null
+                                      ? "بهای FIFO ثبت نشده"
+                                      : `بهای واحد FIFO: ${unitCostLabel(material.unitCost)}`}
                                   </span>
+                                  {material.unitCost !== null && material.totalCost !== null && (
+                                    <span className="font-semibold text-slate-700 sm:col-span-3">
+                                      {material.movementReversed
+                                        ? "مبلغ برگشت‌شده: "
+                                        : "مبلغ ماده: "}
+                                      {amountLabel(material.totalCost)}
+                                    </span>
+                                  )}
                                   {material.description && (
                                     <span className="text-slate-500 sm:col-span-3">
                                       توضیحات: {material.description}

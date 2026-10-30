@@ -9,14 +9,15 @@ namespace Modules.Inventory.Persistence.Repositories.StockMovements;
 public sealed class StockMovementCommandRepository(InventoryWriteDbContext context)
     : IStockMovementCommandRepository
 {
-    public async Task<InventoryOperationStatus> RegisterAsync(
+    public async Task<StockMovementRegistrationResult> RegisterAsync(
         StockMovement movement,
+        decimal? maximumTotalCost,
         CancellationToken cancellationToken)
     {
-        if (movement.Type == StockMovementType.Consumption &&
+        if (movement.Type is StockMovementType.Consumption or StockMovementType.Return &&
             string.IsNullOrWhiteSpace(movement.IdempotencyKey))
         {
-            return InventoryOperationStatus.InvalidInput;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.InvalidInput);
         }
 
         if (movement.IdempotencyKey is not null)
@@ -28,15 +29,7 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                     cancellationToken);
             if (existingMovement is not null)
             {
-                return existingMovement.MaterialId == movement.MaterialId &&
-                       existingMovement.Type == movement.Type &&
-                       existingMovement.Quantity == movement.Quantity &&
-                       existingMovement.PurchaseQuantity == movement.PurchaseQuantity &&
-                       existingMovement.PurchaseUnitPrice == movement.PurchaseUnitPrice &&
-                       existingMovement.ReferenceType == movement.ReferenceType &&
-                       existingMovement.ReferenceId == movement.ReferenceId
-                    ? InventoryOperationStatus.Succeeded
-                    : InventoryOperationStatus.Conflict;
+                return GetExistingResult(existingMovement, movement, maximumTotalCost);
             }
         }
 
@@ -44,12 +37,12 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
             .SingleOrDefaultAsync(item => item.Id == movement.MaterialId, cancellationToken);
         if (material is null)
         {
-            return InventoryOperationStatus.NotFound;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.NotFound);
         }
 
         if (!material.Status)
         {
-            return InventoryOperationStatus.Inactive;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.Inactive);
         }
 
         if (movement.Type == StockMovementType.Receipt &&
@@ -59,7 +52,16 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                  movement.PurchaseQuantity.Value * material.PurchaseConversionFactor,
                  3) != movement.Quantity))
         {
-            return InventoryOperationStatus.InvalidInput;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.InvalidInput);
+        }
+
+        if (movement.Type == StockMovementType.Receipt)
+        {
+            movement.SetTotalCost(
+                movement.PurchaseQuantity!.Value *
+                movement.PurchaseUnitPrice!.Value);
+            movement.SetUnitCost(
+                movement.TotalCost!.Value / movement.Quantity);
         }
 
         var balance = await context.StockBalances
@@ -70,9 +72,79 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                 $"Material {movement.MaterialId} has no stock balance, violating the inventory invariant.");
         }
 
+        if (balance.Quantity + movement.GetQuantityChange() < 0)
+        {
+            return new StockMovementRegistrationResult(InventoryOperationStatus.InsufficientStock);
+        }
+
+        var history = await context.StockMovements
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(item => item.MaterialId == movement.MaterialId)
+            .OrderBy(item => item.Id)
+            .Select(item => new StockMovementFifoCosting.Movement(
+                item.Type,
+                item.Quantity,
+                item.TotalCost,
+                item.PurchaseQuantity,
+                item.PurchaseUnitPrice))
+            .ToListAsync(cancellationToken);
+
+        if (movement.Type == StockMovementType.Return)
+        {
+            var existingReturn = await context.StockMovements
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AnyAsync(item =>
+                    item.Type == StockMovementType.Return &&
+                    item.ReferenceType == movement.ReferenceType &&
+                    item.ReferenceId == movement.ReferenceId,
+                    cancellationToken);
+            if (existingReturn)
+            {
+                return new StockMovementRegistrationResult(InventoryOperationStatus.Conflict);
+            }
+
+            var originalConsumption = await context.StockMovements
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(item =>
+                    item.Type == StockMovementType.Consumption &&
+                    item.ReferenceType == movement.ReferenceType &&
+                    item.ReferenceId == movement.ReferenceId)
+                .Select(item => new { item.TotalCost })
+                .SingleOrDefaultAsync(cancellationToken);
+            if (originalConsumption?.TotalCost is null)
+            {
+                return new StockMovementRegistrationResult(
+                    InventoryOperationStatus.HistoricalDataConflict);
+            }
+
+            movement.SetTotalCost(originalConsumption.TotalCost.Value);
+            movement.SetUnitCost(originalConsumption.TotalCost.Value / movement.Quantity);
+        }
+
+        var layers = StockMovementFifoCosting.BuildLayers(history);
+        if (movement.Type == StockMovementType.Consumption)
+        {
+            if (!StockMovementFifoCosting.TryConsume(layers, movement.Quantity, out var totalCost))
+            {
+                return new StockMovementRegistrationResult(
+                    InventoryOperationStatus.HistoricalDataConflict);
+            }
+
+            movement.SetTotalCost(totalCost);
+            movement.SetUnitCost(totalCost / movement.Quantity);
+            if (maximumTotalCost.HasValue && totalCost > maximumTotalCost.Value)
+            {
+                return new StockMovementRegistrationResult(
+                    InventoryOperationStatus.AmountLimitExceeded);
+            }
+        }
+
         if (!balance.TryApply(movement.GetQuantityChange()))
         {
-            return InventoryOperationStatus.InsufficientStock;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.InsufficientStock);
         }
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -81,12 +153,15 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
         {
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return InventoryOperationStatus.Succeeded;
+            return new StockMovementRegistrationResult(
+                InventoryOperationStatus.Succeeded,
+                movement.UnitCost,
+                movement.TotalCost);
         }
         catch (DbUpdateConcurrencyException)
         {
             await transaction.RollbackAsync(cancellationToken);
-            return InventoryOperationStatus.ConcurrencyConflict;
+            return new StockMovementRegistrationResult(InventoryOperationStatus.ConcurrencyConflict);
         }
         catch (DbUpdateException) when (movement.IdempotencyKey is not null)
         {
@@ -100,18 +175,51 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
                     cancellationToken);
             if (existingMovement is not null)
             {
-                return existingMovement.MaterialId == movement.MaterialId &&
-                       existingMovement.Type == movement.Type &&
-                       existingMovement.Quantity == movement.Quantity &&
-                       existingMovement.PurchaseQuantity == movement.PurchaseQuantity &&
-                       existingMovement.PurchaseUnitPrice == movement.PurchaseUnitPrice &&
-                       existingMovement.ReferenceType == movement.ReferenceType &&
-                       existingMovement.ReferenceId == movement.ReferenceId
-                    ? InventoryOperationStatus.Succeeded
-                    : InventoryOperationStatus.Conflict;
+                return GetExistingResult(existingMovement, movement, maximumTotalCost);
             }
 
             throw;
         }
     }
+
+    private static bool Matches(StockMovement existing, StockMovement requested) =>
+        existing.MaterialId == requested.MaterialId &&
+        existing.Type == requested.Type &&
+        existing.Quantity == requested.Quantity &&
+        existing.PurchaseQuantity == requested.PurchaseQuantity &&
+        existing.PurchaseUnitPrice == requested.PurchaseUnitPrice &&
+        existing.ReferenceType == requested.ReferenceType &&
+        existing.ReferenceId == requested.ReferenceId;
+
+    private static StockMovementRegistrationResult GetExistingResult(
+        StockMovement existing,
+        StockMovement requested,
+        decimal? maximumTotalCost)
+    {
+        if (!Matches(existing, requested))
+        {
+            return new StockMovementRegistrationResult(InventoryOperationStatus.Conflict);
+        }
+
+        if (existing.Type is StockMovementType.Consumption or StockMovementType.Return &&
+            existing.TotalCost is null)
+        {
+            return new StockMovementRegistrationResult(
+                InventoryOperationStatus.HistoricalDataConflict);
+        }
+        if (maximumTotalCost.HasValue &&
+            existing.Type == StockMovementType.Consumption &&
+            existing.TotalCost.HasValue &&
+            existing.TotalCost.Value > maximumTotalCost.Value)
+        {
+            return new StockMovementRegistrationResult(
+                InventoryOperationStatus.AmountLimitExceeded);
+        }
+
+        return new StockMovementRegistrationResult(
+            InventoryOperationStatus.Succeeded,
+            existing.UnitCost,
+            existing.TotalCost);
+    }
+
 }

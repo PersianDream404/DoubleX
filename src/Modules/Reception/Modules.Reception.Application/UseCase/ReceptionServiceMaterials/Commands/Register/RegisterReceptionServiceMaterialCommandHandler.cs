@@ -85,32 +85,58 @@ public sealed class RegisterReceptionServiceMaterialCommandHandler(
                 return Result.Conflict("پذیرش هم‌زمان تغییر کرده است.");
             }
         }
-        else if (existing.MovementRegistered)
+        else if (existing.MovementRegistered && existing.UnitCost is not null)
         {
             return Result.Success(true);
         }
+        else if (existing.MovementRegistered)
+        {
+            return Result.Error("برای مصرف ثبت‌شدهٔ قدیمی، بهای FIFO قابل بازیابی نیست.");
+        }
 
-        var movementResult = await commandBus.Send<RegisterStockMovementCommand, bool>(
+        var receptionMaterial = service.Materials.SingleOrDefault(item =>
+            item.IdempotencyKey == idempotencyKey);
+        if (receptionMaterial is null)
+        {
+            return Result.Error("رکورد مادهٔ مصرفی در پذیرش پیدا نشد.");
+        }
+
+        var movementResult = await commandBus.Send<
+            RegisterStockMovementCommand,
+            RegisterStockMovementResponseDto>(
             new RegisterStockMovementCommand(new RegisterStockMovementRequestDto
             {
                 MaterialId = request.MaterialId,
                 Type = StockMovementType.Consumption,
                 Quantity = request.Quantity,
                 OccurredAt = DateTimeOffset.UtcNow,
-                ReferenceType = "ReceptionService",
-                ReferenceId = command.ReceptionServiceId,
+                ReferenceType = "ReceptionServiceMaterial",
+                ReferenceId = receptionMaterial.Id,
                 Description = request.Description,
                 IdempotencyKey = idempotencyKey
-            }),
+            }, reception.MaximumAdditionalMaterialCharge),
             cancellationToken);
         if (!movementResult.IsSuccess)
         {
             return Result.Error(movementResult.GetErrorMessage());
         }
 
-        if (!reception.MarkMaterialMovementRegistered(command.ReceptionServiceId, idempotencyKey))
+        if (movementResult.Value.UnitCost is null)
         {
-            return Result.Error("گردش انبار ثبت شد، اما ثبت وضعیت مصرف در پذیرش انجام نشد.");
+            return Result.Error("گردش انبار ثبت شد، اما بهای FIFO برای مادهٔ مصرفی در دسترس نیست.");
+        }
+        if (movementResult.Value.TotalCost is null)
+        {
+            return Result.Error("گردش انبار ثبت شد، اما مبلغ FIFO برای مادهٔ مصرفی در دسترس نیست.");
+        }
+
+        if (!reception.MarkMaterialMovementRegistered(
+                command.ReceptionServiceId,
+                idempotencyKey,
+                movementResult.Value.UnitCost.Value,
+                movementResult.Value.TotalCost.Value))
+        {
+            return Result.Error("گردش انبار ثبت شد، اما مبلغ ماده از محدودهٔ مجاز پذیرش بیشتر است.");
         }
 
         return await repository.SaveChangesAsync(cancellationToken)

@@ -23,6 +23,7 @@ public sealed record ReceptionServiceMaterialReadModel(
     long MaterialId,
     decimal Quantity,
     decimal? UnitCost,
+    decimal? TotalCost,
     string? Description,
     bool MovementRegistered,
     bool MovementReversed);
