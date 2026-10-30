@@ -10,5 +10,8 @@ public interface IMaterialQueryRepository
         GetMaterialsRequestDto request,
         CancellationToken cancellationToken);
     Task<MaterialDto?> GetByIdAsync(long id, CancellationToken cancellationToken);
+    Task<IReadOnlyList<MaterialReceptionLookupDto>> GetReceptionLookupsAsync(
+        IReadOnlyCollection<long> materialIds,
+        CancellationToken cancellationToken);
     Task<Material?> GetEntityByIdAsync(long id, CancellationToken cancellationToken);
 }

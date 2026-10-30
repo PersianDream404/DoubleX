@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IPersonnelCommissionOutboxRepository>(provider =>
             provider.GetRequiredService<ReceptionCommandRepository>());
         services.AddScoped<IReceptionQueryRepository, ReceptionQueryRepository>();
+        services.AddScoped<IReceptionReportQueryRepository, ReceptionReportQueryRepository>();
         return services;
     }
 }

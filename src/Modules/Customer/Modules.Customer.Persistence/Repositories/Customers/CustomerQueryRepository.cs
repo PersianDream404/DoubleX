@@ -93,4 +93,36 @@ public sealed class CustomerQueryRepository(CustomerReadDbContext context)
             .Select(CustomerMapper.ToGetByIdDto())
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<CustomerReceptionLookupDto>> GetReceptionLookupsAsync(
+        long salonId,
+        IReadOnlyCollection<long> customerIds,
+        CancellationToken cancellationToken) =>
+        await context.Customers
+            .AsNoTracking()
+            .Where(customer =>
+                customer.SalonId == salonId &&
+                customerIds.Contains(customer.Id))
+            .Select(customer => new CustomerReceptionLookupDto(
+                customer.Id,
+                customer.FullName,
+                customer.MobilePhone,
+                customer.Status))
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<long>> GetIdsBySearchAsync(
+        long salonId,
+        string search,
+        CancellationToken cancellationToken)
+    {
+        var term = search.Trim();
+        return await context.Customers
+            .AsNoTracking()
+            .Where(customer =>
+                customer.SalonId == salonId &&
+                (customer.FullName.Contains(term) ||
+                 customer.MobilePhone.Contains(term)))
+            .Select(customer => customer.Id)
+            .ToListAsync(cancellationToken);
+    }
 }

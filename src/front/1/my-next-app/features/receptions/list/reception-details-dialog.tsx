@@ -78,12 +78,29 @@ export function ReceptionDetailsDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [details, setDetails] = useState<ReceptionDetails | null>(null);
-  const [loading, setLoading] = useState(open && receptionId !== null);
-  const [error, setError] = useState<string | null>(null);
+  const [requestState, setRequestState] = useState<
+    | { receptionId: number; status: "loading" }
+    | { receptionId: number; status: "success"; details: ReceptionDetails }
+    | { receptionId: number; status: "error"; error: string }
+    | null
+  >(() =>
+    open && receptionId !== null
+      ? { receptionId, status: "loading" }
+      : null,
+  );
   const [serviceActionId, setServiceActionId] = useState<number | null>(null);
   const [serviceActionError, setServiceActionError] = useState<string | null>(null);
   const [serviceActionMessage, setServiceActionMessage] = useState<string | null>(null);
+  const currentRequest =
+    requestState?.receptionId === receptionId ? requestState : null;
+  const details =
+    currentRequest?.status === "success" ? currentRequest.details : null;
+  const error =
+    currentRequest?.status === "error" ? currentRequest.error : null;
+  const loading =
+    open &&
+    receptionId !== null &&
+    (currentRequest === null || currentRequest.status === "loading");
 
   useEffect(() => {
     if (!open || receptionId === null) return;
@@ -94,15 +111,21 @@ export function ReceptionDetailsDialog({
       .then((response) => {
         if (!response.data) throw new Error(response.message ?? "جزئیات پذیرش دریافت نشد.");
         if (!controller.signal.aborted) {
-          setDetails(response.data);
-          setError(null);
+          setRequestState({
+            receptionId,
+            status: "success",
+            details: response.data,
+          });
         }
       })
       .catch((cause: unknown) => {
-        if (!controller.signal.aborted) setError(handleApiError(cause));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setRequestState({
+            receptionId,
+            status: "error",
+            error: handleApiError(cause),
+          });
+        }
       });
     return () => controller.abort();
   }, [open, receptionId]);
@@ -128,12 +151,19 @@ export function ReceptionDetailsDialog({
         throw new Error(response.message ?? "وضعیت خدمت تغییر نکرد.");
       }
 
-      setDetails((current) => current && ({
-        ...current,
-        services: current.services.map((item) =>
-          item.id === serviceId ? { ...item, status } : item,
-        ),
-      }));
+      setRequestState((current) =>
+        current?.receptionId === receptionId && current.status === "success"
+          ? {
+              ...current,
+              details: {
+                ...current.details,
+                services: current.details.services.map((item) =>
+                  item.id === serviceId ? { ...item, status } : item,
+                ),
+              },
+            }
+          : current,
+      );
       setServiceActionMessage(
         status === 3
           ? "خدمت تکمیل شد؛ محاسبه و ثبت پورسانت در Finance به‌صورت خودکار در صف انجام قرار گرفت."
@@ -152,9 +182,7 @@ export function ReceptionDetailsDialog({
       onOpenChange={(nextOpen) => {
         onOpenChange(nextOpen);
         if (!nextOpen) {
-          setDetails(null);
-          setError(null);
-          setLoading(false);
+          setRequestState(null);
           setServiceActionError(null);
           setServiceActionMessage(null);
         }
@@ -229,6 +257,16 @@ export function ReceptionDetailsDialog({
                   <p className="mt-1 text-xs text-slate-500">
                     شناسه مشتری: {new Intl.NumberFormat("fa-IR").format(details.customerId)}
                   </p>
+                  {details.customerMobilePhone && (
+                    <p className="mt-1 text-xs text-slate-600" dir="ltr">
+                      {details.customerMobilePhone}
+                    </p>
+                  )}
+                  {details.customerStatus !== null && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      وضعیت مشتری: {details.customerStatus ? "فعال" : "غیرفعال"}
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -327,7 +365,8 @@ export function ReceptionDetailsDialog({
                             value={
                               service.personnelId === null
                                 ? "تعیین نشده"
-                                : `شناسه ${new Intl.NumberFormat("fa-IR").format(service.personnelId)}`
+                                : service.personnelName ??
+                                  `شناسه ${new Intl.NumberFormat("fa-IR").format(service.personnelId)}`
                             }
                           />
                           <CompactValue label="تخفیف خدمت" value={amountLabel(service.discountAmount)} />
@@ -381,10 +420,12 @@ export function ReceptionDetailsDialog({
                                   className="grid gap-2 px-3 py-2.5 text-xs sm:grid-cols-[minmax(0,1fr)_100px_140px]"
                                 >
                                   <span className="font-medium text-slate-700">
-                                    ماده با شناسه {new Intl.NumberFormat("fa-IR").format(material.materialId)}
+                                    {material.materialName ??
+                                      `ماده با شناسه ${new Intl.NumberFormat("fa-IR").format(material.materialId)}`}
                                   </span>
                                   <span className="text-slate-500">
                                     مقدار: {new Intl.NumberFormat("fa-IR").format(material.quantity)}
+                                    {material.baseUnitSymbol ? ` ${material.baseUnitSymbol}` : ""}
                                   </span>
                                   <span className="text-slate-500">
                                     {material.unitCost === null

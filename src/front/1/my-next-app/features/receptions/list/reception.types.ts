@@ -19,6 +19,9 @@ export interface ReceptionListItem {
 export interface ReceptionServiceMaterial {
   id: number;
   materialId: number;
+  materialName: string | null;
+  baseUnitName: string | null;
+  baseUnitSymbol: string | null;
   quantity: number;
   unitCost: number | null;
   totalCost: number | null;
@@ -32,6 +35,7 @@ export interface ReceptionServiceItem {
   serviceId: number;
   serviceTariffId: number;
   personnelId: number | null;
+  personnelName: string | null;
   serviceName: string;
   quantity: number;
   unitPrice: number;
@@ -52,6 +56,8 @@ export interface ReceptionPayment {
 }
 
 export interface ReceptionDetails extends ReceptionListItem {
+  customerMobilePhone: string | null;
+  customerStatus: boolean | null;
   subTotal: number;
   totalDiscountAmount: number;
   notes: string | null;

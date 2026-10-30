@@ -11,4 +11,8 @@ public interface IPersonnelQueryRepository : IQueryRepository<Modules.Personnel.
 {
     Task<GetByIdPersonnelResponseDto?> GetByIdDtoAsync(long id, CancellationToken ct = default);
     Task<PagedList<GetAllPersonalResponseDto>> GetAllProjectedAsync(GetAllPersonnelRequestDto request, CancellationToken ct);
+    Task<IReadOnlyList<PersonnelReceptionLookupDto>> GetReceptionLookupsAsync(
+        long salonId,
+        IReadOnlyCollection<long> personnelIds,
+        CancellationToken cancellationToken);
 }

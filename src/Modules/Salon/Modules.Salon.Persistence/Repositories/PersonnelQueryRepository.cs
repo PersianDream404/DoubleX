@@ -122,4 +122,19 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
 
         return result;
     }
+
+    public async Task<IReadOnlyList<PersonnelReceptionLookupDto>> GetReceptionLookupsAsync(
+        long salonId,
+        IReadOnlyCollection<long> personnelIds,
+        CancellationToken cancellationToken) =>
+        await _dbContext.Personnels
+            .AsNoTracking()
+            .Where(personnel =>
+                personnel.SalonId == salonId &&
+                personnelIds.Contains(personnel.Id))
+            .Select(personnel => new PersonnelReceptionLookupDto(
+                personnel.Id,
+                personnel.PersonalInfo.FullName,
+                personnel.Status))
+            .ToListAsync(cancellationToken);
 }

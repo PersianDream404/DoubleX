@@ -46,4 +46,17 @@ public sealed class MaterialQueryRepository(InventoryReadDbContext context)
 
     public Task<Material?> GetEntityByIdAsync(long id, CancellationToken cancellationToken) =>
         context.Materials.FirstOrDefaultAsync(material => material.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<MaterialReceptionLookupDto>> GetReceptionLookupsAsync(
+        IReadOnlyCollection<long> materialIds,
+        CancellationToken cancellationToken) =>
+        await context.Materials
+            .AsNoTracking()
+            .Where(material => materialIds.Contains(material.Id))
+            .Select(material => new MaterialReceptionLookupDto(
+                material.Id,
+                material.Name,
+                material.BaseUnit.Name,
+                material.BaseUnit.Symbol))
+            .ToListAsync(cancellationToken);
 }

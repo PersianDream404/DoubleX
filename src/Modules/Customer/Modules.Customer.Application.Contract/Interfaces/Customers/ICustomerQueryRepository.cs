@@ -19,6 +19,14 @@ public interface ICustomerQueryRepository : IQueryRepository<CustomerEntity>
     Task<CustomerDetailsDto?> GetByIdProjectedAsync(
         long id,
         CancellationToken cancellationToken);
+    Task<IReadOnlyList<CustomerReceptionLookupDto>> GetReceptionLookupsAsync(
+        long salonId,
+        IReadOnlyCollection<long> customerIds,
+        CancellationToken cancellationToken);
+    Task<IReadOnlyList<long>> GetIdsBySearchAsync(
+        long salonId,
+        string search,
+        CancellationToken cancellationToken);
 
     Task<CustomerEntity?> GetEntityByIdAsync(long id, CancellationToken cancellationToken);
     Task<bool> MobilePhoneExistsAsync(

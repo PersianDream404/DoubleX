@@ -28,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "فهرست پذیرش‌ها", href: "/receptions" },
       { label: "ثبت پذیرش", href: "/receptions/new" },
+      { label: "گزارش پذیرش", href: "/receptions/reports" },
       { label: "رزرو و نوبت", href: "/bookings" },
     ],
   },
