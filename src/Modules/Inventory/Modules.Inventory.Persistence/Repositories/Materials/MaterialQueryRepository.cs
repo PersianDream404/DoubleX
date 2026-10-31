@@ -31,6 +31,14 @@ public sealed class MaterialQueryRepository(InventoryReadDbContext context)
             query = query.Where(material => material.Status == request.IsActive.Value);
         }
 
+        if (request.LowStockOnly)
+        {
+            query = query.Where(material =>
+                material.MinimumStock > 0 &&
+                (material.StockBalance == null ||
+                 material.StockBalance.Quantity <= material.MinimumStock));
+        }
+
         return await query
             .OrderBy(material => material.Name)
             .Select(MaterialMapper.ToGetAllDto())

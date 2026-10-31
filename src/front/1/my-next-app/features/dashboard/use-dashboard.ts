@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { handleApiError } from "@/lib/api/handle-api-error";
+import { MaterialService } from "@/features/inventory/materials/material.service";
 
 import { DashboardService } from "./dashboard.service";
 import type { DashboardData, DashboardPeriod } from "./dashboard.types";
@@ -21,6 +22,7 @@ function requireData<T>(data: T | null, message: string): T {
 
 export function useDashboard(period: DashboardPeriod) {
   const service = useMemo(() => new DashboardService(), []);
+  const materialService = useMemo(() => new MaterialService(), []);
   const [refreshKey, setRefreshKey] = useState(0);
   const [state, setState] = useState<DashboardState | null>(null);
   const requestKey = `${period}-${refreshKey}`;
@@ -31,12 +33,41 @@ export function useDashboard(period: DashboardPeriod) {
 
     async function loadDashboard() {
       try {
-        const [summaryResponse, chartsResponse, appointmentsResponse, alertsResponse] =
+        const lowStockRequest = materialService
+          .getAll(
+            {
+              IsActive: true,
+              LowStockOnly: true,
+              PageNumber: 1,
+              PageSize: 50,
+            },
+            config,
+          )
+          .then((response) => ({
+            data: requireData(
+              response.data,
+              response.message ?? "فهرست موجودی مواد دریافت نشد.",
+            ),
+            error: null,
+          }))
+          .catch((cause: unknown) => ({
+            data: null,
+            error: handleApiError(cause),
+          }));
+
+        const [
+          summaryResponse,
+          chartsResponse,
+          appointmentsResponse,
+          alertsResponse,
+          lowStockResult,
+        ] =
           await Promise.all([
             service.getSummary(period, config),
             service.getCharts(period, config),
             service.getTodayAppointments(config),
             service.getAlerts(config),
+            lowStockRequest,
           ]);
 
         const data: DashboardData = {
@@ -56,6 +87,8 @@ export function useDashboard(period: DashboardPeriod) {
             alertsResponse.data,
             alertsResponse.message ?? "هشدارهای داشبورد دریافت نشد.",
           ),
+          lowStockMaterials: lowStockResult.data,
+          lowStockError: lowStockResult.error,
         };
 
         if (!controller.signal.aborted) {
@@ -75,7 +108,7 @@ export function useDashboard(period: DashboardPeriod) {
 
     void loadDashboard();
     return () => controller.abort();
-  }, [period, requestKey, service]);
+  }, [materialService, period, requestKey, service]);
 
   const refresh = useCallback(() => setRefreshKey((key) => key + 1), []);
   const current = state?.key === requestKey ? state : null;

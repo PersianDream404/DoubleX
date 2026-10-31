@@ -37,4 +37,5 @@ export type MaterialListRequest = PageParams & {
   [key: string]: string | number | boolean | null | undefined;
   Q?: string;
   IsActive?: boolean;
+  LowStockOnly?: boolean;
 };

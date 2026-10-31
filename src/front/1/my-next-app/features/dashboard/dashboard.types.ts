@@ -1,3 +1,5 @@
+import type { MaterialListResult } from "@/features/inventory/materials/material.types";
+
 export type DashboardPeriod = 1 | 2 | 3 | 4;
 
 export interface DashboardSummary {
@@ -80,4 +82,6 @@ export interface DashboardData {
   charts: DashboardCharts;
   appointments: DashboardTodayAppointments;
   alerts: DashboardAlert[];
+  lowStockMaterials: MaterialListResult | null;
+  lowStockError: string | null;
 }
