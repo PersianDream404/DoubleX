@@ -15,4 +15,9 @@ public interface IPersonnelQueryRepository : IQueryRepository<Modules.Personnel.
         long salonId,
         IReadOnlyCollection<long> personnelIds,
         CancellationToken cancellationToken);
+    Task<PersonnelContractExpirySummaryDto> GetExpiringContractsAsync(
+        long salonId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken);
 }

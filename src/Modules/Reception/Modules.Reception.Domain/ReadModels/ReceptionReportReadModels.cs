@@ -39,6 +39,9 @@ public sealed record ReceptionReportSummaryReadModel(
     int CompletedReceptionCount,
     int InProgressReceptionCount,
     int CancelledReceptionCount,
+    int AppointmentReceptionCount,
+    int WalkInReceptionCount,
+    int UniqueCustomerCount,
     decimal ServiceSubtotal,
     decimal DiscountAmount,
     decimal ServiceFinalAmount,
@@ -47,6 +50,14 @@ public sealed record ReceptionReportSummaryReadModel(
     decimal MaterialChargeAmount,
     IReadOnlyList<ReceptionReportTrendReadModel> Trend,
     IReadOnlyList<ReceptionReportPaymentMethodReadModel> PaymentMethods);
+
+public sealed record ReceptionOutstandingDebtSummaryReadModel(
+    int ReceptionCount,
+    decimal RemainingAmount);
+
+public sealed record ReceptionAppointmentLinkReadModel(
+    long AppointmentId,
+    long ReceptionId);
 
 public sealed record ReceptionReportReceptionReadModel(
     long Id,

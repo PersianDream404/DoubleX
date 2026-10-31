@@ -137,4 +137,43 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
                 personnel.PersonalInfo.FullName,
                 personnel.Status))
             .ToListAsync(cancellationToken);
+
+    public async Task<PersonnelContractExpirySummaryDto> GetExpiringContractsAsync(
+        long salonId,
+        DateOnly fromDate,
+        DateOnly toDate,
+        CancellationToken cancellationToken)
+    {
+        var contracts =
+            from contract in _dbContext.PersonnelContracts.AsNoTracking()
+            join personnel in _dbContext.Personnels.AsNoTracking()
+                on contract.PersonnelId equals personnel.Id
+            where personnel.SalonId == salonId &&
+                  personnel.Status &&
+                  !personnel.Deleted &&
+                  !contract.Deleted &&
+                  contract.IsActive &&
+                  contract.EffectiveTo.HasValue &&
+                  contract.EffectiveTo.Value >= fromDate &&
+                  contract.EffectiveTo.Value <= toDate
+            select new
+            {
+                contract.PersonnelId,
+                FullName = personnel.PersonalInfo.FullName,
+                EffectiveTo = contract.EffectiveTo!.Value
+            };
+
+        var totalCount = await contracts.CountAsync(cancellationToken);
+        var items = await contracts
+            .OrderBy(item => item.EffectiveTo)
+            .ThenBy(item => item.PersonnelId)
+            .Take(50)
+            .Select(item => new PersonnelContractExpiryDto(
+                item.PersonnelId,
+                item.FullName,
+                item.EffectiveTo))
+            .ToListAsync(cancellationToken);
+
+        return new PersonnelContractExpirySummaryDto(totalCount, items);
+    }
 }

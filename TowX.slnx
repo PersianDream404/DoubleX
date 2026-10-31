@@ -87,6 +87,12 @@
     <Project Path="src/Modules/Finance/Modules.Finance.Persistence/Modules.Finance.Persistence.csproj" />
     <Project Path="src/Modules/Finance/Modules.Finance.Presentation/Modules.Finance.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Dashboard/">
+    <Project Path="src/Modules/Dashboard/Modules.Dashboard.Application.Contract/Modules.Dashboard.Application.Contract.csproj" />
+    <Project Path="src/Modules/Dashboard/Modules.Dashboard.Application/Modules.Dashboard.Application.csproj" />
+    <Project Path="src/Modules/Dashboard/Modules.Dashboard.Persistence/Modules.Dashboard.Persistence.csproj" />
+    <Project Path="src/Modules/Dashboard/Modules.Dashboard.Presentation/Modules.Dashboard.Presentation.csproj" />
+  </Folder>
 
   <Folder Name="/src/Presentation/">
     <Project Path="src/BuildingBlocks/Web/Web.csproj" Id="e0450831-009b-46e2-b98a-f044cbab3848" />

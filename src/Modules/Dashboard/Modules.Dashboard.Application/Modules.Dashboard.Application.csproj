@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Modules.Dashboard.Application.Contract\Modules.Dashboard.Application.Contract.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Scrutor" />
+  </ItemGroup>
+</Project>

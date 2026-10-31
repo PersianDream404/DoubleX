@@ -16,6 +16,7 @@
 		<ProjectReference Include="..\..\Modules\Appointment\Modules.Appointment.Presentation\Modules.Appointment.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\CashRegister\Modules.CashRegister.Presentation\Modules.CashRegister.Presentation.csproj" />
 		<ProjectReference Include="..\..\Modules\Finance\Modules.Finance.Presentation\Modules.Finance.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Dashboard\Modules.Dashboard.Presentation\Modules.Dashboard.Presentation.csproj" />
 
 		<ProjectReference Include="..\Aspire\Project.ServiceDefaults\Project.ServiceDefaults.csproj" />
 	</ItemGroup>

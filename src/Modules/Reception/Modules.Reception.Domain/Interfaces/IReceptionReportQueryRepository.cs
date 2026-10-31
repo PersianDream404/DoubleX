@@ -8,6 +8,15 @@ public interface IReceptionReportQueryRepository
         ReceptionReportFilter filter,
         CancellationToken cancellationToken);
 
+    Task<ReceptionOutstandingDebtSummaryReadModel> GetOutstandingDebtSummaryAsync(
+        long salonId,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ReceptionAppointmentLinkReadModel>> GetAppointmentLinksAsync(
+        long salonId,
+        IReadOnlyCollection<long> appointmentIds,
+        CancellationToken cancellationToken);
+
     Task<ReceptionReportPageReadModel<ReceptionReportReceptionReadModel, ReceptionReportTotalsReadModel>>
         GetReceptionsAsync(ReceptionReportFilter filter, CancellationToken cancellationToken);
 

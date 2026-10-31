@@ -30,9 +30,18 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                 InProgressReceptionCount = group.Count(item =>
                     item.ReceptionStatus == ReceptionStatus.InProgress),
                 CancelledReceptionCount = group.Count(item =>
-                    item.ReceptionStatus == ReceptionStatus.Cancelled)
+                    item.ReceptionStatus == ReceptionStatus.Cancelled),
+                AppointmentReceptionCount = group.Count(item =>
+                    item.AppointmentId.HasValue),
+                WalkInReceptionCount = group.Count(item =>
+                    !item.AppointmentId.HasValue)
             })
             .SingleOrDefaultAsync(cancellationToken);
+
+        var uniqueCustomerCount = await billableReceptions
+            .Select(reception => reception.CustomerId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
         var serviceQuery =
             from service in context.ReceptionServices.AsNoTracking()
@@ -158,6 +167,9 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
             counts?.CompletedReceptionCount ?? 0,
             counts?.InProgressReceptionCount ?? 0,
             counts?.CancelledReceptionCount ?? 0,
+            counts?.AppointmentReceptionCount ?? 0,
+            counts?.WalkInReceptionCount ?? 0,
+            uniqueCustomerCount,
             serviceTotals?.ServiceSubtotal ?? 0m,
             serviceTotals?.DiscountAmount ?? 0m,
             serviceTotals?.ServiceFinalAmount ?? 0m,
@@ -175,6 +187,73 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
                     item.Value.PaidAmount))
                 .ToArray(),
             paymentMethods);
+    }
+
+    public async Task<ReceptionOutstandingDebtSummaryReadModel> GetOutstandingDebtSummaryAsync(
+        long salonId,
+        CancellationToken cancellationToken)
+    {
+        var filter = new ReceptionReportFilter(
+            salonId,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            1,
+            1,
+            false);
+        var outstandingReceptions = FilterReceptions(filter)
+            .Where(reception => reception.ReceptionStatus != ReceptionStatus.Cancelled)
+            .Select(reception => new
+            {
+                RemainingAmount = reception.TotalAmount -
+                    (reception.Payments
+                        .Where(payment =>
+                            payment.PaymentStatus == ReceptionPaymentStatus.Succeeded)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m)
+            })
+            .Where(item => item.RemainingAmount > 0m);
+
+        return await outstandingReceptions
+            .GroupBy(_ => 1)
+            .Select(group => new ReceptionOutstandingDebtSummaryReadModel(
+                group.Count(),
+                group.Sum(item => item.RemainingAmount)))
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? new ReceptionOutstandingDebtSummaryReadModel(0, 0m);
+    }
+
+    public async Task<IReadOnlyList<ReceptionAppointmentLinkReadModel>> GetAppointmentLinksAsync(
+        long salonId,
+        IReadOnlyCollection<long> appointmentIds,
+        CancellationToken cancellationToken)
+    {
+        if (appointmentIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await context.Receptions
+            .AsNoTracking()
+            .Where(reception =>
+                reception.SalonId == salonId &&
+                reception.AppointmentId.HasValue &&
+                appointmentIds.Contains(reception.AppointmentId.Value))
+            .Select(reception => new ReceptionAppointmentLinkReadModel(
+                reception.AppointmentId!.Value,
+                reception.Id))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<ReceptionReportPageReadModel<ReceptionReportReceptionReadModel, ReceptionReportTotalsReadModel>>
@@ -722,4 +801,3 @@ public sealed class ReceptionReportQueryRepository(ReceptionReadDbContext contex
         public decimal PaidAmount { get; set; }
     }
 }
-
