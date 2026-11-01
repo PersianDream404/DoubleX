@@ -22,6 +22,13 @@ export class ServiceCatalogService {
     return this.api.get<ServiceDto[]>(this.path, undefined, config);
   }
 
+  search(
+    q: string,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ServiceDto[]>> {
+    return this.api.get<ServiceDto[]>(this.path, { q }, config);
+  }
+
   getById(
     id: number,
     config?: { signal?: AbortSignal },

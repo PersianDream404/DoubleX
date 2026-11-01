@@ -20,8 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { handleApiError } from "@/lib/api/handle-api-error";
-import type { ApiResponse } from "@/lib/api/types/api-response";
-import type { PagedResult } from "@/lib/api/types/paged-result";
 import { useUserContext } from "@/contexts/user-context";
 import { MaterialService } from "@/features/inventory/materials/material.service";
 import type { MaterialDto } from "@/features/inventory/materials/material.types";
@@ -30,11 +28,14 @@ import type { StockMovementCostQuote } from "@/features/inventory/stock-movement
 import { PersonnelService } from "@/features/personnel/list/personnel.service";
 import type { PersonnelDto } from "@/features/personnel/list/personnel.types";
 import { ServiceCatalogService } from "@/features/services/list/service.service";
-import type { ServiceDto } from "@/features/services/list/service.types";
 import { ServiceTariffService } from "@/features/services/tariffs/service-tariff.service";
 import type { ServiceTariffDto } from "@/features/services/tariffs/service-tariff.types";
 import { CashRegisterService } from "@/features/cash-register/cash-register.service";
 import type { CashRegisterOption } from "@/features/cash-register/cash-register.types";
+import {
+  ServerSearchSelect,
+  type ServerSearchPage,
+} from "./server-search-select";
 
 import {
   CreateReceptionFormSchema,
@@ -71,15 +72,6 @@ type ServiceDraft = {
 
 type PaymentDraft = ReceptionPaymentForm & { key: string };
 
-type ReceptionOptions = {
-  personnels: PersonnelDto[];
-  services: ServiceDto[];
-  tariffs: ServiceTariffDto[];
-  materials: MaterialDto[];
-  cashRegisters: CashRegisterOption[];
-  cashRegisterError: string | null;
-};
-
 const EMPTY_SERVICE: ServiceDraft = {
   key: "service-1",
   serviceId: null,
@@ -91,29 +83,7 @@ const EMPTY_SERVICE: ServiceDraft = {
   materials: [],
 };
 
-const PAGE_SIZE = 100;
-
-async function loadAllPages<TItem>(
-  loadPage: (
-    pageNumber: number,
-    pageSize: number,
-  ) => Promise<ApiResponse<PagedResult<TItem>>>,
-): Promise<TItem[]> {
-  const first = await loadPage(1, PAGE_SIZE);
-  if (!first.data) {
-    throw new Error(first.message ?? "فهرست اطلاعات دریافت نشد.");
-  }
-
-  const items = [...first.data.list];
-  for (let pageNumber = 2; pageNumber <= first.data.pagination.totalPages; pageNumber += 1) {
-    const response = await loadPage(pageNumber, PAGE_SIZE);
-    if (!response.data) {
-      throw new Error(response.message ?? "بخشی از فهرست اطلاعات دریافت نشد.");
-    }
-    items.push(...response.data.list);
-  }
-  return items;
-}
+const PAGE_SIZE = 50;
 
 function createServiceDraft(key: string): ServiceDraft {
   return { ...EMPTY_SERVICE, key, materials: [] };
@@ -203,17 +173,17 @@ export function NewReceptionPage() {
   const { salonId, loading: userLoading, error: userError } = useUserContext();
   const receptionService = useMemo(() => new ReceptionService(), []);
   const stockMovementService = useMemo(() => new StockMovementService(), []);
+  const personnelService = useMemo(() => new PersonnelService(), []);
+  const materialService = useMemo(() => new MaterialService(), []);
+  const catalogService = useMemo(() => new ServiceCatalogService(), []);
+  const tariffService = useMemo(() => new ServiceTariffService(), []);
+  const cashRegisterService = useMemo(() => new CashRegisterService(), []);
   const nextKey = useRef(2);
-  const [options, setOptions] = useState<ReceptionOptions | null>(null);
-  const [optionsLoading, setOptionsLoading] = useState(true);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
-  const [customerQuery, setCustomerQuery] = useState("");
-  const [customers, setCustomers] = useState<CustomerSelectItem[]>([]);
-  const [customerLoading, setCustomerLoading] = useState(false);
-  const [customerError, setCustomerError] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [receptionistId, setReceptionistId] = useState<number | null>(null);
   const [serviceTariffId, setServiceTariffId] = useState<number | null>(null);
+  const [selectedTariff, setSelectedTariff] = useState<ServiceTariffDto | null>(null);
+  const [selectedMaterials, setSelectedMaterials] = useState<Record<number, MaterialDto>>({});
   const [notes, setNotes] = useState("");
   const [services, setServices] = useState<ServiceDraft[]>([EMPTY_SERVICE]);
   const [payments, setPayments] = useState<PaymentDraft[]>([]);
@@ -226,146 +196,148 @@ export function NewReceptionPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [createdReceptionId, setCreatedReceptionId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!salonId) return;
+  const loadCustomerOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<CustomerSelectItem>> => {
+      if (!salonId) return { options: [], hasMore: false };
+      const response = await receptionService.getCustomers(
+        { q: query, pageNumber, pageSize: PAGE_SIZE },
+        { signal },
+      );
+      if (!response.data) throw new Error(response.message ?? "فهرست مشتریان دریافت نشد.");
+      return {
+        options: response.data.list
+          .filter((customer) => customer.status)
+          .map((customer) => ({
+            value: String(customer.id),
+            label: customer.fullName,
+            data: customer,
+          })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [receptionService, salonId],
+  );
 
-    const controller = new AbortController();
-    const personnelService = new PersonnelService();
-    const materialService = new MaterialService();
-    const catalogService = new ServiceCatalogService();
-    const tariffService = new ServiceTariffService();
-    const cashRegisterService = new CashRegisterService();
+  const loadPersonnelOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<PersonnelDto>> => {
+      const response = await personnelService.getAll(
+        { Q: query, PageNumber: pageNumber, PageSize: PAGE_SIZE, IsActive: true },
+        { signal },
+      );
+      if (!response.data) throw new Error(response.message ?? "فهرست پرسنل دریافت نشد.");
+      return {
+        options: response.data.list.map((personnel) => ({
+          value: String(personnel.id),
+          label: personnel.fullName,
+          description: personnel.jobTitle,
+          data: personnel,
+        })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [personnelService],
+  );
 
-    async function loadOptions() {
-      setOptionsError(null);
-      try {
-        const [
-          personnels,
-          materials,
-          serviceResponse,
-          tariffResponse,
-          cashRegisterResult,
-        ] = await Promise.all([
-          loadAllPages((pageNumber, pageSize) =>
-            personnelService.getAll(
-              { PageNumber: pageNumber, PageSize: pageSize },
-              { signal: controller.signal },
-            ),
-          ),
-          loadAllPages((pageNumber, pageSize) =>
-            materialService.getAll(
-              { PageNumber: pageNumber, PageSize: pageSize, IsActive: true },
-              { signal: controller.signal },
-            ),
-          ),
-          catalogService.getAll({ signal: controller.signal }),
-          tariffService.getAll({ signal: controller.signal }),
-          loadAllPages((pageNumber, pageSize) =>
-            cashRegisterService.getAll(
-              { pageNumber, pageSize, isActive: true },
-              { signal: controller.signal },
-            ),
-          ).then(
-            (cashRegisters) => ({ cashRegisters, error: null }),
-            (error: unknown) => ({
-              cashRegisters: [],
-              error: handleApiError(error),
-            }),
-          ),
-        ]);
-        if (!serviceResponse.data || !tariffResponse.data) {
-          throw new Error(
-            serviceResponse.message ??
-              tariffResponse.message ??
-              "خدمات و تعرفه‌های سالن دریافت نشد.",
-          );
-        }
+  const loadTariffOptions = useCallback(
+    async (query: string, _pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<ServiceTariffDto>> => {
+      const response = await tariffService.search(query, { signal });
+      if (!response.data) throw new Error(response.message ?? "فهرست تعرفه‌ها دریافت نشد.");
+      const now = Date.now();
+      return {
+        options: response.data
+          .filter((tariff) =>
+            new Date(tariff.validFrom).getTime() <= now &&
+            (!tariff.validTo || new Date(tariff.validTo).getTime() >= now),
+          )
+          .map((tariff) => ({
+            value: String(tariff.id),
+            label: tariff.name,
+            description: `${tariff.services.length} خدمت`,
+            data: tariff,
+          })),
+        hasMore: false,
+      };
+    },
+    [tariffService],
+  );
 
-        if (!controller.signal.aborted) {
-          setOptions({
-            personnels: personnels.filter((personnel) => personnel.status),
-            materials: materials.filter(
-              (material) => material.isActive && material.currentStock > 0,
-            ),
-            services: serviceResponse.data.filter((service) => service.isActive),
-            tariffs: tariffResponse.data.filter((tariff) => {
-              const now = Date.now();
-              return (
-                new Date(tariff.validFrom).getTime() <= now &&
-                (!tariff.validTo || new Date(tariff.validTo).getTime() >= now)
-              );
-            }),
-            cashRegisters: cashRegisterResult.cashRegisters.filter(
-              (cashRegister) => cashRegister.isActive && cashRegister.activeSessionId !== null,
-            ),
-            cashRegisterError: cashRegisterResult.error,
-          });
-          setOptionsLoading(false);
-        }
-      } catch (error: unknown) {
-        if (!controller.signal.aborted) {
-          setOptionsError(handleApiError(error));
-          setOptionsLoading(false);
-        }
-      }
-    }
+  const loadServiceOptions = useCallback(
+    async (query: string, _pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<ServiceOption>> => {
+      if (!selectedTariff) return { options: [], hasMore: false };
+      const response = await catalogService.search(query, { signal });
+      if (!response.data) throw new Error(response.message ?? "فهرست خدمات دریافت نشد.");
+      const tariffItems = new Map(selectedTariff.services.map((item) => [item.serviceId, item]));
+      return {
+        options: response.data.flatMap((service) => {
+          const tariffItem = tariffItems.get(service.id);
+          if (!service.isActive || !tariffItem) return [];
+          const option: ServiceOption = {
+            id: `${selectedTariff.id}:${service.id}`,
+            serviceId: service.id,
+            serviceTariffId: selectedTariff.id,
+            name: service.name,
+            amount: tariffItem.amount,
+          };
+          return [{
+            value: option.id,
+            label: option.name,
+            description: amountLabel(option.amount),
+            data: option,
+          }];
+        }),
+        hasMore: false,
+      };
+    },
+    [catalogService, selectedTariff],
+  );
 
-    void loadOptions();
-    return () => controller.abort();
-  }, [salonId]);
+  const loadMaterialOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<MaterialDto>> => {
+      const response = await materialService.getAll(
+        {
+          Q: query,
+          PageNumber: pageNumber,
+          PageSize: PAGE_SIZE,
+          IsActive: true,
+          InStockOnly: true,
+        },
+        { signal },
+      );
+      if (!response.data) throw new Error(response.message ?? "فهرست مواد مصرفی دریافت نشد.");
+      return {
+        options: response.data.list.map((material) => ({
+          value: String(material.id),
+          label: material.name,
+          description: `موجودی ${new Intl.NumberFormat("fa-IR").format(material.currentStock)} ${material.baseUnitSymbol}`,
+          data: material,
+        })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [materialService],
+  );
 
-  useEffect(() => {
-    if (!salonId) return;
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => {
-      setCustomerLoading(true);
-      setCustomerError(null);
-      receptionService
-        .getCustomers(
-          { q: customerQuery.trim(), pageNumber: 1, pageSize: 100 },
-          { signal: controller.signal },
-        )
-        .then((response) => {
-          if (!response.data) {
-            throw new Error(response.message ?? "فهرست مشتریان دریافت نشد.");
-          }
-          if (!controller.signal.aborted) {
-            setCustomers(response.data.list.filter((customer) => customer.status));
-            setCustomerLoading(false);
-          }
-        })
-        .catch((error: unknown) => {
-          if (!controller.signal.aborted) {
-            setCustomerError(handleApiError(error));
-            setCustomerLoading(false);
-          }
-        });
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [salonId, customerQuery, receptionService]);
-
-  const serviceOptions = useMemo<ServiceOption[]>(() => {
-    if (!options || !serviceTariffId) return [];
-    const servicesById = new Map(options.services.map((service) => [service.id, service]));
-    const tariff = options.tariffs.find((item) => item.id === serviceTariffId);
-    if (!tariff) return [];
-    return tariff.services.flatMap((tariffService) => {
-      const service = servicesById.get(tariffService.serviceId);
-      if (!service) return [];
-      return [{
-        id: `${tariff.id}:${service.id}`,
-        serviceId: service.id,
-        serviceTariffId: tariff.id,
-        name: service.name,
-        amount: tariffService.amount,
-      }];
-    });
-  }, [options, serviceTariffId]);
+  const loadCashRegisterOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<CashRegisterOption>> => {
+      const response = await cashRegisterService.getAll(
+        { pageNumber, pageSize: PAGE_SIZE, q: query, isActive: true },
+        { signal },
+      );
+      if (!response.data) throw new Error(response.message ?? "فهرست صندوق‌ها دریافت نشد.");
+      return {
+        options: response.data.list
+          .filter((cashRegister) => cashRegister.activeSessionId !== null)
+          .map((cashRegister) => ({
+            value: String(cashRegister.id),
+            label: cashRegister.name,
+            description: cashRegister.code,
+            data: cashRegister,
+          })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [cashRegisterService],
+  );
 
   const materialQuoteRows = useMemo(
     () =>
@@ -481,8 +453,8 @@ export function NewReceptionPage() {
     : !userLoading && !salonId
       ? "شناسه سالن در توکن ورود شما موجود نیست؛ لطفاً دوباره وارد شوید."
       : null;
-  const currentOptionsError = optionsError ?? salonError;
-  const currentOptionsLoading = userLoading || (Boolean(salonId) && optionsLoading);
+  const currentOptionsError = salonError;
+  const currentOptionsLoading = userLoading;
 
   const updateService = useCallback(
     (key: string, update: (service: ServiceDraft) => ServiceDraft) => {
@@ -573,7 +545,7 @@ export function NewReceptionPage() {
       }
     }
     for (const [materialId, quantity] of materialUsage) {
-      const availableStock = options?.materials.find((item) => item.id === materialId)?.currentStock;
+      const availableStock = selectedMaterials[materialId]?.currentStock;
       if (availableStock === undefined || quantity > availableStock) {
         setFormError("مقدار ماده مصرفی از موجودی فعلی بیشتر است.");
         return;
@@ -683,8 +655,7 @@ export function NewReceptionPage() {
     }
   }
 
-  function chooseService(key: string, value: string) {
-    const option = serviceOptions.find((item) => item.id === value);
+  function chooseService(key: string, option: ServiceOption | null) {
     updateService(key, (current) => ({
       ...current,
       serviceId: option?.serviceId ?? null,
@@ -744,12 +715,15 @@ export function NewReceptionPage() {
           <InfoCard title="اطلاعات پذیرش" icon={<ReceiptText className="size-4" />}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="تعرفه پذیرش">
-                <FormSelect
+                <ServerSearchSelect<ServiceTariffDto>
                   ariaLabel="انتخاب تعرفه پذیرش"
                   value={serviceTariffId ? String(serviceTariffId) : ""}
-                  onChange={(value) => {
+                  loadOptions={loadTariffOptions}
+                  emptyMessage="تعرفه معتبری پیدا نشد."
+                  onChange={(value, option) => {
                     const selectedId = value ? Number(value) : null;
                     setServiceTariffId(selectedId);
+                    setSelectedTariff(option?.data ?? null);
                     setServices((current) =>
                       current.map((service) => ({
                         ...service,
@@ -761,55 +735,27 @@ export function NewReceptionPage() {
                     );
                   }}
                   disabled={currentOptionsLoading || Boolean(createdReceptionId)}
-                >
-                  <option value="">انتخاب تعرفه</option>
-                  {options?.tariffs.map((tariff) => (
-                    <option key={tariff.id} value={tariff.id}>{tariff.name}</option>
-                  ))}
-                </FormSelect>
+                />
               </Field>
               <Field label="مشتری">
-                <div className="space-y-2">
-                  <Input
-                    value={customerQuery}
-                    onChange={(event) => {
-                      setCustomerQuery(event.target.value);
-                      setCustomerId(null);
-                    }}
-                    placeholder="جستجو بر اساس نام مشتری..."
-                    className="h-10 rounded-xl border-slate-200 text-sm"
-                    disabled={!salonId || Boolean(createdReceptionId)}
-                  />
-                  <FormSelect
-                    ariaLabel="انتخاب مشتری"
-                    value={customerId ? String(customerId) : ""}
-                    onChange={(value) => setCustomerId(value ? Number(value) : null)}
-                    disabled={!salonId || customerLoading || customers.length === 0 || Boolean(createdReceptionId)}
-                  >
-                    <option value="">
-                      {customerLoading ? "در حال دریافت مشتریان..." : customers.length === 0 ? "مشتری‌ای پیدا نشد" : "انتخاب مشتری"}
-                    </option>
-                    {customers.map((customer) => (
-                      <option key={customer.id} value={customer.id}>{customer.fullName}</option>
-                    ))}
-                  </FormSelect>
-                  {customerError && <p className="text-xs text-destructive" role="alert">{customerError}</p>}
-                </div>
+                <ServerSearchSelect<CustomerSelectItem>
+                  ariaLabel="انتخاب مشتری"
+                  value={customerId ? String(customerId) : ""}
+                  loadOptions={loadCustomerOptions}
+                  emptyMessage="مشتری فعالی پیدا نشد."
+                  onChange={(value) => setCustomerId(value ? Number(value) : null)}
+                  disabled={!salonId || Boolean(createdReceptionId)}
+                />
               </Field>
               <Field label="پذیرشگر">
-                <FormSelect
+                <ServerSearchSelect<PersonnelDto>
                   ariaLabel="انتخاب پذیرشگر"
                   value={receptionistId ? String(receptionistId) : ""}
+                  loadOptions={loadPersonnelOptions}
+                  emptyMessage="پرسنل فعالی پیدا نشد."
                   onChange={(value) => setReceptionistId(value ? Number(value) : null)}
-                  disabled={currentOptionsLoading || !options?.personnels.length}
-                >
-                  <option value="">انتخاب پرسنل پذیرشگر</option>
-                  {options?.personnels.map((personnel) => (
-                    <option key={personnel.id} value={personnel.id}>
-                      {personnel.fullName} - {personnel.jobTitle}
-                    </option>
-                  ))}
-                </FormSelect>
+                  disabled={currentOptionsLoading || Boolean(createdReceptionId)}
+                />
               </Field>
               <div className="sm:col-span-2 lg:col-span-3">
                 <Field label="یادداشت پذیرش (اختیاری)">
@@ -841,8 +787,8 @@ export function NewReceptionPage() {
               <p className="text-sm text-slate-500">در حال دریافت خدمات و تعرفه‌ها...</p>
             ) : !serviceTariffId ? (
               <p className="text-sm text-slate-500">برای نمایش خدمات، ابتدا تعرفهٔ پذیرش را انتخاب کنید.</p>
-            ) : serviceOptions.length === 0 ? (
-              <p className="text-sm text-amber-700">خدمت فعال با تعرفه معتبر برای این سالن پیدا نشد.</p>
+            ) : selectedTariff?.services.length === 0 ? (
+              <p className="text-sm text-amber-700">برای این تعرفه خدمتی ثبت نشده است.</p>
             ) : (
               <div className="space-y-4">
                 {services.map((service, index) => (
@@ -870,35 +816,27 @@ export function NewReceptionPage() {
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       <Field label="خدمت و تعرفه">
-                        <FormSelect
+                        <ServerSearchSelect<ServiceOption>
                           ariaLabel={`انتخاب خدمت ${index + 1}`}
                           value={service.serviceId && service.serviceTariffId ? `${service.serviceTariffId}:${service.serviceId}` : ""}
-                          onChange={(value) => chooseService(service.key, value)}
+                          loadOptions={loadServiceOptions}
+                          emptyMessage="خدمت فعالی در این تعرفه پیدا نشد."
+                          onChange={(_value, option) => chooseService(service.key, option?.data ?? null)}
                           disabled={Boolean(createdReceptionId)}
-                        >
-                          <option value="">انتخاب خدمت</option>
-                          {serviceOptions.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.name} ({amountLabel(option.amount)})
-                            </option>
-                          ))}
-                        </FormSelect>
+                        />
                       </Field>
                       <Field label="پرسنل ارائه‌دهنده">
-                        <FormSelect
+                        <ServerSearchSelect<PersonnelDto>
                           ariaLabel={`انتخاب پرسنل خدمت ${index + 1}`}
                           value={service.personnelId ? String(service.personnelId) : ""}
+                          loadOptions={loadPersonnelOptions}
+                          emptyMessage="پرسنل فعالی پیدا نشد."
                           onChange={(value) => updateService(service.key, (current) => ({
                             ...current,
                             personnelId: value ? Number(value) : null,
                           }))}
                           disabled={Boolean(createdReceptionId)}
-                        >
-                          <option value="">بدون انتخاب</option>
-                          {options?.personnels.map((personnel) => (
-                            <option key={personnel.id} value={personnel.id}>{personnel.fullName}</option>
-                          ))}
-                        </FormSelect>
+                        />
                       </Field>
                       <Field label="تعداد">
                         <Input
@@ -943,7 +881,7 @@ export function NewReceptionPage() {
                             ...current,
                             materials: [...current.materials, createMaterialDraft(`material-${nextKey.current++}`)],
                           }))}
-                          disabled={Boolean(createdReceptionId) || !options?.materials.length}
+                          disabled={Boolean(createdReceptionId)}
                           className="h-8 rounded-lg bg-fuchsia-700 px-3 text-xs text-white hover:bg-fuchsia-800"
                         >
                           <Plus className="size-3.5" />
@@ -966,26 +904,29 @@ export function NewReceptionPage() {
                                       : undefined
                                 }
                               >
-                                <FormSelect
+                                <ServerSearchSelect<MaterialDto>
                                   ariaLabel={`انتخاب ماده مصرفی ${materialIndex + 1}`}
                                   value={material.materialId ? String(material.materialId) : ""}
-                                  onChange={(value) => updateService(service.key, (current) => ({
-                                    ...current,
-                                    materials: current.materials.map((item) =>
-                                      item.key === material.key
-                                        ? { ...item, materialId: value ? Number(value) : null }
-                                        : item,
-                                    ),
-                                  }))}
+                                  loadOptions={loadMaterialOptions}
+                                  emptyMessage="ماده فعال با موجودی قابل استفاده پیدا نشد."
+                                  onChange={(value, option) => {
+                                    if (option) {
+                                      setSelectedMaterials((current) => ({
+                                        ...current,
+                                        [option.data.id]: option.data,
+                                      }));
+                                    }
+                                    updateService(service.key, (current) => ({
+                                      ...current,
+                                      materials: current.materials.map((item) =>
+                                        item.key === material.key
+                                          ? { ...item, materialId: value ? Number(value) : null }
+                                          : item,
+                                      ),
+                                    }));
+                                  }}
                                   disabled={Boolean(createdReceptionId)}
-                                >
-                                  <option value="">انتخاب ماده</option>
-                                  {options?.materials.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                      {option.name} - موجودی {new Intl.NumberFormat("fa-IR").format(option.currentStock)} {option.baseUnitSymbol}
-                                    </option>
-                                  ))}
-                                </FormSelect>
+                                />
                               </Field>
                               <Field label="مقدار">
                                 <Input
@@ -1087,7 +1028,7 @@ export function NewReceptionPage() {
                                 ...item,
                                 paymentMethod: value,
                                 cashRegisterId: value === "نقدی"
-                                  ? item.cashRegisterId ?? options?.cashRegisters[0]?.id ?? null
+                                  ? item.cashRegisterId
                                   : null,
                               }
                             : item,
@@ -1102,30 +1043,20 @@ export function NewReceptionPage() {
                     {payment.paymentMethod === "نقدی" && (
                       <Field
                         label="صندوق باز"
-                        hint={
-                          options?.cashRegisterError ??
-                          (options?.cashRegisters.length
-                            ? undefined
-                            : "صندوق فعالی با جلسهٔ باز موجود نیست.")
-                        }
+                        hint="صندوق‌های فعال دارای جلسه باز، بر اساس نام یا کد جستجو می‌شوند."
                       >
-                        <FormSelect
+                        <ServerSearchSelect<CashRegisterOption>
                           ariaLabel={`صندوق پرداخت ${index + 1}`}
-                          value={payment.cashRegisterId?.toString() ?? ""}
+                          value={payment.cashRegisterId ? String(payment.cashRegisterId) : ""}
+                          loadOptions={loadCashRegisterOptions}
+                          emptyMessage="صندوق فعالی با جلسه باز پیدا نشد."
                           onChange={(value) => setPayments((current) => current.map((item) =>
                             item.key === payment.key
                               ? { ...item, cashRegisterId: value ? Number(value) : null }
                               : item,
                           ))}
-                          disabled={Boolean(createdReceptionId) || !options?.cashRegisters.length}
-                        >
-                          <option value="">انتخاب صندوق</option>
-                          {(options?.cashRegisters ?? []).map((cashRegister) => (
-                            <option key={cashRegister.id} value={cashRegister.id}>
-                              {cashRegister.name} ({cashRegister.code})
-                            </option>
-                          ))}
-                        </FormSelect>
+                          disabled={Boolean(createdReceptionId)}
+                        />
                       </Field>
                     )}
                     <Field label="شماره پیگیری">

@@ -3,4 +3,5 @@ using Modules.Service.Application.Contract.DTOs.ServiceTariffs;
 
 namespace Modules.Service.Application.Contract.UseCase.ServiceTariffs.Queries.GetAll;
 
-public sealed record GetServiceTariffsQuery(long SalonId) : IQuery<IReadOnlyList<ServiceTariffDto>>;
+public sealed record GetServiceTariffsQuery(long SalonId, string? Q = null)
+    : IQuery<IReadOnlyList<ServiceTariffDto>>;

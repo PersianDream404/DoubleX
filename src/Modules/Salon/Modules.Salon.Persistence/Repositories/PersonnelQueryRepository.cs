@@ -113,6 +113,10 @@ public sealed class PersonnelQueryRepository : QueryRepository<Domain.Entities.P
             .AsNoTracking()
             .Where(x => x.SalonId == request.SalonId)
             .WhereIf(!string.IsNullOrWhiteSpace(request.Q), x => x.PersonalInfo.FullName.Contains(request.Q!));
+        if (request.IsActive.HasValue)
+        {
+            query = query.Where(personnel => personnel.Status == request.IsActive.Value);
+        }
 
         var result = await query.ToPagedListAsync(
             PersonalMapper.ToGetAllDto(),

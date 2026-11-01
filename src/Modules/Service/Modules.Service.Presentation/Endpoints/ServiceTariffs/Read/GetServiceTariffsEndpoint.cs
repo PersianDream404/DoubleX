@@ -18,13 +18,14 @@ public sealed class GetServiceTariffsEndpoint
             app.MapGet($"{ServiceApiInfo.Prefix}/Tariffs", async (
                     [FromServices] IQueryBus bus,
                     HttpContext context,
+                    [FromQuery] string? q,
                     CancellationToken cancellationToken) =>
                 {
                     if (!TryGetSalonId(context, out var salonId))
                         return Unauthorized();
 
                     var result = await bus.Send<GetServiceTariffsQuery, IReadOnlyList<ServiceTariffDto>>(
-                        new GetServiceTariffsQuery(salonId), cancellationToken);
+                        new GetServiceTariffsQuery(salonId, q), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
                 .RequireAuthorization()

@@ -140,6 +140,7 @@ export interface UploadedPersonnelFile {
 export type GetAllPersonnelRequest = PageParams & {
   [key: string]: string | number | boolean | null | undefined;
   Q?: string;
+  IsActive?: boolean;
 };
 
 export type PersonnelListResult = PagedResult<PersonnelDto>;

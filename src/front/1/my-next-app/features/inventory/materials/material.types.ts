@@ -38,4 +38,5 @@ export type MaterialListRequest = PageParams & {
   Q?: string;
   IsActive?: boolean;
   LowStockOnly?: boolean;
+  InStockOnly?: boolean;
 };

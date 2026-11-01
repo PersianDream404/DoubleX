@@ -16,6 +16,13 @@ export class ServiceTariffService {
     return this.api.get<ServiceTariffDto[]>(this.path, undefined, config);
   }
 
+  search(
+    q: string,
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ServiceTariffDto[]>> {
+    return this.api.get<ServiceTariffDto[]>(this.path, { q }, config);
+  }
+
   getById(id: number, config?: { signal?: AbortSignal }): Promise<ApiResponse<ServiceTariffDto>> {
     return this.api.get<ServiceTariffDto>(`${this.path}/${id}`, undefined, config);
   }

@@ -16,7 +16,7 @@ public sealed class GetServiceTariffsQueryHandler(IServiceTariffQueryRepository 
     {
         if (!await repository.SalonExistsAsync(query.SalonId, cancellationToken))
             return Result.NotFound("سالن موردنظر پیدا نشد.");
-        var tariffs = await repository.GetTariffsAsync(query.SalonId, cancellationToken);
+        var tariffs = await repository.GetTariffsAsync(query.SalonId, query.Q, cancellationToken);
         return Result.Success<IReadOnlyList<ServiceTariffDto>>(tariffs
             .Select(tariff => new ServiceTariffDto(
                 tariff.Id,
@@ -36,6 +36,9 @@ public sealed class GetServiceTariffsQueryHandler(IServiceTariffQueryRepository 
 
 public sealed class GetServiceTariffsQueryValidator : AbstractValidator<GetServiceTariffsQuery>
 {
-    public GetServiceTariffsQueryValidator() =>
+    public GetServiceTariffsQueryValidator()
+    {
         RuleFor(query => query.SalonId).GreaterThan(0);
+        RuleFor(query => query.Q).MaximumLength(250);
+    }
 }

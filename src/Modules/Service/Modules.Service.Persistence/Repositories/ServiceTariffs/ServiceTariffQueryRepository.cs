@@ -14,13 +14,23 @@ public sealed class ServiceTariffQueryRepository(ServiceReadDbContext readContex
 
     public async Task<IReadOnlyList<ServiceTariffReadModel>> GetTariffsAsync(
         long salonId,
+        string? searchTerm,
         CancellationToken cancellationToken)
-        => await readContext.ServiceTariffs
+    {
+        var query = readContext.ServiceTariffs
             .AsNoTracking()
-            .Where(tariff => tariff.SalonId == salonId)
+            .Where(tariff => tariff.SalonId == salonId);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(tariff => tariff.Name.Contains(term));
+        }
+
+        return await query
             .OrderBy(tariff => tariff.Name)
             .Select(ServiceTariffMapper.ToReadModel())
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<ServiceTariffReadModel?> GetTariffByIdAsync(
         long id,
