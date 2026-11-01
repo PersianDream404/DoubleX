@@ -6,6 +6,7 @@ using System.Globalization;
 using Modules.Personnel.Persistence.Extensions;
 using Web.Extensions;
 using Web.Infrastructure.Modules;
+using Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -44,6 +45,7 @@ var app = builder.Build();
 app.AddModuleDependencies();
 
 app.UseSerilogRequestLogging();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapMyEndpoints();

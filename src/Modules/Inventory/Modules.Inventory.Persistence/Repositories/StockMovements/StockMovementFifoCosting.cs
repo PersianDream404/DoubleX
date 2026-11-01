@@ -1,3 +1,4 @@
+using Framwork.Eceptions;
 using Modules.Inventory.Domain.Entities;
 using Modules.Inventory.Domain.Enums;
 
@@ -31,8 +32,8 @@ internal static class StockMovementFifoCosting
                     RemoveQuantity(layers, movement.Quantity);
                     break;
                 default:
-                    throw new InvalidOperationException(
-                        $"Unsupported stock movement type: {movement.Type}.");
+                    throw new BusinessRuleException(
+                        $"نوع گردش موجودی «{movement.Type}» پشتیبانی نمی‌شود.");
             }
         }
 
@@ -108,11 +109,10 @@ internal static class StockMovementFifoCosting
                 layers.RemoveAt(0);
             }
         }
-
         if (quantity > 0)
         {
-            throw new InvalidOperationException(
-                "The stock movement ledger does not reconcile with the inventory balance.");
+            throw new BusinessRuleException(
+                "مغایرتی بین گردش ثبت‌شده موجودی انبار و مانده فعلی موجودی وجود دارد.");
         }
     }
 
