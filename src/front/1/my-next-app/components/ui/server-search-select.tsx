@@ -26,7 +26,9 @@ type ServerSearchSelectProps<T> = {
     signal: AbortSignal,
   ) => Promise<ServerSearchPage<T>>;
   ariaLabel: string;
+  id?: string;
   placeholder?: string;
+  valueLabel?: string;
   emptyMessage?: string;
   disabled?: boolean;
 };
@@ -36,7 +38,9 @@ export function ServerSearchSelect<T>({
   onChange,
   loadOptions,
   ariaLabel,
+  id,
   placeholder = "برای جستجو تایپ کنید...",
+  valueLabel,
   emptyMessage = "نتیجه‌ای پیدا نشد.",
   disabled = false,
 }: ServerSearchSelectProps<T>) {
@@ -124,7 +128,7 @@ export function ServerSearchSelect<T>({
   const selectedLabel = value
     ? selectedOption?.value === value
       ? selectedOption.label
-      : ""
+      : valueLabel ?? ""
     : "";
 
   return (
@@ -132,6 +136,7 @@ export function ServerSearchSelect<T>({
       <div className="relative">
         <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
         <input
+          id={id}
           type="text"
           role="combobox"
           aria-label={ariaLabel}
@@ -192,7 +197,9 @@ export function ServerSearchSelect<T>({
             </p>
           )}
           {!loading && !error && options.length === 0 && (
-            <p className="px-3 py-4 text-center text-xs text-slate-500">{emptyMessage}</p>
+            <p className="px-3 py-4 text-center text-xs text-slate-500">
+              {hasMore ? "در این صفحه گزینه‌ای پیدا نشد؛ نتایج بیشتری را بررسی کنید." : emptyMessage}
+            </p>
           )}
           {!loading &&
             !error &&
@@ -229,7 +236,7 @@ export function ServerSearchSelect<T>({
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-50 disabled:opacity-60"
             >
               {loadingMore && <LoaderCircle className="size-4 animate-spin" />}
-              نمایش نتایج بیشتر
+              نمایش نتیجه‌های بیشتر
             </button>
           )}
         </div>

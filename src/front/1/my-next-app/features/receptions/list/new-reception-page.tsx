@@ -35,7 +35,7 @@ import type { CashRegisterOption } from "@/features/cash-register/cash-register.
 import {
   ServerSearchSelect,
   type ServerSearchPage,
-} from "./server-search-select";
+} from "@/components/ui/server-search-select";
 
 import {
   CreateReceptionFormSchema,

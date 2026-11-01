@@ -31,7 +31,7 @@ public sealed class MaterialQueryRepository(InventoryReadDbContext context)
             query = query.Where(material => material.Status == request.IsActive.Value);
         }
 
-        if (request.LowStockOnly)
+        if (request.LowStockOnly.HasValue && request.LowStockOnly.Value)
         {
             query = query.Where(material =>
                 material.MinimumStock > 0 &&
@@ -39,7 +39,7 @@ public sealed class MaterialQueryRepository(InventoryReadDbContext context)
                  material.StockBalance.Quantity <= material.MinimumStock));
         }
 
-        if (request.InStockOnly)
+        if (request.InStockOnly.HasValue && request.InStockOnly.Value)
         {
             query = query.Where(material =>
                 material.StockBalance != null &&

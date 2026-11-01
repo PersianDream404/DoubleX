@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DatePicker, { type DateObject } from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
-import { CalendarDays, Clock3, LoaderCircle, Search, UserRound, X } from "lucide-react";
+import { CalendarDays, Clock3, LoaderCircle, UserRound, X } from "lucide-react";
 import { toJalaali } from "jalaali-js";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ServerSearchSelect,
+  type ServerSearchPage,
+} from "@/components/ui/server-search-select";
 import { handleApiError } from "@/lib/api/handle-api-error";
 import { jalaliDateToApi } from "@/features/services/tariffs/service-tariff-date";
 import type { CustomerDto } from "@/features/customers/list/customer.types";
@@ -37,13 +41,6 @@ type Props = {
   onSaved: (message: string, appointmentDate: string) => void;
 };
 
-type Options = {
-  services: ServiceDto[];
-  tariffs: ServiceTariffDto[];
-  personnel: PersonnelDto[];
-};
-
-const EMPTY_OPTIONS: Options = { services: [], tariffs: [], personnel: [] };
 const inputClass = "h-11 rounded-xl border-slate-200 bg-white";
 
 function todayJalali() {
@@ -183,17 +180,14 @@ function FormField({
 }
 
 export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSaved }: Props) {
-  const [options, setOptions] = useState<Options>(EMPTY_OPTIONS);
   const [loadingOptions, setLoadingOptions] = useState(true);
-  const [customerQuery, setCustomerQuery] = useState("");
-  const [customerResults, setCustomerResults] = useState<CustomerDto[]>([]);
-  const [searchingCustomers, setSearchingCustomers] = useState(false);
   const [customer, setCustomer] = useState<CustomerDto | null>(null);
   const [details, setDetails] = useState<AppointmentDetailsDto | null>(null);
   const [servicePersonnel, setServicePersonnel] = useState<ServicePersonnelDto[]>([]);
   const [servicePersonnelLoading, setServicePersonnelLoading] = useState(appointmentId !== null);
   const [serviceId, setServiceId] = useState("");
   const [tariffId, setTariffId] = useState("");
+  const [selectedTariff, setSelectedTariff] = useState<ServiceTariffDto | null>(null);
   const [personnelId, setPersonnelId] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -205,40 +199,104 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const appointmentService = useMemo(() => new AppointmentService(), []);
+  const customerRequestRef = useRef<AbortController | null>(null);
 
-  const selectedPersonnel = options.personnel.filter((person) =>
-    servicePersonnel.some((assignment) => assignment.personnelId === person.id),
+  const selectedTariffIsValid = useMemo(
+    () => validTariffsForDate(selectedTariff ? [selectedTariff] : [], serviceId, date, time)
+      .some((item) => String(item.id) === tariffId),
+    [date, selectedTariff, serviceId, tariffId, time],
   );
-  const activeTariffs = useMemo(() => {
-    return validTariffsForDate(options.tariffs, serviceId, date, time);
-  }, [date, options.tariffs, serviceId, time]);
+
+  const loadCustomerOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<CustomerDto>> => {
+      const response = await appointmentService.searchCustomers(query, pageNumber, signal);
+      if (!response.data) throw new Error(response.message ?? "فهرست مشتریان دریافت نشد.");
+      return {
+        options: response.data.list
+          .filter((item) => item.status)
+          .map((item) => ({
+            value: String(item.id),
+            label: item.fullName,
+            description: formatPhone(item.mobilePhone),
+            data: item,
+          })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [appointmentService],
+  );
+
+  const loadServiceOptions = useCallback(
+    async (query: string, _pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<ServiceDto>> => {
+      const services = await appointmentService.searchActiveServices(query, signal);
+      return {
+        options: services.map((item) => ({
+          value: String(item.id),
+          label: item.name,
+          description: `${new Intl.NumberFormat("fa-IR").format(item.durationMinutes)} دقیقه`,
+          data: item,
+        })),
+        hasMore: false,
+      };
+    },
+    [appointmentService],
+  );
+
+  const loadPersonnelOptions = useCallback(
+    async (query: string, pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<PersonnelDto>> => {
+      if (!serviceId) return { options: [], hasMore: false };
+      const assignments = new Set(servicePersonnel.map((item) => item.personnelId));
+      const response = await appointmentService.searchPersonnel(query, pageNumber, signal);
+      if (!response.data) throw new Error(response.message ?? "فهرست پرسنل دریافت نشد.");
+      return {
+        options: response.data.list
+          .filter((person) => assignments.has(person.id))
+          .map((person) => ({
+            value: String(person.id),
+            label: person.fullName,
+            description: person.jobTitle,
+            data: person,
+          })),
+        hasMore: response.data.pagination.pageNumber < response.data.pagination.totalPages,
+      };
+    },
+    [appointmentService, serviceId, servicePersonnel],
+  );
+
+  const loadTariffOptions = useCallback(
+    async (query: string, _pageNumber: number, signal: AbortSignal): Promise<ServerSearchPage<ServiceTariffDto>> => {
+      if (!serviceId || !date) return { options: [], hasMore: false };
+      const tariffs = await appointmentService.searchTariffs(query, signal);
+      const validTariffs = validTariffsForDate(tariffs, serviceId, date, time);
+      return {
+        options: validTariffs.map((item) => ({
+          value: String(item.id),
+          label: item.name,
+          description: amountLabel(
+            item.services.find((service) => service.serviceId === Number(serviceId))?.amount ?? 0,
+          ),
+          data: item,
+        })),
+        hasMore: false,
+      };
+    },
+    [appointmentService, date, serviceId, time],
+  );
 
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    const serviceApi = new AppointmentService();
-
-    const loads: [
-      Promise<ServiceDto[]>,
-      Promise<ServiceTariffDto[]>,
-      Promise<PersonnelDto[]>,
-      Promise<AppointmentDetailsDto | null>,
-    ] = [
-      serviceApi.getActiveServices(controller.signal),
-      serviceApi.getTariffs(controller.signal),
-      serviceApi.getAllPersonnel(controller.signal),
-      appointmentId
-        ? serviceApi.getById(appointmentId, controller.signal).then((response) => {
+    const appointmentRequest: Promise<AppointmentDetailsDto | null> = appointmentId
+      ? appointmentService.getById(appointmentId, controller.signal).then((response) => {
             if (!response.data) throw new Error(response.message ?? "جزئیات نوبت دریافت نشد.");
             return response.data;
           })
-        : Promise.resolve(null),
-    ];
+      : Promise.resolve(null);
 
-    void Promise.all(loads)
-      .then(([services, tariffs, personnel, appointment]) => {
+    void appointmentRequest
+      .then((appointment) => {
         if (controller.signal.aborted) return;
-        setOptions({ services, tariffs, personnel });
         if (appointment) {
           setDetails(appointment);
           setServiceId(String(appointment.serviceId));
@@ -251,8 +309,10 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
           setDate(todayJalali());
           setTime("");
           setServiceId("");
+          setCustomer(null);
           setPersonnelId("");
           setTariffId("");
+          setSelectedTariff(null);
           setDiscount("0");
           setNotes("");
           setNotificationChannel(0);
@@ -266,12 +326,12 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
       });
 
     return () => controller.abort();
-  }, [appointmentId, open]);
+  }, [appointmentId, appointmentService, open]);
 
   useEffect(() => {
     if (!open || !serviceId) return;
     const controller = new AbortController();
-    void new AppointmentService()
+    void appointmentService
       .getServicePersonnel(Number(serviceId), controller.signal)
       .then((assignments) => {
         if (!controller.signal.aborted) setServicePersonnel(assignments);
@@ -283,30 +343,7 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
         if (!controller.signal.aborted) setServicePersonnelLoading(false);
       });
     return () => controller.abort();
-  }, [appointmentId, open, serviceId]);
-
-  useEffect(() => {
-    if (!open || customerQuery.trim().length < 2) return;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setSearchingCustomers(true);
-      void new AppointmentService()
-        .searchCustomers(customerQuery.trim(), controller.signal)
-        .then((customers) => {
-          if (!controller.signal.aborted) setCustomerResults(customers);
-        })
-        .catch((cause: unknown) => {
-          if (!controller.signal.aborted) setFormError(handleApiError(cause));
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setSearchingCustomers(false);
-        });
-    }, 300);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [customerQuery, open]);
+  }, [appointmentId, appointmentService, open, serviceId]);
 
   useEffect(() => {
     if (!open || appointmentId || !serviceId || !tariffId || !personnelId || !date || !time) {
@@ -319,7 +356,7 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
     const controller = new AbortController();
     const timeout = window.setTimeout(() => {
       setCheckingAvailability(true);
-      void new AppointmentService()
+      void appointmentService
         .getAvailability({
           serviceId: Number(serviceId),
           serviceTariffId: Number(tariffId),
@@ -352,19 +389,28 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
       controller.abort();
       setCheckingAvailability(false);
     };
-  }, [appointmentId, date, open, personnelId, serviceId, tariffId, time]);
+  }, [appointmentId, appointmentService, date, open, personnelId, serviceId, tariffId, time]);
 
-  async function selectCustomer(result: CustomerDto) {
+  async function selectCustomer(result: CustomerDto | null) {
+    customerRequestRef.current?.abort();
     setFormError(null);
-    setCustomerResults([]);
-    setCustomerQuery("");
+    if (!result) {
+      setCustomer(null);
+      return;
+    }
+    const controller = new AbortController();
+    customerRequestRef.current = controller;
+    setCustomer(result);
     try {
-      const response = await new AppointmentService().getCustomerById(result.id);
+      const response = await appointmentService.getCustomerById(result.id, controller.signal);
       if (!response.data) throw new Error(response.message ?? "اطلاعات مشتری دریافت نشد.");
       if (!response.data.status) throw new Error("این مشتری غیرفعال است و امکان رزرو برای او وجود ندارد.");
-      setCustomer(response.data);
+      if (!controller.signal.aborted) setCustomer(response.data);
     } catch (cause: unknown) {
-      setFormError(handleApiError(cause));
+      if (!controller.signal.aborted) {
+        setCustomer(null);
+        setFormError(handleApiError(cause));
+      }
     }
   }
 
@@ -374,12 +420,14 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
     setServicePersonnel([]);
     setServicePersonnelLoading(Boolean(value));
     setTariffId("");
+    setSelectedTariff(null);
     setAvailability(null);
     setFormError(null);
   }
 
-  function chooseTariff(value: string) {
+  function chooseTariff(value: string, selected: ServiceTariffDto | null) {
     setTariffId(value);
+    setSelectedTariff(selected);
     setAvailability(null);
     setFormError(null);
   }
@@ -427,7 +475,7 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
       setFieldErrors({ date: "تاریخ و ساعت معتبر نیست." });
       return;
     }
-    if (!appointmentId && !activeTariffs.some((item) => String(item.id) === tariffId)) {
+    if (!appointmentId && !selectedTariffIsValid) {
       setFieldErrors({ serviceTariffId: "برای تاریخ انتخاب‌شده تعرفهٔ معتبر وجود ندارد." });
       return;
     }
@@ -446,7 +494,7 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
 
     setSubmitting(true);
     try {
-      const serviceApi = new AppointmentService();
+      const serviceApi = appointmentService;
       if (appointmentId) {
         const response = await serviceApi.update(appointmentId, {
           startsAt,
@@ -482,7 +530,6 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
     }
   }
 
-  const selectedTariff = activeTariffs.find((item) => String(item.id) === tariffId) ?? null;
   const tariffAmount = selectedTariff?.services.find((item) => item.serviceId === Number(serviceId))?.amount;
   const isEditing = appointmentId !== null;
 
@@ -551,46 +598,16 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField label="جستجوی مشتری" htmlFor="appointment-customer" error={fieldErrors.customerId}>
-                    <div className="relative">
-                      <Search className="absolute top-3.5 right-3 size-4 text-slate-400" />
-                      <Input
-                        id="appointment-customer"
-                        value={customerQuery}
-                        onChange={(event) => {
-                          const query = event.target.value;
-                          setCustomerQuery(query);
-                          if (query.trim().length < 2) setCustomerResults([]);
-                        }}
-                        placeholder="نام یا شماره موبایل مشتری"
-                        className={`${inputClass} pr-10`}
-                        autoComplete="off"
-                        aria-label="جستجوی مشتری بر اساس نام یا موبایل"
-                      />
-                      {searchingCustomers && (
-                        <LoaderCircle className="absolute top-3.5 left-3 size-4 animate-spin text-slate-400" />
-                      )}
-                      {customerQuery.trim().length >= 2 && !searchingCustomers && customerResults.length === 0 && (
-                        <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-500 shadow-lg">
-                          مشتری فعالی پیدا نشد. ثبت مشتری جدید از این فرم پشتیبانی نمی‌شود.
-                        </div>
-                      )}
-                      {customerResults.length > 0 && (
-                        <ul className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                          {customerResults.map((item) => (
-                            <li key={item.id}>
-                              <button
-                                type="button"
-                                onClick={() => void selectCustomer(item)}
-                                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-right text-sm hover:bg-violet-50 focus-visible:bg-violet-50 focus-visible:outline-none"
-                              >
-                                <span>{item.fullName}</span>
-                                <span dir="ltr" className="text-xs text-slate-500">{formatPhone(item.mobilePhone)}</span>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                    <ServerSearchSelect<CustomerDto>
+                      id="appointment-customer"
+                      ariaLabel="جستجوی مشتری بر اساس نام یا موبایل"
+                      value={customer ? String(customer.id) : ""}
+                      valueLabel={customer?.fullName}
+                      loadOptions={loadCustomerOptions}
+                      placeholder="نام یا شماره موبایل مشتری"
+                      emptyMessage="مشتری فعالی پیدا نشد."
+                      onChange={(_value, option) => void selectCustomer(option?.data ?? null)}
+                    />
                   </FormField>
                   <div className="rounded-xl bg-slate-50 p-3 text-xs leading-6 text-slate-600">
                     {customer ? (
@@ -617,57 +634,43 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField label="نوع خدمت" htmlFor="appointment-service" error={fieldErrors.serviceId}>
-                    <select
+                    <ServerSearchSelect<ServiceDto>
                       id="appointment-service"
+                      ariaLabel="انتخاب خدمت فعال"
                       value={serviceId}
-                      onChange={(event) => chooseService(event.target.value)}
-                      className={`${inputClass} w-full px-3 text-sm`}
-                      required
-                    >
-                      <option value="">انتخاب خدمت فعال</option>
-                      {options.services.map((item) => (
-                        <option key={item.id} value={item.id}>{item.name}</option>
-                      ))}
-                    </select>
-                    {options.services.length === 0 && (
-                      <p className="text-xs text-amber-700">خدمت فعال قابل رزروی برای این سالن وجود ندارد.</p>
-                    )}
+                      loadOptions={loadServiceOptions}
+                      emptyMessage="خدمت فعالی برای این سالن پیدا نشد."
+                      onChange={(value) => chooseService(value)}
+                    />
                   </FormField>
                   <FormField label="پرسنل مرتبط" htmlFor="appointment-personnel" error={fieldErrors.personnelId}>
-                    <select
+                    <ServerSearchSelect<PersonnelDto>
                       id="appointment-personnel"
+                      ariaLabel="انتخاب پرسنل مرتبط"
                       value={personnelId}
-                      onChange={(event) => choosePersonnel(event.target.value)}
+                      valueLabel={personnelId === String(details?.personnelId) ? details?.personnelName : undefined}
+                      loadOptions={loadPersonnelOptions}
+                      emptyMessage="پرسنل فعالی برای این خدمت پیدا نشد."
+                      onChange={(value) => choosePersonnel(value)}
                       disabled={!serviceId || servicePersonnelLoading}
-                      className={`${inputClass} w-full px-3 text-sm disabled:bg-slate-100`}
-                      required
-                    >
-                      <option value="">
-                        {servicePersonnelLoading ? "در حال دریافت..." : serviceId ? "انتخاب پرسنل" : "ابتدا خدمت را انتخاب کنید"}
-                      </option>
-                      {selectedPersonnel.map((item) => (
-                        <option key={item.id} value={item.id}>{item.fullName}</option>
-                      ))}
-                    </select>
-                    {serviceId && !servicePersonnelLoading && selectedPersonnel.length === 0 && (
+                    />
+                    {serviceId && !servicePersonnelLoading && servicePersonnel.length === 0 && (
                       <p className="text-xs text-amber-700">برای این خدمت پرسنل فعال و واجد شرایط ثبت نشده است.</p>
                     )}
                   </FormField>
                   <FormField label="تعرفهٔ معتبر در تاریخ انتخابی" htmlFor="appointment-tariff" error={fieldErrors.serviceTariffId}>
-                    <select
+                    <ServerSearchSelect<ServiceTariffDto>
                       id="appointment-tariff"
+                      ariaLabel="جستجو و انتخاب تعرفه معتبر"
                       value={tariffId}
-                      onChange={(event) => chooseTariff(event.target.value)}
+                      valueLabel={selectedTariff?.name}
+                      loadOptions={loadTariffOptions}
+                      emptyMessage="برای این خدمت و تاریخ، تعرفهٔ معتبری پیدا نشد."
+                      onChange={(value, option) => chooseTariff(value, option?.data ?? null)}
                       disabled={!serviceId || !date}
-                      className={`${inputClass} w-full px-3 text-sm disabled:bg-slate-100`}
-                    >
-                      <option value="">انتخاب تعرفه</option>
-                      {activeTariffs.map((item) => (
-                        <option key={item.id} value={item.id}>{item.name}</option>
-                      ))}
-                    </select>
-                    {serviceId && date && activeTariffs.length === 0 && (
-                      <p className="text-xs text-amber-700">برای این خدمت در تاریخ انتخابی تعرفهٔ فعال وجود ندارد.</p>
+                    />
+                    {serviceId && date && !selectedTariffIsValid && (
+                      <p className="text-xs text-amber-700">تعرفه را با جستجو انتخاب کنید.</p>
                     )}
                   </FormField>
                   <FormField label="توضیحات" htmlFor="appointment-notes" error={fieldErrors.notes}>
@@ -686,19 +689,16 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
               {isEditing && (
                 <div className="mt-4">
                   <FormField label="پرسنل مرتبط" htmlFor="appointment-personnel-edit" error={fieldErrors.personnelId}>
-                    <select
+                    <ServerSearchSelect<PersonnelDto>
                       id="appointment-personnel-edit"
+                      ariaLabel="انتخاب پرسنل مرتبط برای ویرایش"
                       value={personnelId}
-                      onChange={(event) => choosePersonnel(event.target.value)}
+                      valueLabel={personnelId === String(details?.personnelId) ? details?.personnelName : undefined}
+                      loadOptions={loadPersonnelOptions}
+                      emptyMessage="پرسنل فعالی برای این خدمت پیدا نشد."
+                      onChange={(value) => choosePersonnel(value)}
                       disabled={servicePersonnelLoading}
-                      className={`${inputClass} w-full px-3 text-sm disabled:bg-slate-100`}
-                      required
-                    >
-                      <option value="">{servicePersonnelLoading ? "در حال دریافت..." : "انتخاب پرسنل"}</option>
-                      {selectedPersonnel.map((item) => (
-                        <option key={item.id} value={item.id}>{item.fullName}</option>
-                      ))}
-                    </select>
+                    />
                   </FormField>
                   <div className="mt-4">
                     <FormField label="توضیحات" htmlFor="appointment-notes-edit" error={fieldErrors.notes}>
@@ -763,9 +763,10 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
                   <FormField label="تاریخ نوبت" error={fieldErrors.date}>
                     <AppointmentDatePicker value={date} onChange={(nextDate) => {
                       setDate(nextDate);
-                      if (!validTariffsForDate(options.tariffs, serviceId, nextDate, time)
+                      if (!validTariffsForDate(selectedTariff ? [selectedTariff] : [], serviceId, nextDate, time)
                         .some((item) => String(item.id) === tariffId)) {
                         setTariffId("");
+                        setSelectedTariff(null);
                       }
                       setAvailability(null);
                       setFormError(null);
@@ -782,9 +783,10 @@ export function AppointmentFormDialog({ open, appointmentId, onOpenChange, onSav
                         onChange={(event) => {
                           const nextTime = event.target.value;
                           setTime(nextTime);
-                          if (!validTariffsForDate(options.tariffs, serviceId, date, nextTime)
+                          if (!validTariffsForDate(selectedTariff ? [selectedTariff] : [], serviceId, date, nextTime)
                             .some((item) => String(item.id) === tariffId)) {
                             setTariffId("");
+                            setSelectedTariff(null);
                           }
                           setAvailability(null);
                           setFormError(null);

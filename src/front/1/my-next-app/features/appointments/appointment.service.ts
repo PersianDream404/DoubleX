@@ -16,6 +16,7 @@ import type {
 } from "./appointment.types";
 
 const PAGE_SIZE = 100;
+const SEARCH_PAGE_SIZE = 50;
 
 export class AppointmentService {
   private readonly api = new ApiClient();
@@ -63,14 +64,16 @@ export class AppointmentService {
     );
   }
 
-  async searchCustomers(query: string, signal?: AbortSignal): Promise<CustomerDto[]> {
-    const response = await this.api.get<CustomerListResult>(
+  searchCustomers(
+    query: string,
+    pageNumber: number,
+    signal?: AbortSignal,
+  ): Promise<ApiResponse<CustomerListResult>> {
+    return this.api.get<CustomerListResult>(
       "/api/Customer",
-      { Q: query, PageNumber: 1, PageSize: 10 },
+      { Q: query, PageNumber: pageNumber, PageSize: SEARCH_PAGE_SIZE },
       { signal },
     );
-    if (!response.data) throw new Error(response.message ?? "فهرست مشتریان دریافت نشد.");
-    return response.data.list.filter((customer) => customer.status);
   }
 
   async getCustomerById(id: number, signal?: AbortSignal): Promise<ApiResponse<CustomerDto>> {
@@ -83,10 +86,47 @@ export class AppointmentService {
     return response.data.filter((service) => service.isActive);
   }
 
+  async searchActiveServices(query: string, signal?: AbortSignal): Promise<ServiceDto[]> {
+    const response = await this.api.get<ServiceDto[]>(
+      "/api/Services/SelectList",
+      { q: query || undefined },
+      { signal },
+    );
+    if (!response.data) throw new Error(response.message ?? "فهرست خدمات دریافت نشد.");
+    return response.data.filter((service) => service.isActive);
+  }
+
   async getTariffs(signal?: AbortSignal): Promise<ServiceTariffDto[]> {
     const response = await this.api.get<ServiceTariffDto[]>("/api/Services/Tariffs", undefined, { signal });
     if (!response.data) throw new Error(response.message ?? "فهرست تعرفه‌ها دریافت نشد.");
     return response.data;
+  }
+
+  async searchTariffs(query: string, signal?: AbortSignal): Promise<ServiceTariffDto[]> {
+    const response = await this.api.get<ServiceTariffDto[]>(
+      "/api/Services/Tariffs",
+      { q: query || undefined },
+      { signal },
+    );
+    if (!response.data) throw new Error(response.message ?? "فهرست تعرفه‌ها دریافت نشد.");
+    return response.data;
+  }
+
+  searchPersonnel(
+    query: string,
+    pageNumber: number,
+    signal?: AbortSignal,
+  ): Promise<ApiResponse<PersonnelListResult>> {
+    return this.api.get<PersonnelListResult>(
+      "/api/Personnel",
+      {
+        Q: query,
+        PageNumber: pageNumber,
+        PageSize: SEARCH_PAGE_SIZE,
+        IsActive: true,
+      },
+      { signal },
+    );
   }
 
   async getServicePersonnel(

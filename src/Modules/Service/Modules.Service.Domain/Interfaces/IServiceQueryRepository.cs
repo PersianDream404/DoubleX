@@ -9,6 +9,9 @@ public interface IServiceQueryRepository
         long salonId,
         string? searchTerm,
         CancellationToken cancellationToken);
-    Task<IReadOnlyList<ServiceReadModel>> GetActiveServicesAsync(long salonId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ServiceReadModel>> GetActiveServicesAsync(
+        long salonId,
+        string? searchTerm,
+        CancellationToken cancellationToken);
     Task<ServiceReadModel?> GetServiceByIdAsync(long id, CancellationToken cancellationToken);
 }

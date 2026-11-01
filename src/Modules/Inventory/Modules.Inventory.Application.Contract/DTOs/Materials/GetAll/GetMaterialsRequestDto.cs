@@ -6,6 +6,6 @@ public sealed class GetMaterialsRequestDto : PagedParamData
 {
     public string? Q { get; set; }
     public bool? IsActive { get; set; }
-    public bool LowStockOnly { get; set; }
-    public bool InStockOnly { get; set; }
+    public bool? LowStockOnly { get; set; }
+    public bool? InStockOnly { get; set; }
 }

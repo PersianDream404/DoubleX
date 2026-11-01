@@ -18,13 +18,14 @@ public sealed class GetActiveServicesEndpoint
             app.MapGet($"{ServiceApiInfo.Prefix}/SelectList", async (
                     [FromServices] IQueryBus bus,
                     HttpContext context,
+                    [FromQuery] string? q,
                     CancellationToken cancellationToken) =>
                 {
                     if (!TryGetSalonId(context, out var salonId))
                         return Unauthorized();
 
                     var result = await bus.Send<GetActiveServicesQuery, IReadOnlyList<ServiceDto>>(
-                        new GetActiveServicesQuery(salonId), cancellationToken);
+                        new GetActiveServicesQuery(salonId, q), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
                 .RequireAuthorization()
