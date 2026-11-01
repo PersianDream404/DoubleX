@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.FileStore.Persistence;
+using Modules.FileStore.Persistence.Extensions;
 using Modules.FileStore.Presentation.Endpoints.FileStores.Write;
 using SharedKernel.Interface;
 using SmeOpsHub.SharedKernel;
@@ -28,4 +29,9 @@ public class FileStoreModule : IModule
 
 
     }
+
+    public void RegisterBuilder(IApplicationBuilder builder) =>
+    builder.ApplicationServices.ApplyCustomerMigrationsAsync()
+        .GetAwaiter()
+        .GetResult();
 }

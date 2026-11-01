@@ -40,7 +40,7 @@ export const CreateReceptionFormSchema = z
     payments: z.array(ReceptionPaymentFormSchema),
   })
   .superRefine((form, context) => {
-    let totalAmount = 0;
+    let totalAmount = form.materialCostTotal;
     form.services.forEach((service, index) => {
       const serviceAmount = service.quantity * service.unitPrice;
       if (service.discountAmount > serviceAmount) {
@@ -57,7 +57,6 @@ export const CreateReceptionFormSchema = z
           message: "تعرفه همه خدمات باید با تعرفه انتخاب‌شده برای پذیرش یکسان باشد.",
           path: ["services", index, "serviceTariffId"],
         });
-        totalAmount += form.materialCostTotal;
       }
     });
 

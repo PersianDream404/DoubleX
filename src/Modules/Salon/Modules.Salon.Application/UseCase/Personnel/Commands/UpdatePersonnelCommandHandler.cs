@@ -203,7 +203,7 @@ public class UpdatePersonnelCommandHandler(
                 ? Result.Success(true)
                 : Result.Conflict("بازهٔ قرارداد جدید با قراردادهای قبلی هم‌پوشانی دارد یا تاریخ شروع معتبر نیست.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return Result.Error(Messages.ErrorInPersonnel);
         }

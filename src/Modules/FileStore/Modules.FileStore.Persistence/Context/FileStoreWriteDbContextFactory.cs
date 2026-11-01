@@ -1,6 +1,7 @@
 using Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using SharedKernel.Constants;
 
 namespace Modules.FileStore.Persistence.Context;
 
@@ -10,7 +11,7 @@ public sealed class FileStoreWriteDbContextFactory
     public FileStoreWriteDbContext CreateDbContext(string[] args)
     {
         var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__BaseConnection");
+            Environment.GetEnvironmentVariable("ConnectionStrings__BaseConnection")??AppSetting.ConnectionStringText;
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
