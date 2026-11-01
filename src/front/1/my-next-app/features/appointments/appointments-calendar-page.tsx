@@ -75,8 +75,10 @@ function AppointmentDatePicker({
 
 export function AppointmentsCalendarPage({
   initialDialogOpen = false,
+  initialDialogPresentation = "dialog",
 }: {
   initialDialogOpen?: boolean;
+  initialDialogPresentation?: "dialog" | "page";
 }) {
   const [selectedDate, setSelectedDate] = useState(tehranTodayJalali);
   const [mode, setMode] = useState<ViewMode>("day");
@@ -416,6 +418,7 @@ export function AppointmentsCalendarPage({
         key={`${dialogOpen ? "open" : "closed"}-${editingId ?? "new"}`}
         open={dialogOpen}
         appointmentId={editingId}
+        presentation={initialDialogPresentation}
         onOpenChange={(nextOpen) => {
           setDialogOpen(nextOpen);
           if (!nextOpen) setEditingId(null);
