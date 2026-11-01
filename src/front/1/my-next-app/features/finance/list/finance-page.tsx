@@ -46,8 +46,6 @@ import {
 import type { PersonnelEarningType } from "./finance.types";
 import { useFinance } from "./use-finance";
 
-type FinanceTab = "earnings" | "settlements";
-
 const EMPTY_FIXED_SALARY = {
   periodStart: "",
   periodEnd: "",
@@ -198,23 +196,20 @@ function SummaryCard({
   tone: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-fuchsia-100 bg-white p-4 shadow-sm">
-      <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${tone}`}>
-        <Icon aria-hidden="true" className="size-5" />
-      </span>
+    <div className={`flex min-w-0 items-center justify-between gap-2 rounded-lg border p-3 ${tone}`}>
       <div className="min-w-0">
-        <p className="text-xs text-slate-500">{title}</p>
-        <p className="mt-1 truncate text-base font-semibold text-slate-900">
-          {value}
-        </p>
+        <p className="truncate text-[11px] font-medium opacity-80">{title}</p>
+        <p className="mt-1 truncate text-sm font-bold">{value}</p>
       </div>
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/80">
+        <Icon aria-hidden="true" className="size-4" />
+      </span>
     </div>
   );
 }
 
 export function FinancePage() {
   const service = useMemo(() => new FinanceService(), []);
-  const [tab, setTab] = useState<FinanceTab>("earnings");
   const [selectedPersonnelId, setSelectedPersonnelId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -266,6 +261,15 @@ export function FinancePage() {
     [personnel],
   );
   const totalPages = Math.max(1, settlements.pagination.totalPages);
+  const selectedPersonnel = personnel.find((item) => item.id === selectedPersonnelId);
+  const latestSettlement = settlements.list.reduce<
+    (typeof settlements.list)[number] | null
+  >((latest, settlement) => {
+    if (!latest || Date.parse(settlement.paidAt) > Date.parse(latest.paidAt)) {
+      return settlement;
+    }
+    return latest;
+  }, null);
 
   function showSuccess(message: string) {
     setSuccessMessage(message);
@@ -394,405 +398,445 @@ export function FinancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="h-[182px] bg-[linear-gradient(110deg,#10000f_0%,#210020_55%,#10000f_100%)]">
-        <div className="mx-auto w-[92%] max-w-[1200px] pt-2">
+    <div className="min-h-screen bg-[#f6f8fd]">
+      <div className="border-b border-fuchsia-800 bg-[#32103c]">
+        <div className="mx-auto flex h-7 w-[94%] max-w-[1480px] items-center">
           <Breadcrumb>
-            <BreadcrumbList className="text-xs text-white/70">
+            <BreadcrumbList className="text-[10px] text-white/75">
               <BreadcrumbItem>
-                <BreadcrumbLink href="/finance">مدیریت مالی</BreadcrumbLink>
+                <BreadcrumbLink href="/finance">حقوق و تسویه</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage className="text-white">حقوق و تسویه پرسنل</BreadcrumbPage>
+                <BreadcrumbPage className="text-white">حقوق و پورسانت</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-lg font-semibold text-white">حقوق و تسویه پرسنل</h1>
-              <p className="mt-1 text-xs text-white/70">
-                محاسبه حقوق ثابت، پورسانت و ثبت پرداخت‌های مرحله‌ای
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-8 border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              onClick={() => setRefreshKey((current) => current + 1)}
-            >
-              <RefreshCw className="size-4" />
-              به‌روزرسانی
-            </Button>
-          </div>
         </div>
-      </section>
+      </div>
 
-      <main className="mx-auto -mt-[94px] w-[92%] max-w-[1200px] space-y-4 pb-10">
-        <section className="rounded-xl border border-fuchsia-100 bg-white p-4 shadow-sm">
-          <div className="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-            <div className="grid gap-1.5">
-              <Label htmlFor="finance-personnel">پرسنل</Label>
-              <select
-                id="finance-personnel"
-                value={selectedPersonnelId ?? ""}
-                onChange={(event) => onPersonnelChange(event.target.value)}
-                disabled={personnelLoading || personnel.length === 0}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-fuchsia-500 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20 disabled:opacity-60"
-              >
-                <option value="">
-                  {personnelLoading ? "در حال دریافت فهرست پرسنل..." : "انتخاب پرسنل"}
-                </option>
-                {personnel.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.fullName} - {item.jobTitle}
-                  </option>
-                ))}
-              </select>
-              {personnelError && <p role="alert" className="text-xs text-destructive">{personnelError}</p>}
-              {!personnelLoading && !personnelError && personnel.length === 0 && (
-                <p className="text-xs text-slate-500">پرسنل فعالی برای این سالن ثبت نشده است.</p>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="بخش مالی پرسنل">
-              <Button
-                type="button"
-                role="tab"
-                aria-selected={tab === "earnings"}
-                className={tab === "earnings" ? "bg-fuchsia-700 text-white hover:bg-fuchsia-800" : "bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
-                onClick={() => setTab("earnings")}
-              >
-                <BadgeDollarSign className="size-4" />
-                حقوق و پورسانت
-              </Button>
-              <Button
-                type="button"
-                role="tab"
-                aria-selected={tab === "settlements"}
-                className={tab === "settlements" ? "bg-fuchsia-700 text-white hover:bg-fuchsia-800" : "bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
-                onClick={() => setTab("settlements")}
-              >
-                <Banknote className="size-4" />
-                تسویه‌حساب
-              </Button>
-            </div>
-          </div>
-
-          {actionError && (
-            <p role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-              {actionError}
-            </p>
-          )}
-          {successMessage && (
-            <p role="status" className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              {successMessage}
-            </p>
-          )}
-        </section>
-
-        {tab === "earnings" ? (
-          <section role="tabpanel" className="space-y-4">
-            <section className="rounded-xl border border-fuchsia-100 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <CalendarDays className="size-4 text-fuchsia-700" />
-                    بازهٔ گزارش حقوق و پورسانت
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    تاریخ شروع و پایان بر اساس تاریخ ثبت درآمد در گزارش اعمال می‌شود.
-                  </p>
+      <div className="mx-auto w-[94%] max-w-[1480px] py-4 sm:py-5">
+        <div className="grid items-start gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="space-y-3">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <header className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                  <ReceiptText aria-hidden="true" className="size-4 text-fuchsia-600" />
+                  خلاصه وضعیت
+                </h2>
+                <span className="size-2 rounded-full bg-emerald-500" aria-label="گزارش مالی" />
+              </header>
+              <dl className="divide-y divide-slate-100 px-3">
+                <div className="flex items-center justify-between gap-3 py-3">
+                  <dt className="text-xs text-slate-500">پرسنل</dt>
+                  <dd className="truncate text-xs font-semibold text-slate-800">
+                    {selectedPersonnel?.fullName ?? "انتخاب نشده"}
+                  </dd>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    aria-pressed={earningsDateRange.preset === "daily"}
-                    onClick={setDailyEarningsRange}
-                    className={earningsDateRange.preset === "daily"
-                      ? "h-8 rounded-lg bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-                      : "h-8 rounded-lg bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
-                  >
-                    روزانه
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    aria-pressed={earningsDateRange.preset === "monthly"}
-                    onClick={setMonthlyEarningsRange}
-                    className={earningsDateRange.preset === "monthly"
-                      ? "h-8 rounded-lg bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-                      : "h-8 rounded-lg bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100"}
-                  >
-                    ماهانه
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    aria-pressed={earningsDateRange.preset === "all"}
-                    onClick={() => setEarningsDateRange(EMPTY_EARNINGS_DATE_RANGE)}
-                    className="h-8 rounded-lg"
-                  >
-                    همهٔ تاریخ‌ها
-                  </Button>
+                <div className="flex items-center justify-between gap-3 py-3">
+                  <dt className="text-xs text-slate-500">آخرین پرداخت</dt>
+                  <dd className="text-xs font-semibold text-slate-800" dir="ltr">
+                    {latestSettlement ? paidAtLabel(latestSettlement.paidAt) : "—"}
+                  </dd>
                 </div>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <JalaliDateInput
-                  id="finance-earnings-from"
-                  label="از تاریخ"
-                  value={earningsDateRange.from}
-                  onChange={(from) => setEarningsDateRange({ from, to: earningsDateRange.to, preset: "custom" })}
-                />
-                <JalaliDateInput
-                  id="finance-earnings-to"
-                  label="تا تاریخ"
-                  value={earningsDateRange.to}
-                  onChange={(to) => setEarningsDateRange({ from: earningsDateRange.from, to, preset: "custom" })}
-                />
-              </div>
-              {!earningsRangeValid && (
-                <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                  تاریخ پایان باید مساوی یا بعد از تاریخ شروع باشد.
-                </p>
-              )}
+                <div className="flex items-center justify-between gap-3 py-3">
+                  <dt className="text-xs text-slate-500">روش پرداخت</dt>
+                  <dd className="truncate text-xs font-semibold text-slate-800">
+                    {latestSettlement?.paymentMethod ?? "—"}
+                  </dd>
+                </div>
+              </dl>
             </section>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <SummaryCard
-                title="حقوق ثابت"
-                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.fixedSalaryAmount ?? 0)}
-                icon={Wallet}
-                tone="bg-blue-50 text-blue-700"
-              />
-              <SummaryCard
-                title="پورسانت خدمات"
-                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.serviceCommissionAmount ?? 0)}
-                icon={CircleDollarSign}
-                tone="bg-fuchsia-50 text-fuchsia-700"
-              />
-              <SummaryCard
-                title="کل مطالبات"
-                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.totalEarned ?? 0)}
-                icon={ReceiptText}
-                tone="bg-violet-50 text-violet-700"
-              />
-              <SummaryCard
-                title="پرداخت‌شده"
-                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.settledAmount ?? 0)}
-                icon={Banknote}
-                tone="bg-emerald-50 text-emerald-700"
-              />
-              <SummaryCard
-                title="مانده بدهی"
-                value={!earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.remainingAmount ?? 0)}
-                icon={BadgeDollarSign}
-                tone="bg-amber-50 text-amber-700"
-              />
-            </div>
-            {earningsError && (
-              <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-                {earningsError}
-              </p>
-            )}
 
-            <div className="grid items-start gap-4 lg:grid-cols-2">
-              <form onSubmit={submitFixedSalary} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <Wallet className="size-5 text-fuchsia-700" />
-                  <div>
-                    <h2 className="text-sm font-semibold">محاسبه حقوق ثابت</h2>
-                    <p className="text-xs text-slate-500">حقوق ثبت‌شده در قرارداد پرسنل را برای بازه انتخابی ثبت کنید.</p>
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <JalaliDateInput
-                    id="finance-period-start"
-                    label="شروع دوره"
-                    value={fixedSalary.periodStart}
-                    onChange={(periodStart) => setFixedSalary((current) => ({ ...current, periodStart }))}
-                    required
-                  />
-                  <JalaliDateInput
-                    id="finance-period-end"
-                    label="پایان دوره"
-                    value={fixedSalary.periodEnd}
-                    onChange={(periodEnd) => setFixedSalary((current) => ({ ...current, periodEnd }))}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={!selectedPersonnelId || submitting !== null}
-                  className="mt-4 bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-                >
-                  {submitting === "fixed" && <LoaderCircle className="size-4 animate-spin" />}
-                  محاسبه و ثبت حقوق
-                </Button>
-              </form>
-
-              <form onSubmit={submitReceptionEarnings} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <CircleDollarSign className="size-5 text-fuchsia-700" />
-                  <div>
-                    <h2 className="text-sm font-semibold">محاسبه پورسانت پذیرش</h2>
-                    <p className="text-xs text-slate-500">پورسانت خدمات تکمیل‌شده و دارای پرسنل را از روی قرارداد محاسبه می‌کند.</p>
-                  </div>
+            <form
+              onSubmit={submitSettlement}
+              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <header className="mb-4 border-b border-slate-100 pb-3">
+                <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                  <Banknote aria-hidden="true" className="size-4 text-fuchsia-600" />
+                  ثبت پرداخت پرسنل
+                </h2>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                  برای پرداخت مرحله‌ای، مبلغ همان پرداخت را ثبت کنید.
+                </p>
+              </header>
+              <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="finance-settlement-type">نوع مطالبات</Label>
+                  <select
+                    id="finance-settlement-type"
+                    value={earningType}
+                    onChange={(event) => setEarningType(Number(event.target.value) as PersonnelEarningType)}
+                    className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus-visible:border-fuchsia-500 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20"
+                  >
+                    <option value={1}>حقوق ثابت</option>
+                    <option value={2}>پورسانت خدمات</option>
+                  </select>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="finance-reception-id">شناسه پذیرش</Label>
+                  <Label htmlFor="finance-settlement-amount">مبلغ پرداخت (تومان)</Label>
                   <Input
-                    id="finance-reception-id"
-                    value={receptionId}
-                    onChange={(event) => setReceptionId(normalizeDigits(event.target.value))}
-                    inputMode="numeric"
+                    id="finance-settlement-amount"
+                    value={settlementAmount}
+                    onChange={(event) => setSettlementAmount(normalizeDigits(event.target.value))}
+                    inputMode="decimal"
                     dir="ltr"
-                    placeholder="مثلاً 123"
+                    placeholder="۰"
+                    className="h-9 rounded-lg text-xs"
                   />
-                  <p className="text-xs text-slate-500">محاسبه برای همه پرسنل واجد شرایطِ پذیرش انجام می‌شود.</p>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={submitting !== null}
-                  className="mt-4 bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-                >
-                  {submitting === "reception" && <LoaderCircle className="size-4 animate-spin" />}
-                  محاسبه پورسانت
-                </Button>
-              </form>
-            </div>
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-900">
-              مطالبات متفرقه به‌عنوان نوع مستقل در API فعلی Finance ثبت نمی‌شود؛ این صفحه فقط حقوق ثابت و پورسانت خدمات را بر اساس قرارداد و پذیرش محاسبه می‌کند.
-            </p>
-            {!selectedPersonnelId && (
-              <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-600">
-                برای مشاهده مانده مطالبات، یک پرسنل انتخاب کنید.
-              </p>
-            )}
-          </section>
-        ) : (
-          <section role="tabpanel" className="space-y-4">
-            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-              <form onSubmit={submitSettlement} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <Banknote className="size-5 text-fuchsia-700" />
-                  <div>
-                    <h2 className="text-sm font-semibold">ثبت پرداخت پرسنل</h2>
-                    <p className="text-xs text-slate-500">برای پرداخت مرحله‌ای، مبلغ همان پرداخت را ثبت کنید.</p>
-                  </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="finance-payment-method">روش پرداخت</Label>
+                  <Input
+                    id="finance-payment-method"
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                    placeholder="مثلاً کارت‌به‌کارت یا نقدی"
+                    maxLength={50}
+                    className="h-9 rounded-lg text-xs"
+                  />
                 </div>
-                <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="finance-settlement-description">توضیحات (اختیاری)</Label>
+                  <Input
+                    id="finance-settlement-description"
+                    value={settlementDescription}
+                    onChange={(event) => setSettlementDescription(event.target.value)}
+                    maxLength={1000}
+                    placeholder="توضیحات را وارد کنید..."
+                    className="h-9 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+              {selectedPersonnelId && earnings && (
+                <p className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2 text-[10px] leading-5 text-blue-800">
+                  مانده کل قابل‌پرداخت: {amountLabel(earnings.remainingAmount)}. کنترل مانده نوع مطالبات در سرور انجام می‌شود.
+                </p>
+              )}
+              {!selectedPersonnelId && (
+                <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-[10px] leading-5 text-amber-800">
+                  ابتدا پرسنل را از بخش فیلتر انتخاب کنید.
+                </p>
+              )}
+              <Button
+                type="submit"
+                disabled={!selectedPersonnelId || submitting !== null}
+                className="mt-4 h-9 w-full rounded-lg bg-fuchsia-700 text-xs text-white hover:bg-fuchsia-800"
+              >
+                {submitting === "settlement" ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Banknote className="size-4" />
+                )}
+                ثبت پرداخت
+              </Button>
+            </form>
+          </aside>
+
+          <main className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-l from-white to-fuchsia-50/30 px-4 py-3 sm:px-5">
+              <div>
+                <h1 className="flex items-center gap-2 text-base font-bold text-fuchsia-800">
+                  <ReceiptText aria-hidden="true" className="size-5 text-fuchsia-600" />
+                  حقوق و پورسانت
+                </h1>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  محاسبه حقوق ثابت، پورسانت و ثبت پرداخت‌های مرحله‌ای
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRefreshKey((current) => current + 1)}
+                className="h-8 rounded-lg border-fuchsia-200 px-3 text-xs text-fuchsia-700 hover:bg-fuchsia-50"
+              >
+                <RefreshCw className="size-3.5" />
+                به‌روزرسانی
+              </Button>
+            </header>
+
+            <div className="space-y-3 p-3 sm:p-4">
+              <section className="rounded-lg border border-slate-200 p-3">
+                <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(0,1.5fr)] lg:items-end">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="finance-settlement-type">نوع مطالبات</Label>
+                    <Label htmlFor="finance-personnel">پرسنل</Label>
                     <select
-                      id="finance-settlement-type"
-                      value={earningType}
-                      onChange={(event) => setEarningType(Number(event.target.value) as PersonnelEarningType)}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-fuchsia-500 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20"
+                      id="finance-personnel"
+                      value={selectedPersonnelId ?? ""}
+                      onChange={(event) => onPersonnelChange(event.target.value)}
+                      disabled={personnelLoading || personnel.length === 0}
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus-visible:border-fuchsia-500 focus-visible:ring-3 focus-visible:ring-fuchsia-500/20 disabled:opacity-60"
                     >
-                      <option value={1}>حقوق ثابت</option>
-                      <option value={2}>پورسانت خدمات</option>
+                      <option value="">
+                        {personnelLoading ? "در حال دریافت فهرست پرسنل..." : "انتخاب پرسنل"}
+                      </option>
+                      {personnel.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.fullName} - {item.jobTitle}
+                        </option>
+                      ))}
                     </select>
+                    {personnelError && (
+                      <p role="alert" className="text-xs text-destructive">{personnelError}</p>
+                    )}
+                    {!personnelLoading && !personnelError && personnel.length === 0 && (
+                      <p className="text-xs text-slate-500">پرسنل فعالی برای این سالن ثبت نشده است.</p>
+                    )}
                   </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="finance-settlement-amount">مبلغ پرداخت (تومان)</Label>
-                    <Input
-                      id="finance-settlement-amount"
-                      value={settlementAmount}
-                      onChange={(event) => setSettlementAmount(normalizeDigits(event.target.value))}
-                      inputMode="decimal"
-                      dir="ltr"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="finance-payment-method">روش پرداخت</Label>
-                    <Input
-                      id="finance-payment-method"
-                      value={paymentMethod}
-                      onChange={(event) => setPaymentMethod(event.target.value)}
-                      placeholder="مثلاً کارت‌به‌کارت یا نقدی"
-                      maxLength={50}
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="finance-settlement-description">توضیحات (اختیاری)</Label>
-                    <Input
-                      id="finance-settlement-description"
-                      value={settlementDescription}
-                      onChange={(event) => setSettlementDescription(event.target.value)}
-                      maxLength={1000}
-                    />
+
+                  <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-end">
+                    <div className="flex overflow-x-auto rounded-lg border border-slate-200 bg-slate-50/70">
+                      {([
+                        { value: "monthly", label: "ماهانه", onClick: setMonthlyEarningsRange },
+                        { value: "daily", label: "روزانه", onClick: setDailyEarningsRange },
+                        {
+                          value: "all",
+                          label: "همه تاریخ‌ها",
+                          onClick: () => setEarningsDateRange(EMPTY_EARNINGS_DATE_RANGE),
+                        },
+                      ] as const).map((preset) => (
+                        <button
+                          key={preset.value}
+                          type="button"
+                          aria-pressed={earningsDateRange.preset === preset.value}
+                          onClick={preset.onClick}
+                          className={`shrink-0 border-l border-slate-200 px-3 py-2 text-[11px] transition last:border-l-0 ${
+                            earningsDateRange.preset === preset.value
+                              ? "bg-fuchsia-50 font-semibold text-fuchsia-800"
+                              : "text-slate-600 hover:bg-white"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <JalaliDateInput
+                        id="finance-earnings-from"
+                        label="از تاریخ"
+                        value={earningsDateRange.from}
+                        onChange={(from) =>
+                          setEarningsDateRange({ from, to: earningsDateRange.to, preset: "custom" })
+                        }
+                      />
+                      <JalaliDateInput
+                        id="finance-earnings-to"
+                        label="تا تاریخ"
+                        value={earningsDateRange.to}
+                        onChange={(to) =>
+                          setEarningsDateRange({ from: earningsDateRange.from, to, preset: "custom" })
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-                {selectedPersonnelId && earnings && (
-                  <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                    مانده کل قابل‌پرداخت: {amountLabel(earnings.remainingAmount)}. کنترل مانده جداگانه برای نوع مطالبات در سرور انجام می‌شود.
+                {!earningsRangeValid && (
+                  <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                    تاریخ پایان باید مساوی یا بعد از تاریخ شروع باشد.
                   </p>
                 )}
-                {!selectedPersonnelId && (
-                  <p className="mt-3 text-xs text-amber-700">ابتدا پرسنل را از بالای صفحه انتخاب کنید.</p>
-                )}
-                <Button
-                  type="submit"
-                  disabled={!selectedPersonnelId || submitting !== null}
-                  className="mt-4 bg-fuchsia-700 text-white hover:bg-fuchsia-800"
-                >
-                  {submitting === "settlement" && <LoaderCircle className="size-4 animate-spin" />}
-                  ثبت پرداخت
-                </Button>
-              </form>
+              </section>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold">تاریخچه پرداخت‌ها</h2>
-                    <p className="text-xs text-slate-500">
-                      {selectedPersonnelId ? "تسویه‌های پرسنل انتخاب‌شده" : "تسویه‌های ثبت‌شده در سالن"}
+              {(actionError || successMessage) && (
+                <p
+                  role={actionError ? "alert" : "status"}
+                  className={`rounded-lg border px-3 py-2 text-xs ${
+                    actionError
+                      ? "border-rose-200 bg-rose-50 text-rose-800"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  }`}
+                >
+                  {actionError ?? successMessage}
+                </p>
+              )}
+
+              <section
+                aria-label="خلاصه مطالبات پرسنل"
+                className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5"
+              >
+                <SummaryCard
+                  title="حقوق ثابت"
+                  value={!selectedPersonnelId || !earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.fixedSalaryAmount ?? 0)}
+                  icon={Wallet}
+                  tone="border-fuchsia-100 bg-fuchsia-50/70 text-fuchsia-800"
+                />
+                <SummaryCard
+                  title="پورسانت خدمات"
+                  value={!selectedPersonnelId || !earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.serviceCommissionAmount ?? 0)}
+                  icon={CircleDollarSign}
+                  tone="border-blue-100 bg-blue-50/70 text-blue-800"
+                />
+                <SummaryCard
+                  title="مانده بدهی"
+                  value={!selectedPersonnelId || !earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.remainingAmount ?? 0)}
+                  icon={BadgeDollarSign}
+                  tone="border-pink-100 bg-pink-50/70 text-pink-800"
+                />
+                <SummaryCard
+                  title="پرداخت‌شده"
+                  value={!selectedPersonnelId || !earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.settledAmount ?? 0)}
+                  icon={Banknote}
+                  tone="border-emerald-100 bg-emerald-50/70 text-emerald-800"
+                />
+                <SummaryCard
+                  title="کل مطالبات"
+                  value={!selectedPersonnelId || !earningsRangeValid ? "—" : earningsLoading ? "..." : amountLabel(earnings?.totalEarned ?? 0)}
+                  icon={ReceiptText}
+                  tone="border-violet-100 bg-violet-50/70 text-violet-800"
+                />
+              </section>
+
+              {earningsError && (
+                <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {earningsError}
+                </p>
+              )}
+
+              <section aria-label="محاسبه مطالبات" className="grid items-stretch gap-3 lg:grid-cols-2">
+                <form
+                  onSubmit={submitFixedSalary}
+                  className="overflow-hidden rounded-lg border border-slate-200"
+                >
+                  <header className="flex items-start gap-2 border-b border-slate-100 bg-gradient-to-l from-white to-fuchsia-50/50 px-3 py-3">
+                    <Wallet aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-fuchsia-600" />
+                    <div>
+                      <h2 className="text-xs font-bold text-slate-800">محاسبه حقوق ثابت</h2>
+                      <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                        حقوق ثبت‌شده در قرارداد پرسنل را برای بازه انتخابی ثبت کنید.
+                      </p>
+                    </div>
+                  </header>
+                  <div className="grid gap-3 p-3 sm:grid-cols-2">
+                    <JalaliDateInput
+                      id="finance-period-start"
+                      label="شروع دوره"
+                      value={fixedSalary.periodStart}
+                      onChange={(periodStart) => setFixedSalary((current) => ({ ...current, periodStart }))}
+                      required
+                    />
+                    <JalaliDateInput
+                      id="finance-period-end"
+                      label="پایان دوره"
+                      value={fixedSalary.periodEnd}
+                      onChange={(periodEnd) => setFixedSalary((current) => ({ ...current, periodEnd }))}
+                      required
+                    />
+                    <Button
+                      type="submit"
+                      disabled={!selectedPersonnelId || submitting !== null}
+                      className="h-8 rounded-lg bg-fuchsia-700 text-xs text-white hover:bg-fuchsia-800 sm:col-span-2 sm:w-fit"
+                    >
+                      {submitting === "fixed" && <LoaderCircle className="size-4 animate-spin" />}
+                      محاسبه حقوق ثابت
+                    </Button>
+                  </div>
+                </form>
+
+                <form
+                  onSubmit={submitReceptionEarnings}
+                  className="overflow-hidden rounded-lg border border-slate-200"
+                >
+                  <header className="flex items-start gap-2 border-b border-slate-100 bg-gradient-to-l from-white to-blue-50/50 px-3 py-3">
+                    <CircleDollarSign aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-fuchsia-600" />
+                    <div>
+                      <h2 className="text-xs font-bold text-slate-800">محاسبه پورسانت</h2>
+                      <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                        پورسانت خدمات تکمیل‌شده و دارای پرسنل از روی قرارداد محاسبه می‌شود.
+                      </p>
+                    </div>
+                  </header>
+                  <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="finance-reception-id">شناسه پذیرش</Label>
+                      <Input
+                        id="finance-reception-id"
+                        value={receptionId}
+                        onChange={(event) => setReceptionId(normalizeDigits(event.target.value))}
+                        inputMode="numeric"
+                        dir="ltr"
+                        placeholder="مثلاً ۱۲۳"
+                        className="h-9 rounded-lg text-xs"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={submitting !== null}
+                      className="h-8 rounded-lg bg-fuchsia-700 text-xs text-white hover:bg-fuchsia-800"
+                    >
+                      {submitting === "reception" && <LoaderCircle className="size-4 animate-spin" />}
+                      محاسبه پورسانت
+                    </Button>
+                    <p className="text-[10px] leading-5 text-slate-500 sm:col-span-2">
+                      محاسبه برای همه پرسنل واجد شرایطِ پذیرش انجام می‌شود.
                     </p>
                   </div>
+                </form>
+              </section>
+
+              <section className="overflow-hidden rounded-lg border border-slate-200">
+                <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-3">
+                  <h2 className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                    <CalendarDays aria-hidden="true" className="size-4 text-fuchsia-600" />
+                    تاریخچه پرداخت‌ها
+                  </h2>
                   {settlements.pagination.totalCount > 0 && (
-                    <Badge variant="secondary">{new Intl.NumberFormat("fa-IR").format(settlements.pagination.totalCount)} پرداخت</Badge>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {new Intl.NumberFormat("fa-IR").format(settlements.pagination.totalCount)} پرداخت
+                    </Badge>
                   )}
-                </div>
+                </header>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/60 hover:bg-muted/60">
-                        {!selectedPersonnelId && <TableHead className="h-9 px-2 text-start">پرسنل</TableHead>}
-                        <TableHead className="h-9 px-2 text-start">نوع مطالبات</TableHead>
-                        <TableHead className="h-9 px-2 text-start">مبلغ</TableHead>
-                        <TableHead className="h-9 px-2 text-start">روش پرداخت</TableHead>
-                        <TableHead className="h-9 px-2 text-start">تاریخ پرداخت</TableHead>
+                      <TableRow className="bg-slate-50 hover:bg-slate-50">
+                        {!selectedPersonnelId && <TableHead className="h-9 px-3 text-start text-[10px]">پرسنل</TableHead>}
+                        <TableHead className="h-9 px-3 text-start text-[10px]">تاریخ پرداخت</TableHead>
+                        <TableHead className="h-9 px-3 text-start text-[10px]">روش پرداخت</TableHead>
+                        <TableHead className="h-9 px-3 text-start text-[10px]">مبلغ</TableHead>
+                        <TableHead className="h-9 px-3 text-start text-[10px]">نوع مطالبات</TableHead>
+                        <TableHead className="h-9 px-3 text-start text-[10px]">توضیحات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {settlementsError ? (
                         <TableRow>
-                          <TableCell colSpan={selectedPersonnelId ? 4 : 5} className="py-8 text-center text-sm text-destructive" role="alert">
+                          <TableCell colSpan={selectedPersonnelId ? 5 : 6} className="py-8 text-center text-xs text-destructive" role="alert">
                             {settlementsError}
                           </TableCell>
                         </TableRow>
                       ) : settlementsLoading ? (
                         <TableRow>
-                          <TableCell colSpan={selectedPersonnelId ? 4 : 5} className="py-8 text-center text-sm">در حال دریافت تسویه‌ها...</TableCell>
+                          <TableCell colSpan={selectedPersonnelId ? 5 : 6} className="py-8 text-center text-xs text-slate-500">
+                            در حال دریافت تسویه‌ها...
+                          </TableCell>
                         </TableRow>
                       ) : settlements.list.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={selectedPersonnelId ? 4 : 5} className="py-8 text-center text-sm">پرداختی برای نمایش ثبت نشده است.</TableCell>
+                          <TableCell colSpan={selectedPersonnelId ? 5 : 6} className="py-8 text-center text-xs text-slate-500">
+                            <ReceiptText aria-hidden="true" className="mx-auto mb-2 size-7 text-slate-300" />
+                            پرداختی برای نمایش ثبت نشده است.
+                          </TableCell>
                         </TableRow>
                       ) : (
                         settlements.list.map((settlement) => (
                           <TableRow key={settlement.id} className="h-10">
                             {!selectedPersonnelId && (
-                              <TableCell className="px-2 py-2 text-sm">
+                              <TableCell className="px-3 py-2 text-xs">
                                 {personnelNames.get(settlement.personnelId) ?? `پرسنل ${settlement.personnelId}`}
                               </TableCell>
                             )}
-                            <TableCell className="px-2 py-2 text-sm">{earningTypeLabel(settlement.earningType)}</TableCell>
-                            <TableCell className="whitespace-nowrap px-2 py-2 text-sm">{amountLabel(settlement.amount)}</TableCell>
-                            <TableCell className="px-2 py-2 text-sm">{settlement.paymentMethod}</TableCell>
-                            <TableCell className="whitespace-nowrap px-2 py-2 text-sm" dir="ltr">{paidAtLabel(settlement.paidAt)}</TableCell>
+                            <TableCell className="whitespace-nowrap px-3 py-2 text-xs" dir="ltr">
+                              {paidAtLabel(settlement.paidAt)}
+                            </TableCell>
+                            <TableCell className="px-3 py-2 text-xs">{settlement.paymentMethod}</TableCell>
+                            <TableCell className="whitespace-nowrap px-3 py-2 text-xs font-semibold">
+                              {amountLabel(settlement.amount)}
+                            </TableCell>
+                            <TableCell className="px-3 py-2 text-xs">{earningTypeLabel(settlement.earningType)}</TableCell>
+                            <TableCell className="max-w-40 truncate px-3 py-2 text-xs text-slate-500">
+                              {settlement.description || "—"}
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -800,21 +844,41 @@ export function FinancePage() {
                   </Table>
                 </div>
                 {totalPages > 1 && (
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-                    <Button type="button" variant="outline" size="sm" disabled={page <= 1 || settlementsLoading} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+                  <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-[10px] text-slate-600">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1 || settlementsLoading}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      className="h-7 rounded-lg px-2 text-[10px]"
+                    >
                       قبلی
                     </Button>
-                    <span>صفحه {new Intl.NumberFormat("fa-IR").format(page)} از {new Intl.NumberFormat("fa-IR").format(totalPages)}</span>
-                    <Button type="button" variant="outline" size="sm" disabled={page >= totalPages || settlementsLoading} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>
+                    <span>
+                      صفحه {new Intl.NumberFormat("fa-IR").format(page)} از {new Intl.NumberFormat("fa-IR").format(totalPages)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages || settlementsLoading}
+                      onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                      className="h-7 rounded-lg px-2 text-[10px]"
+                    >
                       بعدی
                     </Button>
                   </div>
                 )}
-              </div>
+              </section>
+
+              <p className="rounded-lg border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2 text-[10px] leading-5 text-slate-600">
+                مطالبات متفرقه در API فعلی Finance ثبت نمی‌شود؛ این صفحه فقط حقوق ثابت و پورسانت خدمات را بر اساس قرارداد و پذیرش محاسبه می‌کند.
+              </p>
             </div>
-          </section>
-        )}
-      </main>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

@@ -73,7 +73,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between gap-2 bg-black px-3 text-white sm:px-6">
+    <header className="flex h-15 items-center justify-between gap-2 border-b border-fuchsia-700 bg-[linear-gradient(105deg,#15051f_0%,#24102e_55%,#15051f_100%)] px-3 text-white sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-8">
         <Link href="/" className="text-2xl font-bold text-fuchsia-500">
           Beauty
