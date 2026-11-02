@@ -1,4 +1,6 @@
 using SharedKernel.Base;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Modules.Reception.Domain.Entities;
 
@@ -65,6 +67,10 @@ public sealed class CashRegisterPaymentOutbox : BaseEntityIdentity
             occurredAt,
             idempotencyKey,
             description);
+
+    public static string CreateIdempotencyKey(long receptionId, string paymentIdempotencyKey) =>
+        Convert.ToHexString(SHA256.HashData(
+            Encoding.UTF8.GetBytes($"{receptionId}:{paymentIdempotencyKey}")));
 
     public void MarkProcessed(DateTimeOffset processedAt)
     {

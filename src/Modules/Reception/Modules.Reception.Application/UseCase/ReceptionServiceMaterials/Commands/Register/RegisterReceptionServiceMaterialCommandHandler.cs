@@ -144,7 +144,7 @@ public sealed class RegisterReceptionServiceMaterialCommandHandler(
             : Result.Conflict("گردش انبار ثبت شد؛ وضعیت پذیرش هم‌زمان تغییر کرد و باید دوباره بررسی شود.");
     }
 
-    private static string CreateInventoryIdempotencyKey(
+    internal static string CreateInventoryIdempotencyKey(
         long receptionId,
         long receptionServiceId,
         string clientKey)

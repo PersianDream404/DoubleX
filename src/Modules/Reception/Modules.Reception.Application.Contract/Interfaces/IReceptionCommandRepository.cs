@@ -1,5 +1,6 @@
 using ReceptionEntity = Modules.Reception.Domain.Entities.Reception;
 using Modules.Reception.Domain.Entities;
+using Ardalis.Result;
 
 namespace Modules.Reception.Application.Contract.Interfaces;
 
@@ -9,6 +10,9 @@ public interface IReceptionCommandRepository
     void AddCashRegisterPaymentOutbox(CashRegisterPaymentOutbox outbox);
     void AddPersonnelCommissionOutbox(PersonnelCommissionOutbox outbox);
     Task<bool> AppointmentAlreadyLinkedAsync(long appointmentId, CancellationToken cancellationToken);
-    Task<bool> AddAsync(ReceptionEntity reception, CancellationToken cancellationToken);
+    Task<Result<T>> AddAsync<T>(
+        ReceptionEntity reception,
+        Func<ReceptionEntity, CancellationToken, Task<Result<T>>> transactionWork,
+        CancellationToken cancellationToken);
     Task<bool> SaveChangesAsync(CancellationToken cancellationToken);
 }

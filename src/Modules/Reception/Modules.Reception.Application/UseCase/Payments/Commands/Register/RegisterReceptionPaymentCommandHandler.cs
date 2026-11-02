@@ -9,8 +9,6 @@ using Modules.Reception.Application.Contract.Interfaces;
 using Modules.Reception.Application.Contract.DTOs.Payments.Register;
 using Modules.Reception.Application.Contract.UseCase.Payments.Commands.Register;
 using Modules.Reception.Domain.Entities;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Modules.Reception.Application.UseCase.Payments.Commands.Register;
 
@@ -90,8 +88,9 @@ public sealed class RegisterReceptionPaymentCommandHandler(
 
         if (sessionId.HasValue)
         {
-            var idempotencyKey = Convert.ToHexString(SHA256.HashData(
-                Encoding.UTF8.GetBytes($"{reception.Id}:{command.Request.IdempotencyKey}")));
+            var idempotencyKey = CashRegisterPaymentOutbox.CreateIdempotencyKey(
+                reception.Id,
+                command.Request.IdempotencyKey);
             repository.AddCashRegisterPaymentOutbox(CashRegisterPaymentOutbox.Create(
                 command.Request.SalonId,
                 command.Request.CashRegisterId!.Value,

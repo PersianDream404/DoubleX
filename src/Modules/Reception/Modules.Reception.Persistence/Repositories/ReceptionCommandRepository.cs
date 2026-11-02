@@ -6,13 +6,17 @@ using Modules.Reception.Application.Contract.DTOs;
 using Modules.Reception.Application.Contract.Interfaces;
 using Modules.Reception.Domain.Entities;
 using Modules.Reception.Persistence.Context;
+using Modules.Inventory.Persistence.Context;
+using Ardalis.Result;
 using System.Data;
 using System.Globalization;
 using ReceptionEntity = Modules.Reception.Domain.Entities.Reception;
 
 namespace Modules.Reception.Persistence.Repositories;
 
-public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
+public sealed class ReceptionCommandRepository(
+    ReceptionWriteDbContext context,
+    InventoryWriteDbContext inventoryContext)
     : IReceptionCommandRepository, ICashRegisterPaymentOutboxRepository,
         IPersonnelCommissionOutboxRepository
 {
@@ -41,32 +45,77 @@ public sealed class ReceptionCommandRepository(ReceptionWriteDbContext context)
             item => item.AppointmentId == appointmentId,
             cancellationToken);
 
-    public async Task<bool> AddAsync(
+    public async Task<Result<T>> AddAsync<T>(
         ReceptionEntity reception,
+        Func<ReceptionEntity, CancellationToken, Task<Result<T>>> transactionWork,
         CancellationToken cancellationToken)
     {
+        var inventoryConnection = inventoryContext.Database.GetDbConnection();
+        if (inventoryConnection.State != ConnectionState.Closed)
+        {
+            throw new InvalidOperationException(
+                "Inventory context must not be used before joining a reception transaction.");
+        }
+
         await using var transaction = await context.Database.BeginTransactionAsync(
             IsolationLevel.ReadCommitted,
             cancellationToken);
+        var inventoryTransactionJoined = false;
         try
         {
+            inventoryContext.Database.SetDbConnection(
+                context.Database.GetDbConnection(),
+                contextOwnsConnection: false);
+            await inventoryContext.Database.UseTransactionAsync(
+                transaction.GetDbTransaction(),
+                cancellationToken);
+            inventoryTransactionJoined = true;
             reception.AssignReceptionNumber(
                 await AllocateReceptionNumberAsync(reception.SalonId, transaction, cancellationToken));
             await context.Receptions.AddAsync(reception, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
+
+            var result = await transactionWork(reception, cancellationToken);
+            if (!result.IsSuccess)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                context.ChangeTracker.Clear();
+                inventoryContext.ChangeTracker.Clear();
+                return result;
+            }
+
+            context.ReceptionPayments.AddRange(reception.Payments);
+            await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return true;
+            return result;
         }
         catch (DbUpdateException)
         {
+            await transaction.RollbackAsync(CancellationToken.None);
+            context.ChangeTracker.Clear();
+            inventoryContext.ChangeTracker.Clear();
             if (!reception.AppointmentId.HasValue)
                 throw;
 
             var appointmentId = reception.AppointmentId.Value;
-            context.ChangeTracker.Clear();
+            await inventoryContext.Database.UseTransactionAsync(null, CancellationToken.None);
+            inventoryTransactionJoined = false;
+            await context.Database.UseTransactionAsync(null, CancellationToken.None);
             if (await AppointmentAlreadyLinkedAsync(appointmentId, cancellationToken))
-                return false;
+                return Result.Conflict("این نوبت هم‌زمان به پذیرش دیگری متصل شده است.");
             throw;
+        }
+        finally
+        {
+            if (inventoryTransactionJoined)
+            {
+                await inventoryContext.Database.UseTransactionAsync(
+                    null,
+                    CancellationToken.None);
+            }
+            inventoryContext.Database.SetDbConnection(
+                inventoryConnection,
+                contextOwnsConnection: true);
         }
     }
 

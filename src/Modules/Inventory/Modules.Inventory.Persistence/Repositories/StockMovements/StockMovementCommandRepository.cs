@@ -147,12 +147,15 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
             return new StockMovementRegistrationResult(InventoryOperationStatus.InsufficientStock);
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = context.Database.CurrentTransaction is null
+            ? await context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
         await context.StockMovements.AddAsync(movement, cancellationToken);
         try
         {
             await context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            if (transaction is not null)
+                await transaction.CommitAsync(cancellationToken);
             return new StockMovementRegistrationResult(
                 InventoryOperationStatus.Succeeded,
                 movement.UnitCost,
@@ -160,12 +163,14 @@ public sealed class StockMovementCommandRepository(InventoryWriteDbContext conte
         }
         catch (DbUpdateConcurrencyException)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            if (transaction is not null)
+                await transaction.RollbackAsync(cancellationToken);
             return new StockMovementRegistrationResult(InventoryOperationStatus.ConcurrencyConflict);
         }
         catch (DbUpdateException) when (movement.IdempotencyKey is not null)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            if (transaction is not null)
+                await transaction.RollbackAsync(cancellationToken);
             context.ChangeTracker.Clear();
             var existingMovement = await context.StockMovements
                 .IgnoreQueryFilters()

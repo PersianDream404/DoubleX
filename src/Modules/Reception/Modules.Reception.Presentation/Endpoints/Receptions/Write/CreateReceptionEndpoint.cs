@@ -21,13 +21,15 @@ public sealed class CreateReceptionEndpoint
                     HttpContext httpContext,
                     CancellationToken cancellationToken) =>
                 {
-                    if (!ReceptionApiInfo.TryGetSalonId(httpContext, out var salonId))
+                    if (!ReceptionApiInfo.TryGetIdentity(httpContext, out var salonId, out var userId))
                     {
                         return BadRequest("شناسهٔ سالن از هویت کاربر دریافت نشد.");
                     }
 
                     var result = await commandBus.Send<CreateReceptionCommand, long>(
-                        new CreateReceptionCommand(request with { SalonId = salonId }),
+                        new CreateReceptionCommand(
+                            userId,
+                            request with { SalonId = salonId }),
                         cancellationToken);
                     return result.IsSuccess
                         ? Ok(new { id = result.Value })

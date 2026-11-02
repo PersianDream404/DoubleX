@@ -42,7 +42,7 @@ import {
   type ReceptionPaymentForm,
 } from "./reception.schema";
 import { ReceptionService } from "./reception.service";
-import type { CustomerSelectItem, ReceptionServiceItem } from "./reception.types";
+import type { CustomerSelectItem } from "./reception.types";
 
 type ServiceOption = {
   id: string;
@@ -585,69 +585,40 @@ export function NewReceptionPage() {
         receptionDate: new Date().toISOString(),
         notes: parsedForm.data.notes.trim() || null,
         appointmentId: null,
+        services: parsedForm.data.services.map((service) => ({
+          serviceTariffId: service.serviceTariffId,
+          serviceId: service.serviceId,
+          personnelId: service.personnelId,
+          quantity: service.quantity,
+          discountAmount: service.discountAmount,
+          materials: service.materials.map((material) => ({
+            materialId: material.materialId,
+            quantity: material.quantity,
+            idempotencyKey: crypto.randomUUID(),
+            description: material.description.trim() || null,
+          })),
+        })),
+        payments: parsedForm.data.payments.map((payment) => ({
+          amount: payment.amount,
+          paymentMethod: payment.paymentMethod,
+          paidAt: new Date().toISOString(),
+          transactionReference: payment.transactionReference.trim() || null,
+          idempotencyKey: crypto.randomUUID(),
+          description: payment.description.trim() || null,
+          cashRegisterId: payment.cashRegisterId,
+        })),
       });
       activeReceptionId = createResponse.data?.id ?? null;
       if (!activeReceptionId) {
         throw new Error(createResponse.message ?? "شناسه پذیرش ایجادشده از سرور دریافت نشد.");
       }
       setCreatedReceptionId(activeReceptionId);
-
-      const addedReceptionServiceIds = new Set<number>();
-      for (const service of parsedForm.data.services) {
-        await receptionService.addService(activeReceptionId, {
-          serviceTariffId: service.serviceTariffId,
-          serviceId: service.serviceId,
-          personnelId: service.personnelId,
-          quantity: service.quantity,
-          discountAmount: service.discountAmount,
-        });
-
-        const detailResponse = await receptionService.getById(activeReceptionId);
-        if (!detailResponse.data) {
-          throw new Error(detailResponse.message ?? "خدمت به پذیرش اضافه شد اما جزئیات آن دریافت نشد.");
-        }
-        const addedService = detailResponse.data.services.find(
-          (item: ReceptionServiceItem) =>
-            !addedReceptionServiceIds.has(item.id) &&
-            item.serviceId === service.serviceId &&
-            item.serviceTariffId === service.serviceTariffId &&
-            item.personnelId === service.personnelId &&
-            item.quantity === service.quantity &&
-            item.unitPrice === service.unitPrice,
-        );
-        if (!addedService) {
-          throw new Error("شناسه خدمت ثبت‌شده از سرور دریافت نشد؛ ادامه ثبت متوقف شد.");
-        }
-        addedReceptionServiceIds.add(addedService.id);
-
-        for (const material of service.materials) {
-          await receptionService.registerMaterial(activeReceptionId, addedService.id, {
-            materialId: material.materialId,
-            quantity: material.quantity,
-            idempotencyKey: crypto.randomUUID(),
-            description: material.description.trim() || null,
-          });
-        }
-      }
-
-      for (const payment of parsedForm.data.payments) {
-        await receptionService.registerPayment(activeReceptionId, {
-          amount: payment.amount,
-          paymentMethod: payment.paymentMethod,
-          cashRegisterId: payment.cashRegisterId,
-          paidAt: new Date().toISOString(),
-          transactionReference: payment.transactionReference.trim() || null,
-          idempotencyKey: crypto.randomUUID(),
-          description: payment.description.trim() || null,
-        });
-      }
-
       router.replace("/receptions");
     } catch (error: unknown) {
       const message = handleApiError(error);
       setFormError(
         activeReceptionId
-          ? `پذیرش شماره ${activeReceptionId} ایجاد شد، اما ثبت همه جزئیات کامل نشد. برای جلوگیری از ثبت تکراری، این فرم قفل شده است. خطا: ${message}`
+          ? `پذیرش شماره ${activeReceptionId}، خدمات، مواد و پرداختی‌ها ثبت شدند، اما بارگذاری جزئیات کامل نشد. برای جلوگیری از ثبت تکراری، این فرم قفل شده است. خطا: ${message}`
           : message,
       );
     } finally {

@@ -84,6 +84,34 @@ export interface CreateReceptionRequest {
   receptionDate: string;
   notes: string | null;
   appointmentId: number | null;
+  services: CreateReceptionServiceRequest[];
+  payments: CreateReceptionPaymentRequest[];
+}
+
+export interface CreateReceptionServiceRequest {
+  serviceTariffId: number;
+  serviceId: number;
+  personnelId: number | null;
+  quantity: number;
+  discountAmount: number;
+  materials: CreateReceptionServiceMaterialRequest[];
+}
+
+export interface CreateReceptionServiceMaterialRequest {
+  materialId: number;
+  quantity: number;
+  idempotencyKey: string;
+  description: string | null;
+}
+
+export interface CreateReceptionPaymentRequest {
+  amount: number;
+  paymentMethod: string;
+  paidAt: string;
+  transactionReference: string | null;
+  idempotencyKey: string;
+  description: string | null;
+  cashRegisterId: number | null;
 }
 
 export interface AddReceptionServiceRequest {
