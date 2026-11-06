@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
+using Modules.Personnel.Application.Contract.Security;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Commands;
 using SharedKernel.Constants;
 using SharedKernel.Helper;
@@ -37,7 +38,7 @@ public static class UpdatePersonnelEndpoint
 
                 return Ok(MessageHelper.Format(AppMessages.Edit, AppEntity.Personnel));
             })
-            .RequireAuthorization()
+            .RequireAuthorization(PersonnelPermissions.Update)
             .WithTags(ApiInfo.Tag);
         }
     }

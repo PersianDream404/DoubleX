@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modules.Reception.Application;
 using Modules.Reception.Persistence;
 using Modules.Reception.Persistence.Extensions;
+using Modules.Reception.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Reception.Presentation;
@@ -14,6 +15,7 @@ public sealed class ReceptionModule : IModule
     {
         services.AddReceptionInfrastructure(configuration);
         services.AddReceptionApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, ReceptionPermissionProvider>();
         services.AddHostedService<CashRegisterPaymentOutboxProcessor>();
         services.AddHostedService<PersonnelCommissionOutboxProcessor>();
         services.Scan(scan => scan

@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +29,7 @@ public sealed class GetServiceTariffsEndpoint
                         new GetServiceTariffsQuery(salonId, q), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Tariffs)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

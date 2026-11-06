@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +29,7 @@ public sealed class GetServiceMaterialsEndpoint
                         new GetServiceMaterialsQuery(salonId, serviceId), cancellationToken);
                     return result.IsSuccess ? Ok(result.Value!) : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Materials)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

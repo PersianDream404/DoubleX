@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public sealed class CreateServicePersonnelEndpoint
                         ? Ok(new { message = "پرسنل به خدمت اختصاص داده شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.PersonnelAssignments)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

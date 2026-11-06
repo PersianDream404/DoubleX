@@ -1,3 +1,4 @@
+﻿using Modules.Finance.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -33,7 +34,7 @@ public sealed class CreateExpenseEndpoint : BaseEndpoint, IEndpoint
                                 ? Ok(new { id = result.Value })
                                 : BadRequest(result.GetErrorMessage());
                         })
-                    .RequireAuthorization()
+                    .RequireAuthorization(FinancePermissions.ExpensesCreate)
                     .WithTags(FinanceApiInfo.Tag);
     }
 }

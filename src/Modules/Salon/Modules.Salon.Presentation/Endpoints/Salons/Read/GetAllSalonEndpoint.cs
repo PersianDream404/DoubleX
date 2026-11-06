@@ -1,4 +1,5 @@
-﻿using Framwork.Bus.Query;
+﻿using Modules.Salon.Application.Contract.Security;
+using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Framwork.PagedList;
 using Microsoft.AspNetCore.Builder;
@@ -40,6 +41,7 @@ public static class GetAllSalonEndpoint
 
 
             })
+                .RequireAuthorization(SalonPermissions.List)
                 .WithTags(ApiInfo.Tag);
         }
     }

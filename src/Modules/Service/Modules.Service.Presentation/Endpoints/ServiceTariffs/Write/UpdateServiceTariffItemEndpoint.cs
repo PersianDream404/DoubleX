@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -35,7 +36,7 @@ public sealed class UpdateServiceTariffItemEndpoint
                             ? Ok(new { message = "قیمت خدمت در تعرفه ویرایش شد." })
                             : BadRequest(result.GetErrorMessage());
                     })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Tariffs)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

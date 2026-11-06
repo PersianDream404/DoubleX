@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -38,7 +39,7 @@ public sealed class UpdateCustomerEndpoint
                         ? Ok(new { message = "اطلاعات مشتری به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.Update)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

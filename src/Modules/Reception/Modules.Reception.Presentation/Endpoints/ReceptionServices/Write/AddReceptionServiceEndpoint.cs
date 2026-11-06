@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.ReceptionServices.Add;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.ReceptionServices.Commands.Add;
 using SharedKernel.Interface;
 
@@ -34,7 +35,7 @@ public sealed class AddReceptionServiceEndpoint
                         ? Ok(new { message = "خدمت به پذیرش افزوده شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Update)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

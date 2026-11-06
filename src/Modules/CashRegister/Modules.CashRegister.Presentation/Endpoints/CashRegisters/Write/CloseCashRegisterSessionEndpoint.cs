@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -36,7 +37,7 @@ public sealed class CloseCashRegisterSessionEndpoint : BaseEndpoint, IEndpoint
                             cancellationToken);
                         return result.IsSuccess ? Ok(new { message = "صندوق بسته شد." }) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.SessionsClose)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

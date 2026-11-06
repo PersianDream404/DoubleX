@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public sealed class AddServicesToTariffEndpoint
                         ? Ok(new { message = "خدمات به تعرفه اضافه شدند." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Tariffs)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

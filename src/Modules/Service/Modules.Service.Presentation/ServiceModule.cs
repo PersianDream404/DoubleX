@@ -5,6 +5,7 @@ using Modules.Service.Application;
 using Modules.Service.Persistence;
 using Modules.Service.Persistence.Extensions;
 using Modules.Service.Presentation.Endpoints;
+using Modules.Service.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Service.Presentation;
@@ -15,6 +16,7 @@ public sealed class ServiceModule : IModule
     {
         services.AddServiceInfrastructure(configuration);
         services.AddServiceApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, ServicePermissionProvider>();
         services.Scan(scan => scan
             .FromAssemblyOf<Endpoints.Services.GetAll.GetServicesEndpoint.EndPoint>()
             .AddClasses(classes => classes.AssignableTo<IEndpoint>())

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modules.CashRegister.Application;
 using Modules.CashRegister.Persistence;
 using Modules.CashRegister.Persistence.Extensions;
+using Modules.CashRegister.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.CashRegister.Presentation;
@@ -14,6 +15,7 @@ public sealed class CashRegisterModule : IModule
     {
         services.AddCashRegisterInfrastructure(configuration);
         services.AddCashRegisterApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, CashRegisterPermissionProvider>();
         services.Scan(scan => scan
             .FromAssemblyOf<CashRegisterModule>()
             .AddClasses(classes => classes.AssignableTo<IEndpoint>())

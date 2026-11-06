@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -31,7 +32,7 @@ public sealed class GetCustomerByIdEndpoint
                         ? Ok(result.Value)
                         : NotFound(result.IsSuccess ? "مشتری موردنظر پیدا نشد." : result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.Details)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

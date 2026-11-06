@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public sealed class UpdateServiceMaterialEndpoint
                         ? Ok(new { message = "ماده استاندارد خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Materials)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

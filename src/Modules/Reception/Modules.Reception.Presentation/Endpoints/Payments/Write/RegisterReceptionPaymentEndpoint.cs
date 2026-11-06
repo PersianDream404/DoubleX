@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.Payments.Register;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.Payments.Commands.Register;
 using SharedKernel.Interface;
 
@@ -37,7 +38,7 @@ public sealed class RegisterReceptionPaymentEndpoint
                         ? Ok(new { message = "پرداخت پذیرش ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Update)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

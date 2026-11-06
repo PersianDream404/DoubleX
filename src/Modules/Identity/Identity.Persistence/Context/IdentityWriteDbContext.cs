@@ -18,7 +18,8 @@ public class IdentityWriteDbContext : IdentityDbContext<ApplicationUser, Identit
     }
     #region DbSet
     public DbSet<ApplicationUser> Users { get; set; }
-
+    public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
+    public DbSet<UserPermissionOverrideAudit> UserPermissionOverrideAudits => Set<UserPermissionOverrideAudit>();
 
 
     #endregion

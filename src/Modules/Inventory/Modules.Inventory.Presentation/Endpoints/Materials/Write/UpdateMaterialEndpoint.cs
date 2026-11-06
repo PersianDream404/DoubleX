@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -33,6 +34,7 @@ public sealed class UpdateMaterialEndpoint
                         ? Ok(new { message = "کالا به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.MaterialsUpdate)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

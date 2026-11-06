@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -30,7 +31,7 @@ public sealed class GetServiceCategoryByIdEndpoint
                         ? Ok(result.Value)
                         : NotFound(result.IsSuccess ? "دسته‌بندی خدمت یافت نشد." : result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Categories)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

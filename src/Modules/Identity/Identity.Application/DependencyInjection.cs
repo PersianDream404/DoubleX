@@ -5,6 +5,8 @@ using Framwork.Decorator.Command;
 using Framwork.Decorator.Query;
 using Identity.Application.Common.Mapping;
 using Identity.Application.Services;
+using Identity.Application.Security;
+using Identity.Application.Contract.Security;
 using Identity.Application.Users.Queries.GetAll;
 using Mapster;
 using MapsterMapper;
@@ -12,6 +14,7 @@ using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Events;
 using SharedKernel.Interface;
+using SharedKernel.Security;
 
 public static class DependencyInjection
 {
@@ -46,6 +49,10 @@ public static class DependencyInjection
         services.AddScoped<ICommandBus, CommandBus>();
         services.AddScoped<IQueryBus, QueryBus>();
         services.AddScoped<IJwtService, JwtService>();
+        services.AddSingleton<PermissionRegistry>();
+        services.AddPermissionAuthorization();
+        services.AddScoped<IEffectivePermissionResolver, EffectivePermissionResolver>();
+        services.AddScoped<IUserPermissionManagementService, UserPermissionManagementService>();
 
 
         #region Mapping

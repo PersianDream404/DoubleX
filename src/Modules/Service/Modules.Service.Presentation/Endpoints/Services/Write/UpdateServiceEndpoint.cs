@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public sealed class UpdateServiceEndpoint
                         ? Ok(new { message = "خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Update)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

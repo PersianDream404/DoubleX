@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.ReceptionServiceMaterials.Register;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.ReceptionServiceMaterials.Commands.Reverse;
 using SharedKernel.Interface;
 
@@ -42,7 +43,7 @@ public sealed class ReverseReceptionServiceMaterialEndpoint
                         ? Ok(new { message = "مصرف ماده با ثبت گردش برگشت معکوس شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Update)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

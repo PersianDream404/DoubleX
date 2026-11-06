@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -26,6 +27,7 @@ public sealed class DeactivateUnitEndpoint
                         ? Ok(new { message = "واحد غیرفعال شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.UnitsDelete)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

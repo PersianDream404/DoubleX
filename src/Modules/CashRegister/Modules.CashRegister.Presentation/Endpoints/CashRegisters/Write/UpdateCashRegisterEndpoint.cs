@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -33,7 +34,7 @@ public sealed class UpdateCashRegisterEndpoint : BaseEndpoint, IEndpoint
                             new UpdateCashRegisterCommand(id, salonId, request), cancellationToken);
                         return result.IsSuccess ? Ok(new { message = "اطلاعات صندوق به‌روزرسانی شد." }) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.Update)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

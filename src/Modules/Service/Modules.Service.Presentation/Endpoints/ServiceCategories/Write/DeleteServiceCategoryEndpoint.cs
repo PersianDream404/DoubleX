@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -29,7 +30,7 @@ public sealed class DeleteServiceCategoryEndpoint
                         ? Ok(new { message = "دسته‌بندی حذف شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Categories)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

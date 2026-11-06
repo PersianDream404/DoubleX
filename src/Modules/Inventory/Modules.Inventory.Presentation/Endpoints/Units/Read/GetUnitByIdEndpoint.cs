@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ public sealed class GetUnitByIdEndpoint
                         ? Ok(result.Value)
                         : NotFound(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.UnitsDetails)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

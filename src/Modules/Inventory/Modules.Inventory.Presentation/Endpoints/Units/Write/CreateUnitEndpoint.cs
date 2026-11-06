@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ public sealed class CreateUnitEndpoint
                         ? Ok(new { message = "واحد با موفقیت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.UnitsCreate)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

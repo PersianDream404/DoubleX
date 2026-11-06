@@ -48,6 +48,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: "ثبت مشتری", href: "/customers/new" },
       { label: "لیست پرسنل", href: "/personnel" },
       { label: "ثبت پرسنل", href: "/personnel/new" },
+      { label: "مدیریت دسترسی پرسنل", href: "/personnel/permissions" },
     ],
   },
   {

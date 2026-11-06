@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.Receptions.Get;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.Receptions.Queries.GetById;
 using SharedKernel.Interface;
 
@@ -32,7 +33,7 @@ public sealed class GetReceptionByIdEndpoint
                         ? Ok(result.Value)
                         : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Details)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

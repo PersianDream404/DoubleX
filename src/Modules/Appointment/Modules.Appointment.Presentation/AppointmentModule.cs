@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modules.Appointment.Application;
 using Modules.Appointment.Persistence;
 using Modules.Appointment.Persistence.Extensions;
+using Modules.Appointment.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Appointment.Presentation;
@@ -14,6 +15,7 @@ public sealed class AppointmentModule : IModule
     {
         services.AddAppointmentInfrastructure(configuration);
         services.AddAppointmentApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, AppointmentPermissionProvider>();
         services.Scan(scan => scan
             .FromAssemblyOf<AppointmentModule>()
             .AddClasses(classes => classes.AssignableTo<IEndpoint>())

@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -29,7 +30,7 @@ public sealed class DeactivateServiceEndpoint
                         ? Ok(new { message = "خدمت غیرفعال شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Delete)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

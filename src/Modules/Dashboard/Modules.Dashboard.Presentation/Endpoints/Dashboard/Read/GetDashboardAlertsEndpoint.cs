@@ -1,3 +1,4 @@
+﻿using Modules.Dashboard.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -34,7 +35,7 @@ public sealed class GetDashboardAlertsEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(DashboardPermissions.View)
                 .WithTags(DashboardApiInfo.Tag);
     }
 }

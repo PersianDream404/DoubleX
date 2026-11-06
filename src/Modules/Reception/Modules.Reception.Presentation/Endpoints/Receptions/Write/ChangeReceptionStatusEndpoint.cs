@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.Receptions.Update;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.Receptions.Commands.ChangeStatus;
 using SharedKernel.Interface;
 
@@ -34,7 +35,7 @@ public sealed class ChangeReceptionStatusEndpoint
                         ? Ok(new { message = "وضعیت پذیرش به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Cancel)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

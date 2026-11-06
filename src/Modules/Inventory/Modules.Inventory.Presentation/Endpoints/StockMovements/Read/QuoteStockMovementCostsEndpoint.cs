@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -30,6 +31,7 @@ public sealed class QuoteStockMovementCostsEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.StockMovementQuote)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

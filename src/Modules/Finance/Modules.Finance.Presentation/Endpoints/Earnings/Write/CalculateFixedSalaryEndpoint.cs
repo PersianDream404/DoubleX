@@ -1,3 +1,4 @@
+﻿using Modules.Finance.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -37,7 +38,7 @@ public sealed class CalculateFixedSalaryEndpoint : BaseEndpoint, IEndpoint
                                 ? Ok(new { id = result.Value })
                                 : BadRequest(result.GetErrorMessage());
                         })
-                    .RequireAuthorization()
+                    .RequireAuthorization(FinancePermissions.EarningsCalculate)
                     .WithTags(FinanceApiInfo.Tag);
     }
 }

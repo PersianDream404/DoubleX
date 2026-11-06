@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -30,7 +31,7 @@ public sealed class UpsertServiceMaterialEndpoint
                         ? Ok(new { message = "ماده استاندارد خدمت ذخیره شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.Materials)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

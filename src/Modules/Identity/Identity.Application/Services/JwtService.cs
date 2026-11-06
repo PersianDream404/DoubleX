@@ -1,12 +1,16 @@
 ﻿using System.Text;
 
 using Identity.Application.Contract.DTOs.Authentications;
+using Identity.Application.Contract.Security;
+using Identity.Application.Security;
+using Identity.Domain.Security;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel.Constants;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using SharedKernel.Interface;
+using SharedKernel.Security;
 
 namespace Identity.Application.Services;
 public class JwtToken
@@ -19,28 +23,44 @@ public static class CustomClaims
 {
     public const string User = "UserId";
     public const string SalonId = "SalonId";
-
-    public const string AccessLevel = "AccessLevel";
 }
 
-public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDependency
+public class JwtService(
+    IOptions<JwtSetting> options,
+    IEffectivePermissionResolver permissionResolver) : IJwtService, IScopedDependency
 {
 
-    public JwtTokenResponseDto CreateToken(long Id,long SalonId, List<string> roles)
+    public async Task<JwtTokenResponseDto> CreateTokenAsync(
+        long userId,
+        long salonId,
+        List<string> roles,
+        CancellationToken cancellationToken)
     {
-        var expiredDate = DateTime.UtcNow.AddDays(1);
+        var expiredDate = DateTime.UtcNow.AddMinutes(15);
 
         var secretKey = options.Value.SecretKey;
+        var permissions = await permissionResolver.ResolveAsync(
+            userId, salonId, roles, cancellationToken);
 
         var claims = new List<Claim>
         {
-            new(CustomClaims.User, Id.ToString()),
-
+            new(CustomClaims.User, userId.ToString()),
+            new(CustomClaims.SalonId, salonId.ToString())
         };
-        claims.Add(new(CustomClaims.SalonId, SalonId.ToString()));
-        foreach (var role in roles)
+
+        foreach (var role in roles.Distinct(StringComparer.Ordinal))
         {
-            claims.Add(new(CustomClaims.AccessLevel, role));
+            if (!Roles.IsKnown(role))
+            {
+                throw new InvalidOperationException($"Unknown role '{role}' cannot be used to issue a token.");
+            }
+
+            claims.Add(new(ClaimTypes.Role, role));
+        }
+
+        foreach (var permission in permissions)
+        {
+            claims.Add(new(PermissionClaimTypes.Permission, permission));
         }
 
         var token = GenerateToken(claims, expiredDate, secretKey);
@@ -69,7 +89,7 @@ public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDepen
 
             var claims = handler.ValidateToken(token, validations, out var tokenSecure);
 
-            return claims.FindFirst(s => s.Type == claimType)?.ValueType ?? string.Empty;
+            return claims.FindFirst(s => s.Type == claimType)?.Value ?? string.Empty;
         }
         catch (Exception)
         {
@@ -98,7 +118,6 @@ public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDepen
     {
         try
         {
-            // پاکسازی توکن
             token = token.Replace("Bearer", "", StringComparison.OrdinalIgnoreCase).Trim();
 
             var handler = new JwtSecurityTokenHandler();
@@ -110,25 +129,13 @@ public class JwtService(IOptions<JwtSetting> options) : IJwtService,IScopedDepen
                 ValidateAudience = false
             };
 
-            // اعتبارسنجی توکن
             var principal = handler.ValidateToken(token, validations, out _);
-
-            // استخراج Claim اصلی
-            var firstClaim = principal.Claims.FirstOrDefault();
-            if (firstClaim == null)
-                return (new List<string>(), 0);
-
-            // تعیین نوع کاربر
-            var userType = firstClaim.Type switch
+            if (!long.TryParse(principal.FindFirstValue(CustomClaims.User), out var userId))
             {
-                CustomClaims.User => AppRoles.User,
-                _ => "None"
-            };
+                return ([], 0);
+            }
 
-            // استخراج شناسه
-            int.TryParse(firstClaim.Value, out int userId);
-
-            return (new List<string> { userType }, userId);
+            return (principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToList(), userId);
         }
         catch
         {

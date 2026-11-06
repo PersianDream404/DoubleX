@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -36,7 +37,7 @@ public sealed class GetCashRegisterTransactionsEndpoint : BaseEndpoint, IEndpoin
                             new GetCashRegisterTransactionsQuery(id, request), cancellationToken);
                         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.TransactionsList)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

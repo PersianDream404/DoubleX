@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Framwork.PagedList;
@@ -37,7 +38,7 @@ public sealed class GetSelectListCustomersEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.List)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

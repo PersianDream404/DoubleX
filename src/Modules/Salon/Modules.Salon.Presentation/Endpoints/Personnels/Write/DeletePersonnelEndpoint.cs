@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
+using Modules.Personnel.Application.Contract.Security;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Queries;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Commands;
 using SharedKernel.Constants;
@@ -44,7 +45,7 @@ public static class DeletePersonnelEndpoint
 
                 return Ok(MessageHelper.Format(AppMessages.Delete, AppEntity.Personnel));
             })
-            .RequireAuthorization()
+            .RequireAuthorization(PersonnelPermissions.Delete)
             .WithTags(ApiInfo.Tag);
         }
     }

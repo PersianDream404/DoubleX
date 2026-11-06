@@ -22,19 +22,25 @@ public static class RegisterUserEndpoint
 
                   [FromBody] RegisterUserRequestDto request,
                   [FromServices] ICommandBus _commandBus,
-                  [FromServices] IJwtService jwtService
+                  [FromServices] IJwtService jwtService,
+                  CancellationToken cancellationToken
                 ) =>
             {
 
                 var result = await _commandBus.Send<RegisterUserCommand, RegisterUserResponseDto>(
-                new RegisterUserCommand(request));
+                new RegisterUserCommand(request),
+                cancellationToken);
 
                 if (!result.IsSuccess)
                 {
                     var message = result.GetErrorMessage();
                     return BadRequest(message); 
                 }
-                var tokenResult = jwtService.CreateToken(result.Value.Id,result.Value.SalonId, result.Value.Roles);
+                var tokenResult = await jwtService.CreateTokenAsync(
+                    result.Value.Id,
+                    result.Value.SalonId,
+                    result.Value.Roles,
+                    cancellationToken);
                 return Ok(new
                 {
                     tokenResult= tokenResult,

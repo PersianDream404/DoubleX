@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Appointment.Application.Contract.DTOs.Appointments;
+using Modules.Appointment.Application.Contract.Security;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.ChangeStatus;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.Create;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.Update;
@@ -39,7 +40,7 @@ public sealed class GetAppointmentByIdEndpoint
                         ? Ok(result.Value)
                         : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(AppointmentPermissions.Details)
                 .WithTags(AppointmentApiInfo.Tag);
     }
 }

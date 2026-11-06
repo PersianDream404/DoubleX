@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -32,7 +33,7 @@ public sealed class UpdateServicePersonnelEndpoint
                         ? Ok(new { message = "پرسنل اختصاص‌یافته به خدمت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.PersonnelAssignments)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

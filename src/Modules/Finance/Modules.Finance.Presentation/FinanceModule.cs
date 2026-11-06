@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modules.Finance.Application;
 using Modules.Finance.Persistence;
 using Modules.Finance.Persistence.Extensions;
+using Modules.Finance.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Finance.Presentation;
@@ -14,6 +15,7 @@ public sealed class FinanceModule : IModule
     {
         services.AddFinanceInfrastructure(configuration);
         services.AddFinanceApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, FinancePermissionProvider>();
         services.Scan(scan => scan
             .FromAssemblyOf<FinanceModule>()
             .AddClasses(classes => classes.AssignableTo<IEndpoint>())

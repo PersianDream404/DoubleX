@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public sealed class RemoveServicePersonnelEndpoint
                         ? Ok(new { message = "پرسنل از خدمت حذف شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.PersonnelAssignments)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

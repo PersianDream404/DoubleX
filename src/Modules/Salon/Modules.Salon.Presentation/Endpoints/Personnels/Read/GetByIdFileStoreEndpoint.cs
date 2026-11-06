@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
+using Modules.Personnel.Application.Contract.Security;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Queries;
 using Modules.Personnel.Presentation.Endpoints.Personnels;
 using SharedKernel.Interface;
@@ -43,7 +44,7 @@ public static class GetByIdPersonnelEndpoint
                     : NotFound("پرسنل یافت نشد.");
 
             })
-                .RequireAuthorization()
+                .RequireAuthorization(PersonnelPermissions.Details)
                 .WithTags(ApiInfo.Tag);
         }
     }

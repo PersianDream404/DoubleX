@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.Receptions.GetAll;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.Receptions.Queries.GetAll;
 using SharedKernel.Interface;
 
@@ -35,7 +36,7 @@ public sealed class GetReceptionsEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.List)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

@@ -5,6 +5,7 @@ using Modules.Inventory.Application;
 using Modules.Inventory.Persistence;
 using Modules.Inventory.Persistence.Extensions;
 using Modules.Inventory.Presentation.Endpoints;
+using Modules.Inventory.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Inventory.Presentation;
@@ -15,6 +16,7 @@ public sealed class InventoryModule : IModule
     {
         services.AddInventoryInfrastructure(configuration);
         services.AddInventoryApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, InventoryPermissionProvider>();
 
         services.Scan(scan => scan
             .FromAssemblyOf<CreateUnitEndpoint.EndPoint>()

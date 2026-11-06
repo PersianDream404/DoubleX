@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
+		<ProjectReference Include="..\..\Appointment\Modules.Appointment.Application.Contract\Modules.Appointment.Application.Contract.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Framwork\Framwork.csproj" />
 		<ProjectReference Include="..\Identity.Application.Contract\Identity.Application.Contract.csproj" />
+		<ProjectReference Include="..\..\Salon\Modules.Salon.Application.Contract\Modules.Salon.Application.Contract.csproj" />
+		<ProjectReference Include="..\..\Reception\Modules.Reception.Application.Contract\Modules.Reception.Application.Contract.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" />

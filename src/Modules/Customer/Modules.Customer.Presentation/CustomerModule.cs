@@ -6,6 +6,7 @@ using Modules.Customer.Application;
 using Modules.Customer.Persistence;
 using Modules.Customer.Persistence.Extensions;
 using Modules.Customer.Presentation.Endpoints.Customers;
+using Modules.Customer.Presentation.Security;
 using SharedKernel.Interface;
 
 namespace Modules.Customer.Presentation;
@@ -16,6 +17,7 @@ public sealed class CustomerModule : IModule
     {
         services.AddCustomerInfrastructure(configuration);
         services.AddCustomerApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, CustomerPermissionProvider>();
         services.AddControllers()
             .AddApplicationPart(typeof(CustomerModule).Assembly)
             .AddControllersAsServices();

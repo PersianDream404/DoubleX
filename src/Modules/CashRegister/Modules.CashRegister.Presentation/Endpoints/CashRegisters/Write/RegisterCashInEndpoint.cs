@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -35,7 +36,7 @@ public sealed class RegisterCashInEndpoint : BaseEndpoint, IEndpoint
                             cancellationToken);
                         return result.IsSuccess ? Ok(new { message = "گردش صندوق ثبت شد." }) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.CashIn)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

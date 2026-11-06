@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ public sealed class RegisterStockMovementEndpoint
                         ? Ok(new { message = "گردش انبار با موفقیت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.StockMovementRegister)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

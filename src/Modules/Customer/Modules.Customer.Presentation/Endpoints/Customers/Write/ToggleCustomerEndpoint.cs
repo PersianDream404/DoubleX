@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -39,7 +40,7 @@ public sealed class ToggleCustomerEndpoint
                         ? Ok(new { message = "وضعیت مشتری تغییر کرد." })
                         : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.Toggle)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

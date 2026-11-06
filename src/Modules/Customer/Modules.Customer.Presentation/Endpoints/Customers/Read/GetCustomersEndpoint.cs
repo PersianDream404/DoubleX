@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -33,7 +34,7 @@ public sealed class GetCustomersEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.List)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

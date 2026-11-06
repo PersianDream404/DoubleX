@@ -1,4 +1,5 @@
-﻿using Framwork.Bus.Command;
+﻿using Modules.Salon.Application.Contract.Security;
+using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -42,6 +43,7 @@ public static class ToggleSalonEndpoint
 
 
             })
+                .RequireAuthorization(SalonPermissions.Toggle)
                 .WithTags(ApiInfo.Tag);
         }
     }

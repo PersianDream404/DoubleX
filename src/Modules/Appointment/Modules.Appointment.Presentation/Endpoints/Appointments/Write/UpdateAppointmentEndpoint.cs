@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Appointment.Application.Contract.DTOs.Appointments;
+using Modules.Appointment.Application.Contract.Security;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.ChangeStatus;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.Create;
 using Modules.Appointment.Application.Contract.UseCase.Appointments.Commands.Update;
@@ -40,7 +41,7 @@ public sealed class UpdateAppointmentEndpoint
                         ? Ok(new { message = "اطلاعات نوبت به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(AppointmentPermissions.Update)
                 .WithTags(AppointmentApiInfo.Tag);
     }
 }

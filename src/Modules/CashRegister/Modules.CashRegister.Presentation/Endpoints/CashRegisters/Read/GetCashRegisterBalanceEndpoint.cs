@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -32,7 +33,7 @@ public sealed class GetCashRegisterBalanceEndpoint : BaseEndpoint, IEndpoint
                             new GetCashRegisterBalanceQuery(id, salonId), cancellationToken);
                         return result.IsSuccess ? Ok(result.Value) : NotFound(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.Balance)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

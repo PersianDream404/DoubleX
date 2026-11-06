@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -34,7 +35,7 @@ public sealed class CreateCashRegisterEndpoint : BaseEndpoint, IEndpoint
                             ? Ok(new { id = result.Value })
                             : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.Create)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

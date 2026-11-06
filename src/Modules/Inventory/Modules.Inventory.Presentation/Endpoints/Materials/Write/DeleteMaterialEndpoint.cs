@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -26,6 +27,7 @@ public sealed class DeleteMaterialEndpoint
                         ? Ok(new { message = "کالا حذف نرم شد." })
                         : NotFound(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.MaterialsDelete)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

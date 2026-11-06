@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -32,7 +33,7 @@ public sealed class ToggleCashRegisterEndpoint : BaseEndpoint, IEndpoint
                             new ToggleCashRegisterCommand(id, salonId), cancellationToken);
                         return result.IsSuccess ? Ok(new { message = "وضعیت صندوق تغییر کرد." }) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.Toggle)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

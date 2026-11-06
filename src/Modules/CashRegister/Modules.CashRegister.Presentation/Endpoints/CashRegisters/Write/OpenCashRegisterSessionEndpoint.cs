@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -34,7 +35,7 @@ public sealed class OpenCashRegisterSessionEndpoint : BaseEndpoint, IEndpoint
                             cancellationToken);
                         return result.IsSuccess ? Ok(new { id = result.Value }) : BadRequest(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.SessionsOpen)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

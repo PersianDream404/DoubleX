@@ -1,4 +1,5 @@
-﻿using Framwork.Bus.Command;
+﻿using Modules.Salon.Application.Contract.Security;
+using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -45,6 +46,7 @@ public static class UpdateSalonEndpoint
 
 
             })
+                .RequireAuthorization(SalonPermissions.Update)
                 .WithTags(ApiInfo.Tag);
         }
     }

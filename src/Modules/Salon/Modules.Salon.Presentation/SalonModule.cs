@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Modules.Personnel.Application;
 using Modules.Personnel.Persistence;
 using Modules.Personnel.Persistence.Extensions;
+using Modules.Personnel.Presentation.Security;
 using Modules.Personnel.Presentation.Endpoints.Personnels.Write;
 using SharedKernel.Interface;
 
@@ -16,6 +17,7 @@ public class SalonModule : IModule
     {
         services.AddSalonInfrastructure(configuration);
         services.AddSalonApplicationServices();
+        services.AddSingleton<IModulePermissionProvider, PersonnelPermissionProvider>();
 
         services.AddControllers()
             .AddApplicationPart(typeof(SalonModule).Assembly)

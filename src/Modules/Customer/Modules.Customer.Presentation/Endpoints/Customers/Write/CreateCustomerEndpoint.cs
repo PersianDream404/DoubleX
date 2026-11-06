@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -32,7 +33,7 @@ public sealed class CreateCustomerEndpoint
                         ? Ok(new { message = "مشتری با موفقیت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.Create)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

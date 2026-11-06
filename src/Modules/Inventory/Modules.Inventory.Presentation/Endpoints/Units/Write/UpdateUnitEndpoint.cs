@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -33,6 +34,7 @@ public sealed class UpdateUnitEndpoint
                         ? Ok(new { message = "واحد به‌روزرسانی شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.UnitsUpdate)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

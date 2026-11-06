@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +28,7 @@ public sealed class CreateMaterialEndpoint
                         ? Ok(new { message = "کالا با موجودی اولیه صفر با موفقیت ثبت شد." })
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.MaterialsCreate)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

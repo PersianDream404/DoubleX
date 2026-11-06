@@ -1,3 +1,4 @@
+﻿using Modules.Finance.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -36,7 +37,7 @@ public sealed class GetPersonnelEarningsReportEndpoint : BaseEndpoint, IEndpoint
                                 ? Ok(result.Value)
                                 : BadRequest(result.GetErrorMessage());
                         })
-                    .RequireAuthorization()
+                    .RequireAuthorization(FinancePermissions.Reports)
                     .WithTags(FinanceApiInfo.Tag);
     }
 }

@@ -3,6 +3,7 @@ using Identity.Domain.Entities;
 using Identity.Domain.Interface;
 using Identity.Persistence.Context;
 using Identity.Persistence.Repositories.Users;
+using Identity.Application.Contract.Security;
 using Infrastructure.Context;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -54,6 +55,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUserCommandRepository, UserCommandRepository>();
         services.AddScoped<IUserQueryRepository, UserQueryRepository>();
+        services.AddScoped<IUserPermissionOverrideRepository, UserPermissionOverrideRepository>();
 
         // Add Identity
         services.AddIdentity<ApplicationUser, IdentityRole<long>>(options =>
@@ -103,8 +105,6 @@ public static class DependencyInjection
                     Encoding.UTF8.GetBytes(configuration.GetSection("Setting:SecretKey").Value!))
             };
         });
-
-        services.AddAuthorization();
 
         return services;
     }

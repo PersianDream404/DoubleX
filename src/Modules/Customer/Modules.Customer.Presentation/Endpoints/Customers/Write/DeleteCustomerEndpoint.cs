@@ -1,3 +1,4 @@
+﻿using Modules.Customer.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -39,7 +40,7 @@ public sealed class DeleteCustomerEndpoint
                         ? Ok(new { message = "مشتری حذف شد." })
                         : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(CustomerPermissions.Delete)
                 .WithTags(CustomerApiInfo.Tag);
         }
     }

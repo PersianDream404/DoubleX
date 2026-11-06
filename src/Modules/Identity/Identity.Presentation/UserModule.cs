@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.Identity.Persistence.Extensions;
+using Identity.Application.Security;
+using Identity.Presentation.Security;
+using SharedKernel.Security;
 using SharedKernel.Interface;
 using SmeOpsHub.SharedKernel;
 
@@ -19,6 +22,7 @@ public class UserModule : IModule
     {
         services.AddIdentityInfrastructure(configuration);
         services.AddIdentityApplication();
+        services.AddSingleton<IModulePermissionProvider, IdentityPermissionProvider>();
 
         services.Scan(scan =>
         {
@@ -31,10 +35,16 @@ public class UserModule : IModule
         // services.AddScoped<Identity.Application.Contract.Services.IAuthenticationService, AuthenticationService>();
 
     }
-    public void RegisterBuilder(IApplicationBuilder builder) =>
-    builder.ApplicationServices.ApplyIdentityMigrationsAsync()
-        .GetAwaiter()
-        .GetResult();
+    public void RegisterBuilder(IApplicationBuilder builder)
+    {
+        builder.ApplicationServices.ApplyIdentityMigrationsAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        using var scope = builder.ApplicationServices.CreateScope();
+        var permissionRegistry = scope.ServiceProvider.GetRequiredService<PermissionRegistry>();
+        RolePermissions.Validate(permissionRegistry);
+    }
     //public void MapEndpoints(IEndpointRouteBuilder endpoints)
     //{
     //    endpoints.MapAreaControllerRoute(

@@ -1,3 +1,4 @@
+﻿using Modules.CashRegister.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -32,7 +33,7 @@ public sealed class GetActiveCashRegisterSessionEndpoint : BaseEndpoint, IEndpoi
                             new GetCashRegisterSessionQuery(id, salonId), cancellationToken);
                         return result.IsSuccess ? Ok(result.Value) : NotFound(result.GetErrorMessage());
                     })
-                    .RequireAuthorization()
+                    .RequireAuthorization(CashRegisterPermissions.SessionsActive)
                     .WithTags(CashRegisterApiInfo.Tag);
     }
 }

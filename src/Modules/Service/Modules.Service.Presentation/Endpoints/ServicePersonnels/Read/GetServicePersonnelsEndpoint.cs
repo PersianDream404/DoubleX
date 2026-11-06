@@ -1,3 +1,4 @@
+﻿using Modules.Service.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -33,7 +34,7 @@ public sealed class GetServicePersonnelsEndpoint
                         ? Ok(result.Value!)
                         : NotFound(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ServicePermissions.PersonnelAssignments)
                 .WithTags(ServiceApiInfo.Tag);
     }
 }

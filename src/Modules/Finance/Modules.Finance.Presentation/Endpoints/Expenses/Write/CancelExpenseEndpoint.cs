@@ -1,3 +1,4 @@
+﻿using Modules.Finance.Application.Contract.Security;
 using Framwork.Bus.Command;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
@@ -34,7 +35,7 @@ public sealed class CancelExpenseEndpoint : BaseEndpoint, IEndpoint
                                 ? Ok(new { id, cancelled = true })
                                 : BadRequest(result.GetErrorMessage());
                         })
-                    .RequireAuthorization()
+                    .RequireAuthorization(FinancePermissions.ExpensesCancel)
                     .WithTags(FinanceApiInfo.Tag);
     }
 }

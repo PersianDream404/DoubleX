@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Reception.Application.Contract.DTOs.Receptions.Create;
+using Modules.Reception.Application.Contract.Security;
 using Modules.Reception.Application.Contract.UseCase.Receptions.Commands.Create;
 using SharedKernel.Interface;
 
@@ -35,7 +36,7 @@ public sealed class CreateReceptionEndpoint
                         ? Ok(new { id = result.Value })
                         : BadRequest(result.GetErrorMessage());
                 })
-                .RequireAuthorization()
+                .RequireAuthorization(ReceptionPermissions.Create)
                 .WithTags(ReceptionApiInfo.Tag);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Framwork.Bus.Query;
+﻿using Modules.Salon.Application.Contract.Security;
+using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,7 @@ public static class GetByIdSalonEndpoint
 
 
             })
+                .RequireAuthorization(SalonPermissions.Details)
                 .WithTags(ApiInfo.Tag);
         }
     }

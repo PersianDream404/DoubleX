@@ -1,3 +1,4 @@
+﻿using Modules.Inventory.Application.Contract.Security;
 using Framwork.Bus.Query;
 using Framwork.Extensions;
 using Framwork.PagedList;
@@ -28,6 +29,7 @@ public sealed class GetMaterialsEndpoint
                         ? Ok(result.Value)
                         : BadRequest(result.GetErrorMessage());
                 })
+                .RequireAuthorization(InventoryPermissions.MaterialsList)
                 .WithTags(InventoryApiInfo.Tag);
         }
     }

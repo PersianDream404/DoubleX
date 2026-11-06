@@ -25,19 +25,25 @@ public static class LoginUserEndpoint
                   [FromBody] LoginRequestDto request,
                   [FromServices] IQueryBus queryBus,
                   [FromServices] ILogger<EndPoint> logger,
-                  [FromServices] IJwtService jwtService
+                  [FromServices] IJwtService jwtService,
+                  CancellationToken cancellationToken
                 ) =>
             {
                 logger.LogInformation("start Login");
                 var result = await queryBus.Send<LoginUserQuery, RegisterUserResponseDto>(
-                new LoginUserQuery(request));
+                new LoginUserQuery(request),
+                cancellationToken);
 
                 if (!result.IsSuccess)
                 {
                     var message = result.GetErrorMessage();
                     return BadRequest(message);
                 }
-                var tokenResult = jwtService.CreateToken(result.Value.Id,result.Value.SalonId, result.Value.Roles);
+                var tokenResult = await jwtService.CreateTokenAsync(
+                    result.Value.Id,
+                    result.Value.SalonId,
+                    result.Value.Roles,
+                    cancellationToken);
                 return Ok(new
                 {
                     tokenResult = tokenResult,

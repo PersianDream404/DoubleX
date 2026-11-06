@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Modules.Personnel.Application.Contract.DTOs.Personnel;
+using Modules.Personnel.Application.Contract.Security;
 using Modules.Personnel.Application.Contract.UseCase.Personnel.Queries;
 using SharedKernel.Interface;
 
@@ -46,7 +47,7 @@ public static class GetAllPersonnelEndpoint
 
 
             })
-                .RequireAuthorization()
+                .RequireAuthorization(PersonnelPermissions.List)
                 .WithTags(ApiInfo.Tag);
         }
     }
