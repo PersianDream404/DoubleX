@@ -30,7 +30,7 @@ public static class CreateSalonEndpoint
                 ) =>
             {
 
-                var result = await _commandBus.Send<CreateSalonCommand, bool>
+                var result = await _commandBus.Send<CreateSalonCommand, long>
                                  (new CreateSalonCommand(request), ct);
 
                 if (!result.IsSuccess)

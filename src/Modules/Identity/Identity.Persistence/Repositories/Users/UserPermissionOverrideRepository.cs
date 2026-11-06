@@ -17,12 +17,17 @@ public sealed class UserPermissionOverrideRepository(
         long salonId,
         CancellationToken cancellationToken)
     {
+        var target = await GetUserAsync(userId, cancellationToken);
+        return target?.SalonId == salonId ? target : null;
+    }
+
+    public async Task<UserPermissionTarget?> GetUserAsync(
+        long userId,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user is null || user.SalonId != salonId)
-        {
-            return null;
-        }
+        if (user is null) return null;
 
         var roles = await userManager.GetRolesAsync(user);
         return new UserPermissionTarget(user.Id, user.SalonId, roles.ToArray());

@@ -29,6 +29,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
+  { label: "پنل ادمین", href: "/admin/salons" },
   { label: "مدیریت داشبورد", href: "/dashboard" },
   {
     label: "پذیرش و نوبت",

@@ -65,3 +65,12 @@ src/
 ۲. تنظیم رشته اتصال به دیتابیس در `appsettings.json`.
 ۳. اجرای Migrationها برای ایجاد جداول دیتابیس.
 ۴. اجرای پروژه از طریق Visual Studio یا دستور `dotnet run`.
+
+### راه‌اندازی مدیر سامانه
+
+برای ساخت اولین مدیر سامانه، این مقادیر را به‌صورت Secret یا متغیر محیطی تنظیم کنید؛
+برای نمونه از نام‌های محیطی `Identity__BootstrapSuperAdmin__FullName`،
+`Identity__BootstrapSuperAdmin__Mobile` و `Identity__BootstrapSuperAdmin__Password`
+استفاده کنید. حساب در اولین راه‌اندازی ساخته و به نقش `SuperAdmin` متصل می‌شود؛
+شناسه سالن آن صفر است، چون مدیر سامانه به یک سالن خاص محدود نیست. پس از ساخت،
+می‌توان Secretهای راه‌اندازی را حذف کرد.

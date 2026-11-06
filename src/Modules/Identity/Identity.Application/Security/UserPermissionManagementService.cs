@@ -46,7 +46,7 @@ public sealed class UserPermissionManagementService(
         var target = access.Value;
         var rolePermissions = RolePermissions.GetPermissions(target.Roles, permissionRegistry);
         var overrides = await repository.GetActiveOverridesAsync(
-            targetUserId, salonId, cancellationToken);
+            targetUserId, target.SalonId, cancellationToken);
         var grants = overrides
             .Where(item => item.Effect == UserPermissionEffect.Grant)
             .Select(item => item.Permission)
@@ -97,7 +97,7 @@ public sealed class UserPermissionManagementService(
 
         await repository.SaveOverrideAsync(
             targetUserId,
-            salonId,
+            access.Value.SalonId,
             permission,
             effect,
             actorUserId,
@@ -133,7 +133,7 @@ public sealed class UserPermissionManagementService(
 
         await repository.RemoveOverrideAsync(
             targetUserId,
-            salonId,
+            access.Value.SalonId,
             permission,
             actorUserId,
             DateTimeOffset.UtcNow,
@@ -160,7 +160,7 @@ public sealed class UserPermissionManagementService(
 
         await repository.ResetOverridesAsync(
             targetUserId,
-            salonId,
+            access.Value.SalonId,
             actorUserId,
             DateTimeOffset.UtcNow,
             cancellationToken);
@@ -176,24 +176,37 @@ public sealed class UserPermissionManagementService(
     {
         if (actorUserId <= 0 ||
             targetUserId <= 0 ||
-            salonId <= 0 ||
+            salonId < 0 ||
             (requireDifferentUser && actorUserId == targetUserId))
         {
             return Result<UserPermissionTarget>.NotFound();
         }
 
-        var actor = await repository.GetTargetUserAsync(actorUserId, salonId, cancellationToken);
-        if (actor is null ||
-            (!actor.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal) &&
-             !actor.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal)))
+        var actor = salonId == 0
+            ? await repository.GetUserAsync(actorUserId, cancellationToken)
+            : await repository.GetTargetUserAsync(actorUserId, salonId, cancellationToken);
+        if (actor is null)
         {
             return Result<UserPermissionTarget>.NotFound();
         }
 
-        var target = await repository.GetTargetUserAsync(targetUserId, salonId, cancellationToken);
+        var isSuperAdmin = actor.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal);
+        var isSalonAdmin = actor.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal);
+        if (!isSuperAdmin && !isSalonAdmin)
+        {
+            return Result<UserPermissionTarget>.NotFound();
+        }
+        if (salonId == 0 && !isSuperAdmin)
+        {
+            return Result<UserPermissionTarget>.NotFound();
+        }
+
+        var target = isSuperAdmin
+            ? await repository.GetUserAsync(targetUserId, cancellationToken)
+            : await repository.GetTargetUserAsync(targetUserId, salonId, cancellationToken);
         if (target is null ||
-            target.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal) ||
-            target.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal))
+            target.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal) ||
+            (!isSuperAdmin && target.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal)))
         {
             return Result<UserPermissionTarget>.NotFound();
         }

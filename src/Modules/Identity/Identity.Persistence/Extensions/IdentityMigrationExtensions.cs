@@ -32,5 +32,7 @@ public static class IdentityMigrationExtensions
                 throw new InvalidOperationException($"Could not create the fixed role '{role}': {errors}");
             }
         }
+
+        await SuperAdminSeeder.SeedAsync(scope.ServiceProvider, cancellationToken);
     }
 }

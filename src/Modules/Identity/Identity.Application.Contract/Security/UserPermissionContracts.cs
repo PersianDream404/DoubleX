@@ -31,6 +31,10 @@ public interface IUserPermissionOverrideRepository
         long salonId,
         CancellationToken cancellationToken);
 
+    Task<UserPermissionTarget?> GetUserAsync(
+        long userId,
+        CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<UserPermissionOverride>> GetActiveOverridesAsync(
         long userId,
         long salonId,

@@ -13,6 +13,6 @@ internal static class UserPermissionEndpointClaims
         return long.TryParse(context.User.FindFirstValue(CustomClaims.User), out userId) &&
                userId > 0 &&
                long.TryParse(context.User.FindFirstValue(CustomClaims.SalonId), out salonId) &&
-               salonId > 0;
+               salonId >= 0;
     }
 }

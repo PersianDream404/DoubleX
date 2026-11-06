@@ -37,9 +37,15 @@ const PERMISSION_NAMES: Record<string, string> = {
   Reports: "گزارش‌ها",
 };
 
-export function PersonnelPermissionsPage() {
-  const [userIdInput, setUserIdInput] = useState("");
-  const [userId, setUserId] = useState<number | null>(null);
+export function PersonnelPermissionsPage({
+  initialUserId,
+}: {
+  initialUserId?: number;
+}) {
+  const [userIdInput, setUserIdInput] = useState(
+    initialUserId === undefined ? "" : String(initialUserId),
+  );
+  const [userId, setUserId] = useState<number | null>(initialUserId ?? null);
   const [formError, setFormError] = useState<string | null>(null);
   const {
     permissions,

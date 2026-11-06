@@ -175,6 +175,42 @@ public sealed class PermissionAuthorizationTests
         Assert.DoesNotContain("Reception.Create", permissions);
     }
 
+    [Fact]
+    public async Task SuperAdminCanReadSalonAdminAccessAcrossSalons()
+    {
+        var registry = CreateRegistry();
+        var repository = new StaticPermissionOverrideRepository(
+            [],
+            [
+                new UserPermissionTarget(1, 0, [Roles.SuperAdmin]),
+                new UserPermissionTarget(2, 8, [Roles.SalonAdmin])
+            ]);
+        var service = new UserPermissionManagementService(repository, registry);
+
+        var result = await service.GetUserPermissionsAsync(1, 2, 0, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(8, result.Value.SalonId);
+        Assert.Contains(Roles.SalonAdmin, result.Value.Roles);
+    }
+
+    [Fact]
+    public async Task SalonAdminCannotReadUsersFromAnotherSalon()
+    {
+        var registry = CreateRegistry();
+        var repository = new StaticPermissionOverrideRepository(
+            [],
+            [
+                new UserPermissionTarget(1, 3, [Roles.SalonAdmin]),
+                new UserPermissionTarget(2, 8, [Roles.Personnel])
+            ]);
+        var service = new UserPermissionManagementService(repository, registry);
+
+        var result = await service.GetUserPermissionsAsync(1, 2, 3, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+    }
+
     private static PermissionRegistry CreateRegistry() =>
         new(
         [
@@ -217,14 +253,27 @@ public sealed class PermissionAuthorizationTests
     }
 
     private sealed class StaticPermissionOverrideRepository(
-        IReadOnlyCollection<UserPermissionOverride> overrides)
+        IReadOnlyCollection<UserPermissionOverride> overrides,
+        IReadOnlyCollection<UserPermissionTarget>? users = null)
         : IUserPermissionOverrideRepository
     {
         public Task<UserPermissionTarget?> GetTargetUserAsync(
             long userId,
             long salonId,
-            CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+            CancellationToken cancellationToken)
+        {
+            var user = users?.FirstOrDefault(candidate =>
+                candidate.UserId == userId && candidate.SalonId == salonId);
+            return Task.FromResult(user);
+        }
+
+        public Task<UserPermissionTarget?> GetUserAsync(
+            long userId,
+            CancellationToken cancellationToken)
+        {
+            var user = users?.FirstOrDefault(candidate => candidate.UserId == userId);
+            return Task.FromResult(user);
+        }
 
         public Task<IReadOnlyCollection<UserPermissionOverride>> GetActiveOverridesAsync(
             long userId,

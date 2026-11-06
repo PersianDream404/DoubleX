@@ -13,17 +13,16 @@ using SharedKernel.Helper;
 namespace Modules.Salon.Application.UseCase.Salons.Commands.Create;
 
 public class CreateSalonCommandHandler(ISalonCommandRepository SalonCommandRepository, ISalonQueryRepository colorQueryRepository)
-: ICommandHandler<CreateSalonCommand, bool>
+: ICommandHandler<CreateSalonCommand, long>
 {
-    public async Task<Result<bool>> Handle(
+    public async Task<Result<long>> Handle(
         CreateSalonCommand command,
         CancellationToken cancellationToken)
     {
+        var salon = Personnel.Domain.Entities.Salon.Create(command.request.Name);
         try
         {
-
-            var color = Personnel.Domain.Entities.Salon.Create(command.request.Name);
-            await SalonCommandRepository.AddAsync(color,cancellationToken);
+            await SalonCommandRepository.AddAsync(salon, cancellationToken);
 
         }
         catch (Exception)
@@ -31,7 +30,7 @@ public class CreateSalonCommandHandler(ISalonCommandRepository SalonCommandRepos
             return Result.Error(MessageHelper.Format(AppMessages.ErrorIn, AppEntity.Salon));
         }
 
-        return true;
+        return salon.Id;
     }
 }
 

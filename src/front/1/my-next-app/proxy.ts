@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 interface TokenClaims {
   exp?: unknown;
   AccessLevel?: unknown;
+  role?: unknown;
+  roles?: unknown;
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: unknown;
 }
 
 function readTokenClaims(token: string | undefined): TokenClaims | null {
@@ -30,6 +33,19 @@ function hasAdminRole(claims: TokenClaims): boolean {
     : roleClaims === "Admin";
 }
 
+function hasSuperAdminRole(claims: TokenClaims): boolean {
+  const roleClaims = [
+    claims.role,
+    claims.roles,
+    claims["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"],
+  ];
+  return roleClaims.some((claim) =>
+    Array.isArray(claim)
+      ? claim.includes("SuperAdmin")
+      : claim === "SuperAdmin",
+  );
+}
+
 export function proxy(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const claims = readTokenClaims(token);
@@ -40,6 +56,9 @@ export function proxy(request: NextRequest) {
   const isSalonPage =
     request.nextUrl.pathname === "/salon" ||
     request.nextUrl.pathname.startsWith("/salon/");
+  const isAdminPage =
+    request.nextUrl.pathname === "/admin" ||
+    request.nextUrl.pathname.startsWith("/admin/");
 
   if (request.nextUrl.pathname === "/login") {
     if (authenticated) {
@@ -62,6 +81,10 @@ export function proxy(request: NextRequest) {
   }
 
   if (isSalonPage && !hasAdminRole(claims)) {
+    return NextResponse.redirect(new URL("/403", request.url));
+  }
+
+  if (isAdminPage && !hasSuperAdminRole(claims)) {
     return NextResponse.redirect(new URL("/403", request.url));
   }
 
