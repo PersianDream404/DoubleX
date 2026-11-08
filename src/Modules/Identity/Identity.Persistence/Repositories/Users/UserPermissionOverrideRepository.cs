@@ -33,6 +33,36 @@ public sealed class UserPermissionOverrideRepository(
         return new UserPermissionTarget(user.Id, user.SalonId, roles.ToArray());
     }
 
+    public async Task<IReadOnlyCollection<ManageableUserDto>> GetUsersAsync(
+        long? salonId,
+        CancellationToken cancellationToken)
+    {
+        var usersQuery = userManager.Users.AsNoTracking();
+        if (salonId.HasValue)
+        {
+            usersQuery = usersQuery.Where(user => user.SalonId == salonId.Value);
+        }
+
+        var users = await usersQuery
+            .OrderBy(user => user.FullName)
+            .ThenBy(user => user.UserName)
+            .ToListAsync(cancellationToken);
+        var result = new List<ManageableUserDto>(users.Count);
+        foreach (var user in users)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var roles = await userManager.GetRolesAsync(user);
+            result.Add(new ManageableUserDto(
+                user.Id,
+                user.FullName,
+                user.PhoneNumber ?? user.UserName ?? string.Empty,
+                user.SalonId,
+                roles.ToArray()));
+        }
+
+        return result;
+    }
+
     public async Task<IReadOnlyCollection<UserPermissionOverride>> GetActiveOverridesAsync(
         long userId,
         long salonId,

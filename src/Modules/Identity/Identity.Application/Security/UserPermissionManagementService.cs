@@ -26,6 +26,45 @@ public sealed class UserPermissionManagementService(
     public IReadOnlyCollection<string> GetAssignableRoles() =>
         [Roles.Receptionist, Roles.Personnel];
 
+    public async Task<Result<IReadOnlyCollection<ManageableUserDto>>> GetManageableUsersAsync(
+        long actorUserId,
+        long salonId,
+        CancellationToken cancellationToken)
+    {
+        if (actorUserId <= 0 || salonId < 0)
+        {
+            return Result<IReadOnlyCollection<ManageableUserDto>>.NotFound();
+        }
+
+        var actor = salonId == 0
+            ? await repository.GetUserAsync(actorUserId, cancellationToken)
+            : await repository.GetTargetUserAsync(actorUserId, salonId, cancellationToken);
+        if (actor is null)
+        {
+            return Result<IReadOnlyCollection<ManageableUserDto>>.NotFound();
+        }
+
+        var isSuperAdmin = actor.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal);
+        var isSalonAdmin = actor.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal);
+        if (!isSuperAdmin && (!isSalonAdmin || salonId == 0))
+        {
+            return Result<IReadOnlyCollection<ManageableUserDto>>.NotFound();
+        }
+
+        var users = await repository.GetUsersAsync(
+            isSuperAdmin ? null : salonId,
+            cancellationToken);
+        var manageableUsers = users
+            .Where(user =>
+                user.UserId != actorUserId &&
+                !user.Roles.Contains(Roles.SuperAdmin, StringComparer.Ordinal) &&
+                (isSuperAdmin ||
+                 !user.Roles.Contains(Roles.SalonAdmin, StringComparer.Ordinal)))
+            .ToArray();
+
+        return Result.Success<IReadOnlyCollection<ManageableUserDto>>(manageableUsers);
+    }
+
     public async Task<Result<UserPermissionAccessDto>> GetUserPermissionsAsync(
         long actorUserId,
         long targetUserId,

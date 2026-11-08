@@ -197,7 +197,7 @@ export function AdminSalonsPage() {
               <Button
                 render={
                   <Link
-                    href={`/personnel/permissions?userId=${created.adminUserId}`}
+                    href={`/admin/users/permissions?userId=${created.adminUserId}`}
                   />
                 }
                 size="sm"

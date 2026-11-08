@@ -1,16 +1,21 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
-import { KeyRound, LoaderCircle, RotateCcw, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { KeyRound, LoaderCircle, RotateCcw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { IdentityUserIdSchema } from "./personnel-permissions.schema";
 import { usePersonnelPermissions } from "./use-personnel-permissions";
 
 const MODULE_NAMES: Record<string, string> = {
@@ -39,16 +44,18 @@ const PERMISSION_NAMES: Record<string, string> = {
 
 export function PersonnelPermissionsPage({
   initialUserId,
+  adminMode = false,
 }: {
   initialUserId?: number;
+  adminMode?: boolean;
 }) {
-  const [userIdInput, setUserIdInput] = useState(
-    initialUserId === undefined ? "" : String(initialUserId),
-  );
   const [userId, setUserId] = useState<number | null>(initialUserId ?? null);
-  const [formError, setFormError] = useState<string | null>(null);
   const {
     permissions,
+    users,
+    loadingUsers,
+    usersError,
+    selectedUserId,
     access,
     loadingPermissions,
     loadingAccess,
@@ -70,19 +77,6 @@ export function PersonnelPermissionsPage({
     [permissions],
   );
 
-  function submitUserId(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = IdentityUserIdSchema.safeParse(userIdInput);
-    if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "شناسه حساب معتبر نیست.");
-      setUserId(null);
-      return;
-    }
-
-    setFormError(null);
-    setUserId(parsed.data);
-  }
-
   return (
     <div className="min-h-screen bg-white">
       <section className="h-[150px] bg-[linear-gradient(110deg,#10000f_0%,#210020_55%,#10000f_100%)]">
@@ -90,17 +84,23 @@ export function PersonnelPermissionsPage({
           <Breadcrumb>
             <BreadcrumbList className="text-xs text-white/70">
               <BreadcrumbItem>
-                <BreadcrumbLink href="/personnel">مدیریت پرسنل</BreadcrumbLink>
+                <BreadcrumbLink href={adminMode ? "/admin/salons" : "/personnel"}>
+                  {adminMode ? "مدیریت سامانه" : "مدیریت پرسنل"}
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage className="text-white">دسترسی حساب پرسنل</BreadcrumbPage>
+                <BreadcrumbPage className="text-white">
+                  {adminMode ? "دسترسی کاربران سالن" : "دسترسی حساب پرسنل"}
+                </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
           <div className="mt-4 flex items-center gap-3 text-white">
             <KeyRound className="size-6 text-fuchsia-300" aria-hidden="true" />
-            <h1 className="text-xl font-semibold">مدیریت دسترسی اختصاصی</h1>
+            <h1 className="text-xl font-semibold">
+              {adminMode ? "مدیریت دسترسی کاربران سالن" : "مدیریت دسترسی اختصاصی"}
+            </h1>
           </div>
         </div>
       </section>
@@ -110,35 +110,71 @@ export function PersonnelPermissionsPage({
           <CardHeader>
             <CardTitle>انتخاب حساب کاربری</CardTitle>
             <CardDescription>
-              شناسهٔ حساب Identity را وارد کنید؛ این شناسه با شناسهٔ رکورد پرسنل
-              متفاوت است.
+              حساب را از فهرست کاربران مجاز انتخاب کنید.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={submitUserId} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="w-full max-w-sm space-y-2">
-                <Label htmlFor="identity-user-id">شناسه حساب</Label>
-                <Input
-                  id="identity-user-id"
-                  inputMode="numeric"
-                  dir="ltr"
-                  value={userIdInput}
-                  onChange={(event) => setUserIdInput(event.target.value)}
-                  aria-invalid={Boolean(formError)}
-                  aria-describedby={formError ? "identity-user-id-error" : undefined}
-                  placeholder="مثلاً ۱۲۳"
-                />
-                {formError && (
-                  <p id="identity-user-id-error" className="text-sm text-destructive" role="alert">
-                    {formError}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" className="bg-fuchsia-700 text-white hover:bg-fuchsia-800">
-                <Search className="size-4" aria-hidden="true" />
-                دریافت دسترسی‌ها
-              </Button>
-            </form>
+            <div className="w-full max-w-xl space-y-2">
+              <Label htmlFor="identity-user-select">حساب کاربر</Label>
+              <Select
+                value={selectedUserId === null ? "" : String(selectedUserId)}
+                onValueChange={(value) => {
+                  const parsed = Number(value);
+                  setUserId(
+                    Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null,
+                  );
+                }}
+                disabled={loadingUsers || Boolean(usersError) || users.length === 0}
+              >
+                <SelectTrigger
+                  id="identity-user-select"
+                  aria-label="انتخاب حساب کاربر"
+                  className="w-full max-w-xl border-fuchsia-200 bg-white"
+                >
+                  <SelectValue
+                    placeholder={
+                      loadingUsers ? "در حال دریافت کاربران..." : "انتخاب حساب..."
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => {
+                    const displayName = user.fullName?.trim() || "بدون نام";
+                    return (
+                      <SelectItem
+                        key={user.userId}
+                        value={String(user.userId)}
+                      >
+                        {displayName} · {user.mobile}
+                        {adminMode
+                          ? ` · سالن ${user.salonId.toLocaleString("fa-IR")}`
+                          : ""}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {loadingUsers && (
+                <p className="text-sm text-muted-foreground" role="status">
+                  در حال بارگذاری فهرست کاربران...
+                </p>
+              )}
+              {usersError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {usersError}
+                </p>
+              )}
+              {!loadingUsers && !usersError && users.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  حساب قابل مدیریتی برای انتخاب وجود ندارد.
+                </p>
+              )}
+              {userId !== null && selectedUserId === null && !loadingUsers && (
+                <p className="text-sm text-destructive" role="alert">
+                  این حساب در فهرست حساب‌های قابل مدیریت نیست.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -155,7 +191,7 @@ export function PersonnelPermissionsPage({
           </div>
         ) : permissions.length === 0 && !error ? (
           <p className="py-8 text-center text-sm text-muted-foreground">مجوزی برای مدیریت ثبت نشده است.</p>
-        ) : userId !== null && loadingAccess ? (
+        ) : selectedUserId !== null && loadingAccess ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground" role="status">
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
             در حال دریافت وضعیت دسترسی حساب...
@@ -265,7 +301,7 @@ export function PersonnelPermissionsPage({
               </Card>
             ))}
           </>
-        ) : userId !== null && !error ? (
+        ) : selectedUserId !== null && !error ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             دسترسی‌های این حساب نمایش داده نمی‌شود.
           </p>

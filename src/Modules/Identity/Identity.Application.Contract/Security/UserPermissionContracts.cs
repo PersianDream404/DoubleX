@@ -9,6 +9,13 @@ public sealed record UserPermissionTarget(
     long SalonId,
     IReadOnlyList<string> Roles);
 
+public sealed record ManageableUserDto(
+    long UserId,
+    string? FullName,
+    string Mobile,
+    long SalonId,
+    IReadOnlyList<string> Roles);
+
 public sealed record ManagedPermissionDto(
     string Code,
     string Module,
@@ -38,6 +45,10 @@ public interface IUserPermissionOverrideRepository
     Task<IReadOnlyCollection<UserPermissionOverride>> GetActiveOverridesAsync(
         long userId,
         long salonId,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<ManageableUserDto>> GetUsersAsync(
+        long? salonId,
         CancellationToken cancellationToken);
 
     Task SaveOverrideAsync(
@@ -78,6 +89,11 @@ public interface IUserPermissionManagementService
 {
     IReadOnlyCollection<ManagedPermissionDto> GetAvailablePermissions();
     IReadOnlyCollection<string> GetAssignableRoles();
+
+    Task<Result<IReadOnlyCollection<ManageableUserDto>>> GetManageableUsersAsync(
+        long actorUserId,
+        long salonId,
+        CancellationToken cancellationToken);
 
     Task<Result<UserPermissionAccessDto>> GetUserPermissionsAsync(
         long actorUserId,

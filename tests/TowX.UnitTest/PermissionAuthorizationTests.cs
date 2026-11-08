@@ -211,6 +211,50 @@ public sealed class PermissionAuthorizationTests
         Assert.False(result.IsSuccess);
     }
 
+    [Fact]
+    public async Task ManageableUsersAreLimitedToTheSalonAdminsOwnAndExcludePrivilegedAccounts()
+    {
+        var users =
+            new[]
+            {
+                new UserPermissionTarget(1, 3, [Roles.SalonAdmin]),
+                new UserPermissionTarget(2, 3, [Roles.Personnel]),
+                new UserPermissionTarget(3, 8, [Roles.Personnel]),
+                new UserPermissionTarget(4, 3, [Roles.SalonAdmin]),
+                new UserPermissionTarget(5, 3, [Roles.SuperAdmin])
+            };
+        var service = new UserPermissionManagementService(
+            new StaticPermissionOverrideRepository([], users),
+            CreateRegistry());
+
+        var result = await service.GetManageableUsersAsync(1, 3, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal([2L], result.Value.Select(user => user.UserId));
+        Assert.Equal(3, result.Value.Single().SalonId);
+    }
+
+    [Fact]
+    public async Task SuperAdminCanSelectUsersAcrossSalonsButNotOtherSuperAdmins()
+    {
+        var users =
+            new[]
+            {
+                new UserPermissionTarget(1, 0, [Roles.SuperAdmin]),
+                new UserPermissionTarget(2, 3, [Roles.SalonAdmin]),
+                new UserPermissionTarget(3, 8, [Roles.Personnel]),
+                new UserPermissionTarget(4, 8, [Roles.SuperAdmin])
+            };
+        var service = new UserPermissionManagementService(
+            new StaticPermissionOverrideRepository([], users),
+            CreateRegistry());
+
+        var result = await service.GetManageableUsersAsync(1, 0, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal([2L, 3L], result.Value.Select(user => user.UserId));
+    }
+
     private static PermissionRegistry CreateRegistry() =>
         new(
         [
@@ -280,6 +324,22 @@ public sealed class PermissionAuthorizationTests
             long salonId,
             CancellationToken cancellationToken) =>
             Task.FromResult(overrides);
+
+        public Task<IReadOnlyCollection<ManageableUserDto>> GetUsersAsync(
+            long? salonId,
+            CancellationToken cancellationToken)
+        {
+            IReadOnlyCollection<ManageableUserDto> usersForSalon = users?
+                .Where(user => !salonId.HasValue || user.SalonId == salonId.Value)
+                .Select(user => new ManageableUserDto(
+                    user.UserId,
+                    $"User {user.UserId}",
+                    $"000{user.UserId}",
+                    user.SalonId,
+                    user.Roles))
+                .ToArray() ?? [];
+            return Task.FromResult(usersForSalon);
+        }
 
         public Task SaveOverrideAsync(
             long userId,

@@ -16,3 +16,11 @@ export interface UserPermissionAccess {
   denies: string[];
   effectivePermissions: string[];
 }
+
+export interface ManageableUser {
+  userId: number;
+  fullName: string | null;
+  mobile: string;
+  salonId: number;
+  roles: string[];
+}

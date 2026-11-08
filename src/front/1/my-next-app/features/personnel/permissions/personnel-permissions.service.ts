@@ -3,6 +3,7 @@ import type { ApiResponse } from "@/lib/api/types/api-response";
 
 import type {
   ManagedPermission,
+  ManageableUser,
   UserPermissionAccess,
 } from "./personnel-permissions.types";
 
@@ -25,6 +26,16 @@ export class PersonnelPermissionsService {
   ): Promise<ApiResponse<UserPermissionAccess>> {
     return this.api.get<UserPermissionAccess>(
       `/api/Identity/users/${userId}/permissions`,
+      undefined,
+      config,
+    );
+  }
+
+  getManageableUsers(
+    config?: { signal?: AbortSignal },
+  ): Promise<ApiResponse<ManageableUser[]>> {
+    return this.api.get<ManageableUser[]>(
+      "/api/Identity/users/assignable",
       undefined,
       config,
     );

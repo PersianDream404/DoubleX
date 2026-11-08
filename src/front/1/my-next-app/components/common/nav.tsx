@@ -29,7 +29,6 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "پنل ادمین", href: "/admin/salons" },
   { label: "مدیریت داشبورد", href: "/dashboard" },
   {
     label: "پذیرش و نوبت",
@@ -90,7 +89,7 @@ export function Navbar() {
       ? sectionState.href
       : activeSection?.href ?? null;
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname.startsWith("/admin")) {
     return null;
   }
 

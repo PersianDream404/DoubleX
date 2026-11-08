@@ -7,12 +7,16 @@ import { handleApiError } from "@/lib/api/handle-api-error";
 import { PersonnelPermissionsService } from "./personnel-permissions.service";
 import type {
   ManagedPermission,
+  ManageableUser,
   PermissionEffect,
   UserPermissionAccess,
 } from "./personnel-permissions.types";
 
 export function usePersonnelPermissions(userId: number | null) {
   const [permissions, setPermissions] = useState<ManagedPermission[]>([]);
+  const [users, setUsers] = useState<ManageableUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
   const [accessRequest, setAccessRequest] = useState<{
     userId: number;
     version: number;
@@ -26,12 +30,18 @@ export function usePersonnelPermissions(userId: number | null) {
   );
   const [resetting, setResetting] = useState(false);
   const [accessVersion, setAccessVersion] = useState(0);
+  const selectedUserId =
+    !loadingUsers && users.some((user) => user.userId === userId)
+      ? userId
+      : null;
   const currentAccessRequest =
-    accessRequest?.userId === userId && accessRequest.version === accessVersion
+    accessRequest !== null &&
+    accessRequest.userId === selectedUserId &&
+    accessRequest.version === accessVersion
       ? accessRequest
       : null;
   const access = currentAccessRequest?.data ?? null;
-  const loadingAccess = userId !== null && currentAccessRequest === null;
+  const loadingAccess = selectedUserId !== null && currentAccessRequest === null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -60,20 +70,45 @@ export function usePersonnelPermissions(userId: number | null) {
   }, []);
 
   useEffect(() => {
-    if (userId === null) {
+    const controller = new AbortController();
+    new PersonnelPermissionsService()
+      .getManageableUsers({ signal: controller.signal })
+      .then((response) => {
+        if (controller.signal.aborted) return;
+        if (!response.data) {
+          throw new Error(response.message ?? "فهرست حساب‌های قابل انتخاب دریافت نشد.");
+        }
+        setUsers(response.data);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setUsersError(handleApiError(requestError));
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoadingUsers(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (selectedUserId === null) {
       return;
     }
 
     const controller = new AbortController();
     new PersonnelPermissionsService()
-      .getUserPermissions(userId, { signal: controller.signal })
+      .getUserPermissions(selectedUserId, { signal: controller.signal })
       .then((response) => {
         if (controller.signal.aborted) return;
         if (!response.data) {
           throw new Error(response.message ?? "اطلاعات دسترسی دریافت نشد.");
         }
         setAccessRequest({
-          userId,
+          userId: selectedUserId,
           version: accessVersion,
           data: response.data,
           error: null,
@@ -82,7 +117,7 @@ export function usePersonnelPermissions(userId: number | null) {
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
           setAccessRequest({
-            userId,
+            userId: selectedUserId,
             version: accessVersion,
             data: null,
             error: handleApiError(requestError),
@@ -91,22 +126,22 @@ export function usePersonnelPermissions(userId: number | null) {
       });
 
     return () => controller.abort();
-  }, [accessVersion, userId]);
+  }, [accessVersion, selectedUserId]);
 
   const displayedError = currentAccessRequest?.error ?? error;
 
   const setOverride = useCallback(
     async (permission: string, effect: PermissionEffect) => {
-      if (userId === null || pendingPermission !== null) return;
+      if (selectedUserId === null || pendingPermission !== null) return;
 
       setPendingPermission(permission);
       setError(null);
       try {
         const service = new PersonnelPermissionsService();
         if (effect === "Grant") {
-          await service.grant(userId, permission);
+          await service.grant(selectedUserId, permission);
         } else {
-          await service.deny(userId, permission);
+          await service.deny(selectedUserId, permission);
         }
         setAccessVersion((version) => version + 1);
       } catch (requestError: unknown) {
@@ -115,18 +150,18 @@ export function usePersonnelPermissions(userId: number | null) {
         setPendingPermission(null);
       }
     },
-    [pendingPermission, userId],
+    [pendingPermission, selectedUserId],
   );
 
   const removeOverride = useCallback(
     async (permission: string) => {
-      if (userId === null || pendingPermission !== null) return;
+      if (selectedUserId === null || pendingPermission !== null) return;
 
       setPendingPermission(permission);
       setError(null);
       try {
         const service = new PersonnelPermissionsService();
-        await service.removeOverride(userId, permission);
+        await service.removeOverride(selectedUserId, permission);
         setAccessVersion((version) => version + 1);
       } catch (requestError: unknown) {
         setError(handleApiError(requestError));
@@ -134,27 +169,31 @@ export function usePersonnelPermissions(userId: number | null) {
         setPendingPermission(null);
       }
     },
-    [pendingPermission, userId],
+    [pendingPermission, selectedUserId],
   );
 
   const resetOverrides = useCallback(async () => {
-    if (userId === null || resetting) return;
+    if (selectedUserId === null || resetting) return;
 
     setResetting(true);
     setError(null);
     try {
       const service = new PersonnelPermissionsService();
-      await service.resetOverrides(userId);
+      await service.resetOverrides(selectedUserId);
       setAccessVersion((version) => version + 1);
     } catch (requestError: unknown) {
       setError(handleApiError(requestError));
     } finally {
       setResetting(false);
     }
-  }, [resetting, userId]);
+  }, [resetting, selectedUserId]);
 
   return {
     permissions,
+    users,
+    loadingUsers,
+    usersError,
+    selectedUserId,
     access,
     loadingPermissions,
     loadingAccess,
